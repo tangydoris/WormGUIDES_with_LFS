@@ -43,6 +43,7 @@ import wormguides.model.ColorRule;
 import wormguides.model.LineageData;
 import wormguides.model.LineageTree;
 import wormguides.model.PartsList;
+import wormguides.model.TableLineageData;
 import wormguides.view.AboutPane;
 import wormguides.view.TreePane;
 import wormguides.view.URLLoadWarningDialog;
@@ -443,8 +444,12 @@ public class RootLayoutController implements Initializable{
 	}
 	
 	private void initLineageTree(ArrayList<String> allCellNames) {
-		new LineageTree(allCellNames.toArray(new String[allCellNames.size()]));
-		lineageTreeRoot = LineageTree.getRoot();
+		if (allCellNames!=null) {
+			new LineageTree(allCellNames.toArray(new String[allCellNames.size()]));
+			lineageTreeRoot = LineageTree.getRoot();
+		}
+		else
+			System.out.println("null cell names passed to lineage tree init");
 	}
 	
 	private void initToggleGroup() {
@@ -517,19 +522,27 @@ public class RootLayoutController implements Initializable{
 
 	@Override
 	public void initialize(URL url, ResourceBundle bundle) {
+		if (bundle == null) {
+			System.out.println("initializing with null bundle...");
+			TableLineageData data = AceTreeLoader.loadNucFiles(JAR_NAME);
+			initializeWithLineageData(data);
+		}
+		else { //problem could be that we are not using AceTreeLoader - which partslist relies on, initLineageTree, etc.
+			System.out.println("initializing with NucleiMgrAdapter...");
+			LineageData data = (LineageData) bundle.getObject("lineageData");
+			initializeWithLineageData(data);
+		}	
+	}
+	
+	public void initializeWithLineageData(LineageData data) {
 		initPartsList();
-		LineageData data = AceTreeLoader.loadNucFiles(JAR_NAME);
 		initLineageTree(data.getAllCellNames());
 		
 		assertFXMLNodes();
 		
 		initToggleGroup();
 		initLayers();
-		
-		initializeWithLineageData(data);
-	}
-	
-	public void initializeWithLineageData(LineageData data) {
+
 		init3DWindow(data);
 		getPropertiesFrom3DWindow();
 		
@@ -556,8 +569,6 @@ public class RootLayoutController implements Initializable{
         sizeSubscene();
         sizeInfoPane();
 	}
-	
-	
 	
 	private static final String JAR_NAME = "WormGUIDES.jar";
 	

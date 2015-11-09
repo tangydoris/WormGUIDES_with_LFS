@@ -105,7 +105,10 @@ public class LineageTree {
 		
 		if (startingNode != null) {
 			parent = addCellHelper(newName, startingNode);
-			parent.getChildren().add(makeTreeItem(newName));
+			if (parent!=null)
+				parent.getChildren().add(makeTreeItem(newName));
+			else
+				System.out.println("parent node is null");
 		}
 	}
 	
@@ -210,9 +213,10 @@ public class LineageTree {
 	
 	public static String getCaseSensitiveName(String name) {
 		name = name.toLowerCase();
-		if (nameNodeHash.get(name)==null)
-			return "'"+name+"' systematic";
-		
+		if (nameNodeHash.get(name)==null) {
+			System.out.println("no node for "+name);
+			return "null";
+		}
 		return nameNodeHash.get(name).getValue();
 	}
 	

@@ -54,6 +54,13 @@ public class URLLoader {
 				i++;
 		}
 		
+		/*
+		for (String arg : ruleArgs)
+			System.out.println(arg);
+		for (String arg : viewArgs)
+			System.out.println(arg);
+		*/
+		
 		// process arguments
 		parseRules(ruleArgs);
 		parseViewArgs(viewArgs);
@@ -64,29 +71,24 @@ public class URLLoader {
 		for (String rule : rules) {
 			ArrayList<String> types = new ArrayList<String>();
 			StringBuilder sb = new StringBuilder(rule);
-			boolean noTypeSpecified = true;
 			
 			try {
 				if (sb.indexOf("-s") > -1) {
-					noTypeSpecified = false;
 					types.add("-s");
 					int i = sb.indexOf("-s");
 					sb.replace(i, i+2, "");
 				}
 				if (sb.indexOf("-n") > -1) {
-					noTypeSpecified = false;
 					types.add("-n");
 					int i = sb.indexOf("-n");
 					sb.replace(i, i+2, "");
 				}
 				if (sb.indexOf("-d") > -1) {
-					noTypeSpecified = false;
 					types.add("-d");
 					int i = sb.indexOf("-d");
 					sb.replace(i, i+2, "");
 				}
 				if (sb.indexOf("-g") > -1) {
-					noTypeSpecified = false;
 					types.add("-g");
 					int i = sb.indexOf("-g");
 					sb.replace(i, i+2, "");
@@ -114,24 +116,17 @@ public class URLLoader {
 				// extract name from what's left of rule
 				String name = sb.substring(0, sb.indexOf("+"));
 				
-				if (types.contains("-s"))
+				if (types.contains("-s")) {
 					Search.addColorRule(SearchType.SYSTEMATIC, name, Color.web(colorString), options);
-				
-				if (types.contains("-n"))
+				}
+				if (types.contains("-n")) {
 					Search.addColorRule(SearchType.FUNCTIONAL, name, Color.web(colorString), options);
-				
-				if (types.contains("-d"))
+				}
+				if (types.contains("-d")) {
 					Search.addColorRule(SearchType.DESCRIPTION, name, Color.web(colorString), options);
-				
-				if (types.contains("-g"))
+				}
+				if (types.contains("-g")) {
 					Search.addColorRule(SearchType.GENE, name, Color.web(colorString), options);
-				
-				// if no type present, default is systematic
-				if (noTypeSpecified) {
-					SearchType type = SearchType.SYSTEMATIC;
-					if (isGeneFormat(name))
-						type = SearchType.GENE;
-					Search.addColorRule(type, name, Color.web(colorString), options);
 				}
 			}
 			catch (StringIndexOutOfBoundsException e) {
@@ -141,71 +136,25 @@ public class URLLoader {
 		}
 	}
 	
-	private boolean isGeneFormat(String name) {
-		if (name.indexOf("-") < 0)
-			return false;
-		
-		String[] tokens = name.split("-");
-		if (tokens.length != 2)
-			return false;
-		try {
-			Integer.parseInt(tokens[1]);
-		} catch (NumberFormatException nfe) {
-			return false;
-		}
-		
-		return true;
-	}
-	
 	private void parseViewArgs(ArrayList<String> viewArgs) {
-		// manipulate viewArgs arraylist so that rx ry and rz are grouped together
-		// to facilitate loading rotations in x and y
-		for (int i = 0; i < viewArgs.size(); i++) {
-			if (viewArgs.get(i).startsWith("rX")) {
-				String ry = viewArgs.get(i+1);
-				String rz = viewArgs.get(i+2);
-				viewArgs.set(i, viewArgs.get(i)+","+ry+","+rz);
-				break;
-			}
-		}
-		
 		for (String arg : viewArgs) {
-			if (arg.startsWith("rX")) {
-				String[] tokens = arg.split(",");
-				try {
-					double rx = Double.parseDouble(tokens[0].split("=")[1]);
-					double ry = Double.parseDouble(tokens[1].split("=")[1]);
-					double rz = Double.parseDouble(tokens[2].split("=")[1]);
-					window3D.setRotations(rx, ry, rz);
-				} catch (NumberFormatException nfe) {
-					System.out.println("error in parsing time variable");
-					nfe.printStackTrace();
-				}
-				
-				continue;
-			}
 			String[] tokens = arg.split("=");
 			if (tokens.length!=0) {
 				switch (tokens[0]) {
 					case "time":	try {
-										window3D.setTime(Integer.parseInt(tokens[1])+1);
+										window3D.setTime(Integer.parseInt(tokens[1]));
 									} catch (NumberFormatException nfe) {
 										System.out.println("error in parsing time variable");
 										nfe.printStackTrace();
 									}
 									break;
-					
-					/*
-					case "rX":		
-									try {
-										window3D.setRotations(Double.parseDouble(tokens[1]), 0, 0);
+					case "rX":		try {
+										window3D.setRotationX(Double.parseDouble(tokens[1]));
 									} catch (NumberFormatException nfe) {
 										System.out.println("error in parsing rotation variable");
 										nfe.printStackTrace();
 									}
 									break;
-					*/
-					/*
 					case "rY":		try {
 										window3D.setRotationY(Double.parseDouble(tokens[1]));
 									} catch (NumberFormatException nfe) {
@@ -213,7 +162,6 @@ public class URLLoader {
 										nfe.printStackTrace();
 									}
 									break;
-					
 					case "rZ":		try {
 										window3D.setRotationZ(Double.parseDouble(tokens[1]));
 									} catch (NumberFormatException nfe) {
@@ -221,7 +169,6 @@ public class URLLoader {
 										nfe.printStackTrace();
 									}
 									break;
-					*/
 					case "tX":		try {
 										window3D.setTranslationX(Double.parseDouble(tokens[1]));
 									} catch (NumberFormatException nfe) {
@@ -229,7 +176,6 @@ public class URLLoader {
 										nfe.printStackTrace();
 									}
 									break;
-					
 					case "tY":		try {
 										window3D.setTranslationY(Double.parseDouble(tokens[1]));
 									} catch (NumberFormatException nfe) {
@@ -237,7 +183,6 @@ public class URLLoader {
 										nfe.printStackTrace();
 									}
 									break;
-					
 					case "scale":	try {
 										window3D.setScale(Double.parseDouble(tokens[1]));
 									} catch (NumberFormatException nfe) {
@@ -245,7 +190,6 @@ public class URLLoader {
 										nfe.printStackTrace();
 									}
 									break;
-					
 					case "dim":		try {
 										window3D.setOthersVisibility(Double.parseDouble(tokens[1]));
 									} catch (NumberFormatException nfe) {

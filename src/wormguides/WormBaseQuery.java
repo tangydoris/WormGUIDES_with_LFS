@@ -74,7 +74,7 @@ public class WormBaseQuery{
 									
 									while (m.find()) {
 										String name = m.group(1);
-										if (Search.isLineageName(name) && !out.contains(name))
+										if (AceTreeLoader.isLineageName(name) && !out.contains(name))
 											out.add(name);
 									}
 								}

@@ -72,7 +72,6 @@ public class URLWindow extends AnchorPane {
 		iOSField = new TextField();
 		iOSField.setFont(AppFont.getFont());
 		iOSField.setEditable(false);
-		iOSField.setPrefHeight(23);
 		iOSField.setStyle("-fx-focus-color: -fx-outer-border; "+
 						"-fx-faint-focus-color: transparent;");
 		HBox.setHgrow(iOSField, Priority.ALWAYS);
@@ -98,7 +97,7 @@ public class URLWindow extends AnchorPane {
 		androidField = new TextField();
 		androidField.setFont(AppFont.getFont());
 		androidField.setEditable(false);
-		androidField.setPrefHeight(23);
+		androidField.setPrefHeight(22);
 		androidField.setStyle("-fx-focus-color: -fx-outer-border; "+
 						"-fx-faint-focus-color: transparent;");
 		HBox.setHgrow(androidField, Priority.ALWAYS);
@@ -124,7 +123,7 @@ public class URLWindow extends AnchorPane {
 		webField = new TextField();
 		webField.setFont(AppFont.getFont());
 		webField.setEditable(false);
-		webField.setPrefHeight(23);
+		webField.setPrefHeight(22);
 		webField.setStyle("-fx-focus-color: -fx-outer-border; "+
 						"-fx-faint-focus-color: transparent;"); 
 		HBox.setHgrow(webField, Priority.ALWAYS);
@@ -146,8 +145,8 @@ public class URLWindow extends AnchorPane {
 		});
 		webHBox.getChildren().addAll(webField, webCopyBtn);
 		
-		resetBtn = new Button("Generate");
-		resetBtn.setPrefWidth(80);
+		resetBtn = new Button("Regenerate");
+		resetBtn.setPrefWidth(100);
 		resetBtn.setStyle("-fx-focus-color: -fx-outer-border; "+
 						"-fx-faint-focus-color: transparent;");
 		resetBtn.setFont(AppFont.getFont());
@@ -159,7 +158,7 @@ public class URLWindow extends AnchorPane {
 		});
 		
 		closeBtn = new Button("Close");
-		closeBtn.setPrefWidth(80);
+		closeBtn.setPrefWidth(100);
 		closeBtn.setStyle("-fx-focus-color: -fx-outer-border; "+
 						"-fx-faint-focus-color: transparent;");
 		closeBtn.setFont(AppFont.getFont());

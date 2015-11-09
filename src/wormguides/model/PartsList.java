@@ -42,6 +42,7 @@ public class PartsList {
 						functionalNames.add(lineArray[0]);
 						lineageNames.add(lineArray[1]);
 						descriptions.add(lineArray[2]);
+						//System.out.println("DEBUG: " + lineArray[0]);
 					}
 
 					break;

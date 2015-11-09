@@ -608,9 +608,10 @@ public class RootLayout extends BorderPane {
 					}
 					e_10.getTabs().add(e_13);
 				}
+//				________________________________________START LAYERS TAB_________________________________
 				{
 					Tab e_90 = new Tab();
-					e_90.setText("Layers");
+					e_90.setText("Layers TEST");
 					{
 						AnchorPane e_91 = new AnchorPane();
 						e_91.setMinHeight(0.0);
