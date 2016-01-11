@@ -43,7 +43,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import wormguides.model.CellCases;
 import wormguides.model.Connectome;
+import wormguides.model.EmbryonicAnalogousCells;
 import wormguides.model.LineageData;
 import wormguides.model.LineageTree;
 import wormguides.model.PartsList;
@@ -52,6 +54,9 @@ import wormguides.model.SceneElementsList;
 import wormguides.model.StoriesList;
 import wormguides.model.Story;
 import wormguides.view.AboutPane;
+import wormguides.view.HTMLNode;
+import wormguides.view.InfoWindow;
+import wormguides.view.InfoWindowDOM;
 import wormguides.view.TreePane;
 import wormguides.view.URLLoadWarningDialog;
 import wormguides.view.URLLoadWindow;
@@ -151,6 +156,10 @@ public class RootLayoutController implements Initializable{
 	
 	// url stuff
 	private URLLoader urlLoader;
+	
+	//InfoWindow Stuff
+	CellCases cellCases;
+	InfoWindow infoWindow;
 	
 	private ImageView playIcon, pauseIcon;
 	
@@ -257,14 +266,21 @@ public class RootLayoutController implements Initializable{
 		urlLoadStage.show();
 	}
 	
-	@FXML public void viewCellShapesIndex() {
+	@FXML
+	public void openInfoWindow() {
+		if (infoWindow == null) {
+			initInfoWindow();
+		}
+		infoWindow.showWindow();
+	}
+	
+	@FXML
+	public void viewCellShapesIndex() {
 		if (elementsList == null) return;
 		
 		if (cellShapesIndexStage == null) {
 			cellShapesIndexStage = new Stage();
 			cellShapesIndexStage.setTitle("Cell Shapes Index");
-			cellShapesIndexStage.setWidth(805);
-			cellShapesIndexStage.setHeight(625);
 			
 			CellShapesIndexToHTML cellShapesToHTML = new CellShapesIndexToHTML(elementsList);
 			
@@ -278,6 +294,7 @@ public class RootLayoutController implements Initializable{
 			scene.setRoot(root);
 			
 			cellShapesIndexStage.setScene(scene);
+			cellShapesIndexStage.setResizable(false);
 		}
 		cellShapesIndexStage.show();
 	}
@@ -285,9 +302,7 @@ public class RootLayoutController implements Initializable{
 	@FXML public void viewPartsList() {
 		if (partsListStage == null) {
 			partsListStage = new Stage();
-			partsListStage.setTitle("Parts List");
-			partsListStage.setWidth(805);
-			partsListStage.setHeight(625);
+			partsListStage.setTitle("Parts List");	
 			
 			//build webview scene to render parts list
 			WebView partsListWebView = new WebView();
@@ -299,6 +314,7 @@ public class RootLayoutController implements Initializable{
 			scene.setRoot(root);
 			
 			partsListStage.setScene(scene);
+			partsListStage.setResizable(false);
 		}
 		partsListStage.show();
 	}
@@ -307,8 +323,6 @@ public class RootLayoutController implements Initializable{
 		if (connectomeStage == null) {
 			connectomeStage = new Stage();
 			connectomeStage.setTitle("Connectome");
-			connectomeStage.setWidth(805);
-			connectomeStage.setHeight(625);
 			
 			//build webview scene to render html
 			WebView connectomeHTML = new WebView();
@@ -320,6 +334,7 @@ public class RootLayoutController implements Initializable{
 			scene.setRoot(root);
 			
 			connectomeStage.setScene(scene);
+			connectomeStage.setResizable(false);
 		}
 		connectomeStage.show();
 	}
@@ -449,6 +464,33 @@ public class RootLayoutController implements Initializable{
 			if (functionalName!=null) {
 				cellName.setText(name+" ("+functionalName+")");
 				cellDescription.setText(PartsList.getDescriptionByFunctionalName(functionalName));
+			}
+		}
+		
+		//GENERATE CELL TAB ON CLICK
+		if (cellCases == null) return; //error check
+						
+		if (connectome.containsCell(name)) { //in connectome --> terminal case (neuron)
+			if (cellCases.containsTerminalCase(name)) {
+				
+				//show the tab
+			} else {
+				//translate the name if necessary
+				String tabTitle = connectome.checkQueryCell(name).toUpperCase();
+				//add a terminal case --> pass the wiring partners
+				cellCases.makeTerminalCase(tabTitle, 
+						connectome.querryConnectivity(name, true, false, false, false),
+						connectome.querryConnectivity(name, false, true, false, false),
+						connectome.querryConnectivity(name, false, false, true, false),
+						connectome.querryConnectivity(name, false, false, false, true));
+			}
+		} else { //not in connectome --> non terminal case
+			if (cellCases.containsNonTerminalCase(name)) {
+
+				//show tab
+			} else {
+				//add a non terminal case
+				cellCases.makeNonTerminalCase(name);
 			}
 		}
 	}
@@ -753,8 +795,19 @@ public class RootLayoutController implements Initializable{
 		connectome = new Connectome();
 		Search.setConnectome(connectome);
 	}
-
 	
+	private void initInfoWindow() {
+		infoWindow = new InfoWindow();
+	}
+	
+	private void initCellCases() {
+		if (infoWindow == null) {
+			initInfoWindow();
+		}
+		
+		cellCases = new CellCases(infoWindow);
+	}
+
 	@Override
 	public void initialize(URL url, ResourceBundle bundle) {
 		initPartsList();
@@ -788,6 +841,12 @@ public class RootLayoutController implements Initializable{
 		// connectome
 		initConnectome();
 		
+		//info window
+		initInfoWindow();
+		
+		//init cell cases
+		initCellCases();
+		
 		// structures layer
 		initStructuresLayer();
 		
@@ -811,8 +870,7 @@ public class RootLayoutController implements Initializable{
         sizeSubscene();
         sizeInfoPane();
 	}
-	
-	
+
 	private static final String JAR_NAME = "WormGUIDES.jar";
 	
 }
