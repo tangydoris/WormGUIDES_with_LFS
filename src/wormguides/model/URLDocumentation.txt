@@ -8,6 +8,10 @@ Rule Type:
 MulticellularStructureRule	->	"-M" (added later to support rules added from the 'Structures' tab)
 ColorRule					->	not specified (original API)
 
+Rule Type:
+MulticellularStructureRule	->	"-m" (added later to support rules added from the 'Structures' tab)
+ColorRule					->	not specified (original API)
+
 Search Type:
 Description	->	"-d"
 Systematic 	->	"-s"
