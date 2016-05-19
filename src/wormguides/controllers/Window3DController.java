@@ -69,6 +69,8 @@ import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.FontSmoothingType;
 import javafx.scene.text.Text;
+import javafx.scene.transform.Affine;
+import javafx.scene.transform.MatrixType;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
@@ -779,8 +781,8 @@ public class Window3DController {
 		mouseOldX = mousePosX;
 		mouseOldY = mousePosY;
 		mouseOldZ = mousePosZ;
-		mousePosX = event.getSceneX();
-		mousePosY = event.getSceneY();
+		mousePosX = event.getScreenX();
+		mousePosY = event.getScreenY();
 		mouseDeltaX = (mousePosX - mouseOldX);
 		mouseDeltaY = (mousePosY - mouseOldY);
 
@@ -799,34 +801,29 @@ public class Window3DController {
 			if (quaternion == null)
 				quaternion = new Quaternion();
 
-			Bounds b = subscene.getBoundsInParent();
+			Bounds b = subscene.localToScreen(subscene.getBoundsInLocal());
 			double subsceneMinX = b.getMinX();
-			double subsceneMaxX = b.getMaxX();
+			//double subsceneMaxX = b.getMaxX();
 			double subsceneMinY = b.getMinY();
-			double subsceneMaxY = b.getMaxY();
+			//double subsceneMaxY = b.getMaxY();
 			double subsceneWidth = b.getWidth();
 			double subsceneHeight = b.getHeight();
 
 			double mOldX = (((mouseOldX - subsceneMinX) / subsceneWidth) * 2.0) - 1.0;
 			double mOldY = (((mouseOldY - subsceneMinY) / subsceneHeight) * 2.0) - 1.0;
-			double mNewX = (((mousePosX - subsceneMinX) / subsceneWidth) * 2.0) - 1.0;;
+			double mNewX = (((mousePosX - subsceneMinX) / subsceneWidth) * 2.0) - 1.0;
 			double mNewY = (((mousePosY - subsceneMinY) / subsceneHeight) * 2.0) - 1.0;
+
+			double q2arr[] = quaternion.gfs_gl_trackball(mOldX, mOldY, mNewX, mNewY);
+			Quaternion q2 = new Quaternion(q2arr[3], q2arr[0], q2arr[1], q2arr[2]);
 			
-			quaternion.gfs_gl_trackball(mOldX, mOldY, mNewX, mNewY);
+			quaternion.multiplyQuaternions(q2);
+
 			ArrayList<Double> eulerAngles = quaternion.toEulerRotation();
 
 			rotateXAngle.set(eulerAngles.get(2));
 			rotateYAngle.set(eulerAngles.get(0));
 			rotateZAngle.set(eulerAngles.get(1));
-
-			/*
-			 * double modifier = 10.0; double modifierFactor = 0.1;
-			 * 
-			 * rotateXAngle.set( ((rotateXAngle.get() + mouseDeltaY *
-			 * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
-			 * rotateYAngle.set( ((rotateYAngle.get() + mouseDeltaX *
-			 * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
-			 */
 
 			repositionSprites();
 			repositionNoteBillboardFronts();
@@ -1855,7 +1852,7 @@ public class Window3DController {
 
 	private Sphere createLocationMarker(double x, double y, double z) {
 		Sphere sphere = new Sphere(1);
-		sphere.getTransforms().addAll(rotateX, rotateY, rotateZ);
+		 sphere.getTransforms().addAll(rotateX, rotateY, rotateZ);
 		sphere.getTransforms().add(new Translate(x * X_SCALE, y * Y_SCALE, z * Z_SCALE));
 		// make marker transparent
 		sphere.setMaterial(colorHash.getOthersMaterial(0));
@@ -2415,6 +2412,8 @@ public class Window3DController {
 				double newAngle = newValue.doubleValue();
 				// cameraTransformer.setRotateX(newAngle);
 				rotateX.setAngle(newAngle);
+				// rotateAffine.appendRotation(newAngle, 0, 0, 0,
+				// Rotate.X_AXIS);
 			}
 		};
 	}
@@ -2426,6 +2425,8 @@ public class Window3DController {
 				double newAngle = newValue.doubleValue();
 				// cameraTransformer.setRotateY(newAngle);
 				rotateY.setAngle(newAngle);
+				// rotateAffine.appendRotation(newAngle, 0, 0, 0,
+				// Rotate.Y_AXIS);
 			}
 		};
 	}
@@ -2437,6 +2438,8 @@ public class Window3DController {
 				double newAngle = newValue.doubleValue();
 				// cameraTransformer.setRotateZ(newAngle);
 				rotateZ.setAngle(newAngle);
+				// rotateAffine.appendRotation(newAngle, 0, 0, 0,
+				// Rotate.Z_AXIS);
 			}
 		};
 	}

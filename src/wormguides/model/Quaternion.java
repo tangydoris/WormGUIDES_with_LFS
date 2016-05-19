@@ -1,21 +1,15 @@
 package wormguides.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Quaternion {
 	private double w, x, y, z;
-	private ArrayList<Double> q;
 
 	/**
 	 * Initial quaternion will be <1,0,0,0> i.e. no rotation
 	 */
 	public Quaternion() {
-		q = new ArrayList<Double>(4);
-		q.add(0.0);
-		q.add(0.0);
-		q.add(0.0);
-		q.add(01.0);
-
 		this.w = 1.0;
 		this.x = 0.0;
 		this.y = 0.0;
@@ -30,13 +24,7 @@ public class Quaternion {
 	 * @param y
 	 * @param z
 	 */
-	private Quaternion(double w, double x, double y, double z) {
-		q = new ArrayList<Double>(4);
-		q.set(0, x);
-		q.set(1, y);
-		q.set(2, z);
-		q.set(3, w);
-
+	public Quaternion(double w, double x, double y, double z) {
 		this.w = w;
 		this.x = x;
 		this.y = y;
@@ -85,7 +73,7 @@ public class Quaternion {
 	 * 
 	 * @param local_rotation
 	 */
-	private void multiplyQuaternions(Quaternion local_rotation) {
+	public void multiplyQuaternions(Quaternion local_rotation) {
 
 		this.w = ((getW() * local_rotation.getW()) - (getX() * local_rotation.getX()) - (getY() * local_rotation.getY())
 				- (getZ() * local_rotation.getZ()));
@@ -188,22 +176,9 @@ public class Quaternion {
 		return eulerRotation;
 	}
 
-	private void vzero(ArrayList<Double> v) {
-		v.clear();
-		v.add(0.0);
-		v.add(0.0);
-		v.add(0.0);
-	}
-
-	private void vset(ArrayList<Double> v, double x, double y, double z) {
-		v.clear();
-		v.add(x);
-		v.add(y);
-		v.add(z);
-	}
-
-	private double tb_project_to_sphere(double r, double x, double y) {
+	public double tb_project_to_sphere(double r, double x, double y) {
 		double d, t, z;
+
 		double sqrt2 = Math.sqrt(2);
 		d = Math.sqrt(x * x + y * y);
 		if (d < r * (sqrt2 / 2)) { /* Inside sphere */
@@ -215,123 +190,107 @@ public class Quaternion {
 		return z;
 	}
 
-	private void vcross(ArrayList<Double> v1, ArrayList<Double> v2, ArrayList<Double> cross) {
-		cross.clear();
-		double v10 = v1.get(0);
-		double v11 = v1.get(1);
-		double v12 = v1.get(2);
-		double v20 = v2.get(0);
-		double v21 = v2.get(1);
-		double v22 = v2.get(2);
-		cross.add((v11 * v22) - (v12 * v21));
-		cross.add((v12 * v20) - (v10 * v22));
-		cross.add((v10 * v21) - (v11 * v20));
+	private void vcopy(double v1[], double v2[]) {
+		for (int i = 0; i < 3; i++)
+			v2[i] = v1[i];
 	}
 
-	private void vsub(ArrayList<Double> p1, ArrayList<Double> p2, ArrayList<Double> d) {
-		d.clear();
-		d.add(0, p1.get(0) - p2.get(0));
-		d.add(1, p1.get(1) - p2.get(1));
-		d.add(2, p1.get(2) - p2.get(2));
+	public double[] vcross(double v1[], double v2[]) {
+		double cross[] = new double[3];
+		double v10 = v1[0];
+		double v11 = v1[1];
+		double v12 = v1[2];
+		double v20 = v2[0];
+		double v21 = v2[1];
+		double v22 = v2[2];
+		cross[0] = (v11 * v22) - (v12 * v21);
+		cross[1] = (v12 * v20) - (v10 * v22);
+		cross[2] = (v10 * v21) - (v11 * v20);
+		return cross;
 	}
 
-	private void vnormal(ArrayList<Double> v) {
+	private double[] vsub(double p1[], double p2[]) {
+		double d[] = new double[3];
+		d[0] = p1[0] - p2[0];
+		d[1] = p1[1] - p2[1];
+		d[2] = p1[2] - p2[2];
+		return d;
+	}
+
+	private void vnormal(double v[]) {
 		vscale(v, 1.0 / vlength(v));
 	}
 
-	private double vlength(ArrayList<Double> v) {
-		double v0 = v.get(0);
-		double v1 = v.get(1);
-		double v2 = v.get(2);
+	private double vlength(double v[]) {
+		double v0 = v[0];
+		double v1 = v[1];
+		double v2 = v[2];
 		return Math.sqrt(v0 * v0 + v1 * v1 + v2 * v2);
 	}
 
-	private void vscale(ArrayList<Double> v, double div) {
-		ArrayList<Double> temp = new ArrayList<Double>(3);
-		temp.add(v.get(0) * div);
-		temp.add(v.get(1) * div);
-		temp.add(v.get(2) * div);
-
-		v.clear();
-		v.add(temp.get(0));
-		v.add(temp.get(1));
-		v.add(temp.get(2));
+	private void vscale(double v[], double div) {
+		v[0] = v[0] * div;
+		v[1] = v[1] * div;
+		v[2] = v[2] * div;
 	}
 
-	private void vcopy(ArrayList<Double> v1, ArrayList<Double> v2) {
-		v2.clear();
-		v2.add(v1.get(0));
-		v2.add(v1.get(1));
-		v2.add(v1.get(2));
+	private double[] vcopy(double v[]) {
+		return Arrays.copyOf(v, v.length);
 	}
 
 	/**
 	 * Given an axis and angle, compute quaternion.
 	 */
-	private void gfs_gl_axis_to_quat(ArrayList<Double> a, double phi) {
+	private double[] gfs_gl_axis_to_quat(double a[], double phi) {
+		double temp[] = new double[4];
 		vnormal(a);
-		vcopy(a, q);
-		vscale(q, Math.sin(phi / 2.0));
-		q.add(Math.cos(phi / 2.0));
-		
-		x = q.get(0);
-		y = q.get(1);
-		z = q.get(2);
-		w = q.get(3);
+		vcopy(a, temp);
+		vscale(temp, Math.sin(phi / 2.0));
+		temp[3] = Math.cos(phi / 2.0);
+		return temp;
 	}
 
 	/**
-	 * Simulate a track-ball.  Project the points onto the virtual
-	 * trackball, then figure out the axis of rotation, which is the cross
-	 * product of P1 P2 and O P1 (O is the center of the ball, 0,0,0)
-	 * Note:  This is a deformed trackball-- is a trackball in the center,
-	 * but is deformed into a hyperbolic sheet of rotation away from the
-	 * center.  This particular function was chosen after trying out
-	 * several variations.
+	 * Simulate a track-ball. Project the points onto the virtual trackball,
+	 * then figure out the axis of rotation, which is the cross product of P1 P2
+	 * and O P1 (O is the center of the ball, 0,0,0) Note: This is a deformed
+	 * trackball-- is a trackball in the center, but is deformed into a
+	 * hyperbolic sheet of rotation away from the center. This particular
+	 * function was chosen after trying out several variations.
 	 *
-	 * It is assumed that the arguments to this routine are in the range
-	 * (-1.0 ... 1.0)
+	 * It is assumed that the arguments to this routine are in the range (-1.0
+	 * ... 1.0)
 	 */
-	public void gfs_gl_trackball(double p1x, double p1y, double p2x, double p2y) {
-		ArrayList<Double> a = new ArrayList<Double>(3);
+	public double[] gfs_gl_trackball(double p1x, double p1y, double p2x, double p2y) {
+		double q[] = new double[] { 0.0, 0.0, 0.0, 1.0 };
+		double a[];
 		double phi;
-		ArrayList<Double> p1 = new ArrayList<Double>(3);
-		vzero(p1);
-		ArrayList<Double> p2 = new ArrayList<Double>(3);
-		vzero(p2);
-		ArrayList<Double> d = new ArrayList<Double>(3);
-		vzero(d);
+		double p1[];
+		double p2[];
+		double d[];
 		double t;
 
 		if (p1x == p2x && p1y == p2y) {
 			// zero rotation
-			vzero(q);
-			q.add(1.0);
-
-			x = q.get(0);
-			y = q.get(1);
-			z = q.get(2);
-			w = q.get(3);
-
-			return;
+			return q;
 		}
 
 		/*
 		 * First, figure out z-coordinates for projection of P1 and P2 to
 		 * deformed sphere
 		 */
-		vset(p1, p1x, p1y, tb_project_to_sphere(TRACKBALL_SIZE, p1x, p1y));
-		vset(p2, p2x, p2y, tb_project_to_sphere(TRACKBALL_SIZE, p2x, p2y));
+		p1 = new double[] { p1x, p1y, tb_project_to_sphere(TRACKBALL_SIZE, p1x, p1y) };
+		p2 = new double[] { p2x, p2y, tb_project_to_sphere(TRACKBALL_SIZE, p2x, p2y) };
 
 		/*
 		 * Now, we want the cross product of P1 and P2
 		 */
-		vcross(p2, p1, a);
+		a = vcross(p2, p1);
 
 		/*
 		 * Figure out how much to rotate around that axis
 		 */
-		vsub(p1, p2, d);
+		d = vsub(p1, p2);
 		t = vlength(d) / (2.0 * TRACKBALL_SIZE);
 
 		/*
@@ -343,7 +302,17 @@ public class Quaternion {
 			t = -1.0;
 		phi = 2.0 * Math.asin(t);
 
-		gfs_gl_axis_to_quat(a, phi);
+		q = gfs_gl_axis_to_quat(a, phi);
+		return q;
+	}
+
+	private void normalize_quat(double q[]) {
+		int i;
+		double mag;
+
+		mag = (q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+		for (i = 0; i < 4; i++)
+			q[i] /= mag;
 	}
 
 	// public ArrayList<Double> toEulerRotation() {
@@ -388,5 +357,5 @@ public class Quaternion {
 	private final static double NORTH_POLE = 0.4999;
 	private final static double SOUTH_POLE = -0.499;
 
-	private final double TRACKBALL_SIZE = 0.8;
+	private final double TRACKBALL_SIZE = 0.1;
 }
