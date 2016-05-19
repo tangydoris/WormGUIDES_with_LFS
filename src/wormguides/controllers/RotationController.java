@@ -183,8 +183,8 @@ public class RotationController extends AnchorPane implements Initializable {
 	}
 
 	private void assertFXMLNodes() {
-		assert(xRotationSlider != null);
-		assert(yRotationSlider != null);
-		assert(zRotationSlider != null);
+		assert (xRotationSlider != null);
+		assert (yRotationSlider != null);
+		assert (zRotationSlider != null);
 	}
 }

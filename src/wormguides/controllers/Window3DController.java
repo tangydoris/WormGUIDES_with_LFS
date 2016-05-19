@@ -784,11 +784,8 @@ public class Window3DController {
 		mouseDeltaX = (mousePosX - mouseOldX);
 		mouseDeltaY = (mousePosY - mouseOldY);
 
-		mouseDeltaX /= 2;
-		mouseDeltaY /= 2;
-
-		angleOfRotation = rotationAngleFromMouseMovement();
-		mousePosZ = computeZCoord(mousePosX, mousePosY, angleOfRotation);
+		// angleOfRotation = rotationAngleFromMouseMovement();
+		// mousePosZ = computeZCoord(mousePosX, mousePosY, angleOfRotation);
 
 		if (event.isSecondaryButtonDown() || event.isMetaDown() || event.isControlDown()) {
 
@@ -797,60 +794,39 @@ public class Window3DController {
 
 			repositionSprites();
 			repositionNoteBillboardFronts();
-		}
+		} else if (event.isPrimaryButtonDown()) {
 
-		else if (event.isPrimaryButtonDown()) {
+			if (quaternion == null)
+				quaternion = new Quaternion();
+
+			Bounds b = subscene.getBoundsInParent();
+			double subsceneMinX = b.getMinX();
+			double subsceneMaxX = b.getMaxX();
+			double subsceneMinY = b.getMinY();
+			double subsceneMaxY = b.getMaxY();
+			double subsceneWidth = b.getWidth();
+			double subsceneHeight = b.getHeight();
+
+			double mOldX = (((mouseOldX - subsceneMinX) / subsceneWidth) * 2.0) - 1.0;
+			double mOldY = (((mouseOldY - subsceneMinY) / subsceneHeight) * 2.0) - 1.0;
+			double mNewX = (((mousePosX - subsceneMinX) / subsceneWidth) * 2.0) - 1.0;;
+			double mNewY = (((mousePosY - subsceneMinY) / subsceneHeight) * 2.0) - 1.0;
+			
+			quaternion.gfs_gl_trackball(mOldX, mOldY, mNewX, mNewY);
+			ArrayList<Double> eulerAngles = quaternion.toEulerRotation();
+
+			rotateXAngle.set(eulerAngles.get(2));
+			rotateYAngle.set(eulerAngles.get(0));
+			rotateZAngle.set(eulerAngles.get(1));
+
 			/*
-			 * TODO how to get Z COORDINATE?
+			 * double modifier = 10.0; double modifierFactor = 0.1;
+			 * 
+			 * rotateXAngle.set( ((rotateXAngle.get() + mouseDeltaY *
+			 * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
+			 * rotateYAngle.set( ((rotateYAngle.get() + mouseDeltaX *
+			 * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
 			 */
-			if (quaternion != null) {
-				// double[] vectorToOldMousePos = vectorBWPoints(newOriginX,
-				// newOriginY, newOriginZ, mouseOldX, mouseOldY, mouseOldZ);
-				// double[] vectorToNewMousePos = vectorBWPoints(newOriginX,
-				// newOriginY, newOriginZ, mousePosX, mousePosY, mousePosZ);
-
-				/*
-				 * double[] vectorToOldMousePos = vectorBWPoints(mouseOldX,
-				 * mouseOldY, mouseOldZ, newOriginX, newOriginY, newOriginZ);
-				 * double[] vectorToNewMousePos = vectorBWPoints(mousePosX,
-				 * mousePosY, mousePosZ, newOriginX, newOriginY, newOriginZ);
-				 */
-				double[] vectorToOldMousePos = vectorBWPoints(mouseOldX, mouseOldY, mouseOldZ, 0, 0, 0);
-				double[] vectorToNewMousePos = vectorBWPoints(mousePosX, mousePosY, mousePosZ, 0, 0, 0);
-
-				if (vectorToOldMousePos.length == 3 && vectorToNewMousePos.length == 3) {
-					// System.out.println("from origin to old mouse pos: <" +
-					// vectorToOldMousePos[0] + ", " + vectorToOldMousePos[1] +
-					// ", " + vectorToOldMousePos[2] + ">");
-					// System.out.println("from origin to old mouse pos: <" +
-					// vectorToNewMousePos[0] + ", " + vectorToNewMousePos[1] +
-					// ", " + vectorToNewMousePos[2] + ">");
-					// System.out.println(" ");
-
-					// compute cross product
-					double[] cross = crossProduct(vectorToNewMousePos, vectorToOldMousePos);
-					if (cross.length == 3) {
-						// System.out.println("cross product: <" + cross[0] + ",
-						// " + cross[1] + ", " + cross[2] + ">");
-						quaternion.updateOnRotate(angleOfRotation, cross[0], cross[1], cross[2]);
-
-						ArrayList<Double> eulerAngles = quaternion.toEulerRotation();
-
-						if (eulerAngles.size() == 3) {
-							// rotateX.setAngle(eulerAngles.get(2));
-							// rotateY.setAngle(eulerAngles.get(0));
-						}
-					}
-				}
-			}
-
-			double modifier = 10.0;
-			double modifierFactor = 0.1;
-
-			rotateXAngle.set(
-					((rotateXAngle.get() + mouseDeltaY * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
-			rotateYAngle.set(
-					((rotateYAngle.get() + mouseDeltaX * modifierFactor * modifier * 2.0) % 360 + 540) % 360 - 180);
 
 			repositionSprites();
 			repositionNoteBillboardFronts();
