@@ -303,6 +303,7 @@ public class Quaternion {
 		phi = 2.0 * Math.asin(t);
 
 		q = gfs_gl_axis_to_quat(a, phi);
+		normalize_quat(q);
 		return q;
 	}
 
@@ -315,47 +316,8 @@ public class Quaternion {
 			q[i] /= mag;
 	}
 
-	// public ArrayList<Double> toEulerRotation() {
-	// ArrayList<Double> eulerRotation = new ArrayList<Double>();
-	//
-	// double heading, attitude, bank;
-	// heading = 0.;
-	// attitude = 0.;
-	// bank = 0.;
-	//
-	// double sqw = this.getW()*this.getW();
-	// double sqx = this.getX()*this.getX();
-	// double sqy = this.getY()*this.getY();
-	// double sqz = this.getZ()*this.getZ();
-	//
-	// double unit = sqx + sqy + sqz + sqw;
-	// double test = this.getX()*this.getY() + this.getZ()*this.getW();
-	//
-	// if (test > NORTH_POLE*unit) {
-	// heading = 2*Math.atan2(this.getX(), this.getW());
-	// attitude = Math.PI/2;
-	// bank = 0;
-	// } else if (test < SOUTH_POLE*unit) {
-	// heading = -2*Math.atan2(this.getX(), this.getW());
-	// attitude = -Math.PI/2;
-	// bank = 0;
-	// } else {
-	// heading = Math.atan2(2*this.getY()*this.getW() -
-	// 2*this.getX()*this.getZ(), sqx-sqy-sqz+sqw);
-	// attitude = Math.asin(2*(test/unit));
-	// bank = Math.atan2(2*this.getX()*this.getW() - 2*this.getY()*this.getZ(),
-	// -sqx+sqy-sqz+sqw);
-	// }
-	//
-	// eulerRotation.add(heading);
-	// eulerRotation.add(attitude);
-	// eulerRotation.add(bank);
-	//
-	// return eulerRotation;
-	// }
-
 	private final static double NORTH_POLE = 0.4999;
 	private final static double SOUTH_POLE = -0.499;
 
-	private final double TRACKBALL_SIZE = 0.1;
+	private final double TRACKBALL_SIZE = 0.8;
 }
