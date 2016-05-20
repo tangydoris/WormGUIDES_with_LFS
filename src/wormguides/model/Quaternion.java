@@ -2,19 +2,14 @@ package wormguides.model;
 
 public class Quaternion {
 
-	private double w, x, y, z;
+	private double x, y, z, w;
 	private int renormalize_count;
 
 	/**
 	 * Initial quaternion will be <1,0,0,0> i.e. no rotation
 	 */
 	public Quaternion() {
-		this.w = 1.0;
-		this.x = 0.0;
-		this.y = 0.0;
-		this.z = 0.0;
-
-		renormalize_count = 0;
+		this(0.0, 0.0, 0.0, 1.0);
 	}
 
 	/**
@@ -25,29 +20,13 @@ public class Quaternion {
 	 * @param y
 	 * @param z
 	 */
-	public Quaternion(double w, double x, double y, double z) {
-		this.w = w;
+	public Quaternion(double x, double y, double z, double w) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.w = w;
 
 		renormalize_count = 0;
-	}
-
-	public double getW() {
-		return w;
-	}
-
-	public double getX() {
-		return x;
-	}
-
-	public double getY() {
-		return y;
-	}
-
-	public double getZ() {
-		return z;
 	}
 
 	/**
@@ -94,7 +73,19 @@ public class Quaternion {
 		return new double[] { heading, attitude, bank };
 	}
 
-	public double tb_project_to_sphere(double r, double x, double y) {
+	/**
+	 * Calculates the z-coordinate on the arcball model based on the input x and
+	 * y mouse positions and ball radius.
+	 * 
+	 * @param r
+	 *            Arcball radius
+	 * @param x
+	 *            X-coorindate of the mouse
+	 * @param y
+	 *            Y-coordinate of the mouse
+	 * @return
+	 */
+	private static double tb_project_to_sphere(double r, double x, double y) {
 		double d, t, z;
 
 		double sqrt2 = Math.sqrt(2);
@@ -108,7 +99,19 @@ public class Quaternion {
 		return z;
 	}
 
-	private void vcross(double v1[], double v2[], double dest[]) {
+	/**
+	 * Calculates the cross product from the contents from the first three
+	 * indicies of the input vectors and stores the resulting three vector
+	 * components into the first three indices of the destination vector.
+	 * 
+	 * @param p1
+	 *            First source vector
+	 * @param p2
+	 *            Second source vector
+	 * @param dest
+	 *            Destination vector
+	 */
+	private static void vcross(double v1[], double v2[], double dest[]) {
 		double v10 = v1[0];
 		double v11 = v1[1];
 		double v12 = v1[2];
@@ -121,55 +124,156 @@ public class Quaternion {
 		dest[2] = (v10 * v21) - (v11 * v20);
 	}
 
+	/**
+	 * Calculates the dot product of the contents of the first three indices of
+	 * two input vectors.
+	 * 
+	 * @param v1
+	 *            First source vector
+	 * @param v2
+	 *            Second source vector
+	 * @return
+	 */
 	private double vdot(double v1[], double v2[]) {
 		return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 	}
 
-	private void vsub(double p1[], double p2[], double dest[]) {
+	/**
+	 * Finds the difference of each pair of doubles at the first three indicies
+	 * of the input vectors and stores the three deltas into the first three
+	 * indices of the destination vector.
+	 * 
+	 * @param p1
+	 *            First source vector
+	 * @param p2
+	 *            Second source vector
+	 * @param dest
+	 *            Destination vector
+	 */
+	private static void vsub(double p1[], double p2[], double dest[]) {
 		dest[0] = p1[0] - p2[0];
 		dest[1] = p1[1] - p2[1];
 		dest[2] = p1[2] - p2[2];
 	}
 
+	/**
+	 * Adds each pair of doubles at the first three indicies of the input
+	 * vectors and stores the three sums into the first three indices of the
+	 * destination vector.
+	 * 
+	 * @param p1
+	 *            First source vector
+	 * @param p2
+	 *            Second source vector
+	 * @param dest
+	 *            Destination vector
+	 */
 	private void vadd(double p1[], double p2[], double dest[]) {
 		dest[0] = p1[0] + p2[0];
 		dest[1] = p1[1] + p2[1];
 		dest[2] = p1[2] + p2[2];
 	}
 
-	private void vnormal(double v[]) {
+	/**
+	 * Normalizes the input vector.
+	 * 
+	 * @param v
+	 *            Input vector whose contents are altered after normalization
+	 */
+	private static void vnormal(double v[]) {
 		vscale(v, 1.0 / vlength(v));
 	}
 
-	private double vlength(double v[]) {
+	/**
+	 * Computes the length of the input vector based on the doubles at the first
+	 * three indices.
+	 * 
+	 * @param v
+	 *            Input bector
+	 * @return The length of the input vector calculated from its first three
+	 *         doubless
+	 */
+	private static double vlength(double v[]) {
 		double v0 = v[0];
 		double v1 = v[1];
 		double v2 = v[2];
 		return Math.sqrt(v0 * v0 + v1 * v1 + v2 * v2);
 	}
 
-	private void vscale(double v[], double div) {
-		v[0] = v[0] * div;
-		v[1] = v[1] * div;
-		v[2] = v[2] * div;
+	/**
+	 * Scales the doubles at the first three indicies of a vector by a factor.
+	 * 
+	 * @param v
+	 *            Input vector whose contents are altered after scaling
+	 * @param factor
+	 *            Factor by which to scale the input vector
+	 */
+	private static void vscale(double v[], double factor) {
+		v[0] = v[0] * factor;
+		v[1] = v[1] * factor;
+		v[2] = v[2] * factor;
 	}
 
-	private void vcopy(double v[], double d[]) {
-		d[0] = v[0];
-		d[1] = v[1];
-		d[2] = v[2];
+	/**
+	 * Copies the doubles at the first three indices of v into the d.
+	 * 
+	 * @param v
+	 *            Source vector
+	 * @param dest
+	 *            Destination vector
+	 */
+	private static void vcopy(double v[], double dest[]) {
+		dest[0] = v[0];
+		dest[1] = v[1];
+		dest[2] = v[2];
 	}
 
-	private void vset(double dest[], double x, double y, double z) {
+	/**
+	 * Utility method that sets doubles in the 0, 1, and 2 indices of the
+	 * destination array to x, y and z, respectively.
+	 * 
+	 * @param dest
+	 *            Array to be modified
+	 * @param x
+	 *            Double to be in index 0
+	 * @param y
+	 *            Double to be in index 1
+	 * @param z
+	 *            Double to be in index 2
+	 */
+	private static void vset(double dest[], double x, double y, double z) {
 		dest[0] = x;
 		dest[1] = y;
 		dest[2] = z;
 	}
 
 	/**
-	 * Given an axis and angle, compute quaternion.
+	 * Normalizes the input quaternion vector.
+	 * 
+	 * @param q
+	 *            Input quaternion [x, y, z, w]
 	 */
-	private void gfs_gl_axis_to_quat(double a[], double phi, double destQ[]) {
+	private void normalize_quat(double q[]) {
+		int i;
+		double mag;
+
+		mag = (q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+		for (i = 0; i < 4; i++)
+			q[i] /= mag;
+	}
+
+	/**
+	 * Given an axis and angle, compute quaternion.
+	 * 
+	 * @param a
+	 *            [x, y, z] axis
+	 * @param phi
+	 *            Angle of rotation
+	 * @param destQ
+	 *            Array of length 4 that will contain the resulting quaternion
+	 *            [x, y, z, w]
+	 */
+	private static void gfs_gl_axis_to_quat(double a[], double phi, double destQ[]) {
 		vnormal(a);
 		vcopy(a, destQ);
 		vscale(destQ, Math.sin(phi / 2.0));
@@ -231,7 +335,7 @@ public class Quaternion {
 	 * It is assumed that the arguments to this routine are in the range (-1.0
 	 * ... 1.0)
 	 */
-	public double[] gfs_gl_trackball(double p1x, double p1y, double p2x, double p2y) {
+	public static double[] gfs_gl_trackball(double p1x, double p1y, double p2x, double p2y) {
 		double q[] = new double[] { 0.0, 0.0, 0.0, 1.0 };
 		double a[] = new double[3];
 		double phi;
@@ -276,18 +380,9 @@ public class Quaternion {
 		return q;
 	}
 
-	private void normalize_quat(double q[]) {
-		int i;
-		double mag;
-
-		mag = (q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
-		for (i = 0; i < 4; i++)
-			q[i] /= mag;
-	}
-
 	private final static double NORTH_POLE = 0.4999;
 	private final static double SOUTH_POLE = -0.4999;
 
-	private final double TRACKBALL_SIZE = 0.8;
+	private final static double TRACKBALL_SIZE = 0.8;
 	private final int RENORMALIZE_COUNT = 97;
 }

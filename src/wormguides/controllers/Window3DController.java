@@ -802,7 +802,7 @@ public class Window3DController {
 			double mNewX = (((mousePosX - subsceneMinX) / subsceneWidth) * 2.0) - 1.0;
 			double mNewY = (((mousePosY - subsceneMinY) / subsceneHeight) * 2.0) - 1.0;
 
-			double q2arr[] = quaternion.gfs_gl_trackball(mOldX, mOldY, mNewX, mNewY);
+			double q2arr[] = Quaternion.gfs_gl_trackball(mOldX, mOldY, mNewX, mNewY);
 			quaternion.gfs_gl_add_quat(q2arr);
 
 			double euler[] = quaternion.convertToIntrinsicEuler();
