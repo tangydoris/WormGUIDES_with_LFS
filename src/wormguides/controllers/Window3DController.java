@@ -69,8 +69,6 @@ import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.Sphere;
 import javafx.scene.text.FontSmoothingType;
 import javafx.scene.text.Text;
-import javafx.scene.transform.Affine;
-import javafx.scene.transform.MatrixType;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
@@ -144,12 +142,11 @@ public class Window3DController {
 	private Group root;
 	private PerspectiveCamera camera;
 	private Xform xform;
-	private double mousePosX, mousePosY, mousePosZ;
-	private double mouseOldX, mouseOldY, mouseOldZ;
+	private double mousePosX, mousePosY;
+	private double mouseOldX, mouseOldY;
 	private double mouseDeltaX, mouseDeltaY;
 	// average position offsets of nuclei from zero
 	private int offsetX, offsetY, offsetZ;
-	private double angleOfRotation;
 
 	// housekeeping stuff
 	private IntegerProperty time;
@@ -402,13 +399,10 @@ public class Window3DController {
 
 		mousePosX = 0;
 		mousePosY = 0;
-		mousePosZ = 0;
 		mouseOldX = 0;
 		mouseOldY = 0;
-		mouseOldZ = 0.;
 		mouseDeltaX = 0;
 		mouseDeltaY = 0;
-		angleOfRotation = 0.;
 
 		playService = new PlayService();
 		playingMovie = new SimpleBooleanProperty();
@@ -780,14 +774,10 @@ public class Window3DController {
 
 		mouseOldX = mousePosX;
 		mouseOldY = mousePosY;
-		mouseOldZ = mousePosZ;
 		mousePosX = event.getScreenX();
 		mousePosY = event.getScreenY();
 		mouseDeltaX = (mousePosX - mouseOldX);
 		mouseDeltaY = (mousePosY - mouseOldY);
-
-		// angleOfRotation = rotationAngleFromMouseMovement();
-		// mousePosZ = computeZCoord(mousePosX, mousePosY, angleOfRotation);
 
 		if (event.isSecondaryButtonDown() || event.isMetaDown() || event.isControlDown()) {
 
@@ -803,9 +793,7 @@ public class Window3DController {
 
 			Bounds b = subscene.localToScreen(subscene.getBoundsInLocal());
 			double subsceneMinX = b.getMinX();
-			//double subsceneMaxX = b.getMaxX();
 			double subsceneMinY = b.getMinY();
-			//double subsceneMaxY = b.getMaxY();
 			double subsceneWidth = b.getWidth();
 			double subsceneHeight = b.getHeight();
 
@@ -815,15 +803,13 @@ public class Window3DController {
 			double mNewY = (((mousePosY - subsceneMinY) / subsceneHeight) * 2.0) - 1.0;
 
 			double q2arr[] = quaternion.gfs_gl_trackball(mOldX, mOldY, mNewX, mNewY);
-			Quaternion q2 = new Quaternion(q2arr[3], q2arr[0], q2arr[1], q2arr[2]);
-			
-			quaternion.multiplyQuaternions(q2);
+			quaternion.gfs_gl_add_quat(q2arr);
 
-			ArrayList<Double> eulerAngles = quaternion.toEulerRotation();
+			double euler[] = quaternion.convertToIntrinsicEuler();
 
-			rotateXAngle.set(eulerAngles.get(2));
-			rotateYAngle.set(eulerAngles.get(0));
-			rotateZAngle.set(eulerAngles.get(1));
+			rotateYAngle.set(euler[0]);
+			rotateZAngle.set(euler[1]);
+			rotateXAngle.set(euler[2]);
 
 			repositionSprites();
 			repositionNoteBillboardFronts();
@@ -919,62 +905,6 @@ public class Window3DController {
 			selectedIndex.set(-1);
 			selectedName.set("");
 		}
-	}
-
-	private double[] vectorBWPoints(double px, double py, double pz, double qx, double qy, double qz) {
-		double[] vector = new double[3];
-
-		double vx, vy, vz;
-
-		vx = qx - px;
-		vy = qy - py;
-		vz = qz - pz;
-
-		vector[0] = vx;
-		vector[1] = vy;
-		vector[2] = vz;
-
-		return vector;
-	}
-
-	/*
-	 * TODO fix this
-	 * 
-	 */
-	// http://stackoverflow.com/questions/14954317/know-coordinate-of-z-from-xy-value-and-angle
-	// --> law of cosines: https://en.wikipedia.org/wiki/Law_of_cosines
-	// http://answers.ros.org/question/42803/convert-coordinates-2d-to-3d-point-theoretical-question/
-	private double computeZCoord(double xCoord, double yCoord, double angleOfRotation) {
-		return Math.sqrt(Math.pow(xCoord, 2) + Math.pow(yCoord, 2) - (2 * xCoord * yCoord * Math.cos(angleOfRotation)));
-	}
-
-	// http://math.stackexchange.com/questions/59/calculating-an-angle-from-2-points-in-space
-	private double rotationAngleFromMouseMovement() {
-		double rotationAngleRadians = Math
-				.acos(((mouseOldX * mousePosX) + (mouseOldY * mousePosY) + (mouseOldZ * mousePosZ))
-						/ Math.sqrt((Math.pow(mouseOldX, 2) + Math.pow(mouseOldY, 2) + Math.pow(mouseOldZ, 2))
-								* (Math.pow(mousePosX, 2) + Math.pow(mousePosY, 2) + Math.pow(mousePosZ, 2))));
-
-		return rotationAngleRadians;
-	}
-
-	// http://mathworld.wolfram.com/CrossProduct.html
-	private double[] crossProduct(double[] u, double[] v) {
-		if (u.length != 3 || v.length != 3)
-			return null;
-
-		double[] cross = new double[3];
-
-		double cx, cy, cz;
-		cx = (u[1] * v[2]) - (u[2] * v[1]);
-		cy = (u[2] * v[0]) - (u[0] * v[2]);
-		cz = (u[0] * v[1]) - (u[1] * v[0]);
-
-		cross[0] = cx;
-		cross[1] = cy;
-		cross[2] = cz;
-
-		return cross;
 	}
 
 	private String normalizeName(String name) {
@@ -1852,7 +1782,7 @@ public class Window3DController {
 
 	private Sphere createLocationMarker(double x, double y, double z) {
 		Sphere sphere = new Sphere(1);
-		 sphere.getTransforms().addAll(rotateX, rotateY, rotateZ);
+		sphere.getTransforms().addAll(rotateX, rotateY, rotateZ);
 		sphere.getTransforms().add(new Translate(x * X_SCALE, y * Y_SCALE, z * Z_SCALE));
 		// make marker transparent
 		sphere.setMaterial(colorHash.getOthersMaterial(0));
