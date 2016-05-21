@@ -263,6 +263,18 @@ public class Quaternion {
 	}
 
 	/**
+	 * Converts the input vector of Euler angles in radians into degrees.
+	 * 
+	 * @param e
+	 *            Input vector of Euler angles [heading, attitude, bank] (in
+	 *            radians)
+	 */
+	public static void EulerAnglesToDegrees(double e[]) {
+		for (int i = 0; i < 3; i++)
+			e[i] = 180 * e[i] / Math.PI;
+	}
+
+	/**
 	 * Given an axis and angle, compute quaternion.
 	 * 
 	 * @param a
@@ -323,6 +335,8 @@ public class Quaternion {
 			w = q1[3];
 		}
 	}
+	
+	
 
 	/**
 	 * Simulate a track-ball. Project the points onto the virtual trackball,
@@ -375,6 +389,8 @@ public class Quaternion {
 		if (t < -1.0)
 			t = -1.0;
 		phi = 2.0 * Math.asin(t);
+		
+		System.out.println("arcball angle/ axis - "+phi+"/ "+a[0]+", "+a[1]+", "+a[2]);
 
 		gfs_gl_axis_to_quat(a, phi, q);
 		return q;
@@ -383,6 +399,6 @@ public class Quaternion {
 	private final static double NORTH_POLE = 0.4999;
 	private final static double SOUTH_POLE = -0.4999;
 
-	private final static double TRACKBALL_SIZE = 0.8;
-	private final int RENORMALIZE_COUNT = 97;
+	private final static double TRACKBALL_SIZE = 80;
+	private final int RENORMALIZE_COUNT = 95;
 }

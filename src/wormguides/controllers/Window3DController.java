@@ -806,10 +806,12 @@ public class Window3DController {
 			quaternion.gfs_gl_add_quat(q2arr);
 
 			double euler[] = quaternion.convertToIntrinsicEuler();
+			Quaternion.EulerAnglesToDegrees(euler);
 
-			rotateYAngle.set(euler[0]);
-			rotateZAngle.set(euler[1]);
-			rotateXAngle.set(euler[2]);
+			double factor = 5.0;
+			rotateYAngle.set(factor*euler[0]);
+			rotateZAngle.set(factor*euler[1]);
+			rotateXAngle.set(factor*euler[2]);
 
 			repositionSprites();
 			repositionNoteBillboardFronts();
