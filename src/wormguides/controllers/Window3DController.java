@@ -585,7 +585,7 @@ public class Window3DController {
 		// xy relocates z shrinks apparent by moving away from camera? improves
 		// resolution?
 		orientationIndicator.getTransforms().add(new Translate(270, 200, 800));
-		orientationIndicator.getTransforms().addAll(rotateZ, rotateY, rotateX);
+		orientationIndicator.getTransforms().addAll(rotateX, rotateY, rotateZ);
 		orientationIndicator.getChildren().add(middleTransformGroup);
 		middleTransformGroup.getTransforms().add(indicatorRotation);
 		return orientationIndicator;
@@ -2808,10 +2808,10 @@ public class Window3DController {
 	 * Size of the sliding window of doubles for rotation angles around the x-,
 	 * y- and z-axis.
 	 */
-	private final int ROTATION_ANGLE_WINDOW_SIZE = 20;
+	private final int ROTATION_ANGLE_WINDOW_SIZE = 10;
 	/**
 	 * Factor by which to multiply the calculated euler angles by that we got
 	 * from resulting the quaternion.s
 	 */
-	private final double EULER_ANGLE_FACTOR = 12.0;
+	private final double EULER_ANGLE_FACTOR = 15.0;
 }
