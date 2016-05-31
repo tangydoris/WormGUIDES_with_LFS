@@ -269,6 +269,12 @@ public class Window3DController {
 	private DoubleProperty rotateZAngle;
 
 	private Quaternion quaternion;
+	// sliding windows of rotation angle values for the x-, y- and z-axis used
+	// to reduce noise
+	private double xAngleWindow[];
+	private double yAngleWindow[];
+	private double zAngleWindow[];
+	private int windowIndex;
 
 	/**
 	 * Window3DController class constructor called by
@@ -458,6 +464,12 @@ public class Window3DController {
 		rotateZAngle.addListener(getRotateZAngleListener());
 
 		quaternion = new Quaternion();
+		xAngleWindow = new double[ROTATION_ANGLE_WINDOW_SIZE];
+		yAngleWindow = new double[ROTATION_ANGLE_WINDOW_SIZE];
+		zAngleWindow = new double[ROTATION_ANGLE_WINDOW_SIZE];
+		windowIndex = 0;
+
+		initializeRotationAngles();
 
 		uniformSize = false;
 
@@ -529,11 +541,12 @@ public class Window3DController {
 		initializeUpdate3D();
 	}
 
-	public void initializeWithCannonicalOrientation() {
-		// set default cannonical orientations
-		rotateXAngle.set(cannonicalOrientationX);
-		rotateYAngle.set(cannonicalOrientationY);
-		rotateZAngle.set(cannonicalOrientationZ);
+	private void initializeRotationAngles() {
+		for (int i = 0; i < ROTATION_ANGLE_WINDOW_SIZE; i++) {
+			xAngleWindow[i] = 0;
+			yAngleWindow[i] = 0;
+			zAngleWindow[i] = 0;
+		}
 	}
 
 	private Group createOrientationIndicator() {
@@ -808,14 +821,47 @@ public class Window3DController {
 			double euler[] = quaternion.convertToIntrinsicEuler();
 			Quaternion.EulerAnglesToDegrees(euler);
 
-			double factor = 5.0;
-			rotateYAngle.set(factor*euler[0]);
-			rotateZAngle.set(factor*euler[1]);
-			rotateXAngle.set(factor*euler[2]);
+			addEulerRotationAngleToWindow(euler[2], euler[0], euler[1]);
+
+			rotateYAngle.set(calculateWindowAverage(yAngleWindow));
+			rotateZAngle.set(calculateWindowAverage(zAngleWindow));
+			rotateXAngle.set(calculateWindowAverage(xAngleWindow));
 
 			repositionSprites();
 			repositionNoteBillboardFronts();
 		}
+	}
+
+	/**
+	 * Computes the average of doubles in a buffer window.
+	 * 
+	 * @param window
+	 *            Window of doubles to calculate the average for
+	 */
+	private double calculateWindowAverage(double window[]) {
+		double ans = 0;
+		for (double d : window) {
+			ans += d;
+		}
+		ans /= window.length;
+		return ans;
+	}
+
+	/**
+	 * Inserts the x, y, and z rotation Euler angles into the buffer windows.
+	 * 
+	 * @param xAngle
+	 *            Rotation about the x-axis in degrees.
+	 * @param yAngle
+	 *            Rotation about the y-axis in degrees.
+	 * @param zAngle
+	 *            Rotation about the z-axis in degrees.
+	 */
+	private void addEulerRotationAngleToWindow(double xAngle, double yAngle, double zAngle) {
+		xAngleWindow[windowIndex] = xAngle * EULER_ANGLE_FACTOR;
+		yAngleWindow[windowIndex] = yAngle * EULER_ANGLE_FACTOR;
+		zAngleWindow[windowIndex] = zAngle * EULER_ANGLE_FACTOR;
+		windowIndex = (windowIndex + 1) % ROTATION_ANGLE_WINDOW_SIZE;
 	}
 
 	private void handleMouseReleasedOrEntered() {
@@ -2703,9 +2749,9 @@ public class Window3DController {
 		return this.parentStage;
 	}
 
-	private final static double cannonicalOrientationX = -175.959;
-	private final static double cannonicalOrientationY = 177.143;
-	private final static double cannonicalOrientationZ = -11.02;
+	// private final static double cannonicalOrientationX = -175.959;
+	// private final static double cannonicalOrientationY = 177.143;
+	// private final static double cannonicalOrientationZ = -11.02;
 
 	private final String CS = ", ";
 
@@ -2758,4 +2804,14 @@ public class Window3DController {
 	 * The int used when calculating the y offset between a sprite and label.
 	 */
 	private final int LABEL_SPRITE_Y_OFFSET = 5;
+	/**
+	 * Size of the sliding window of doubles for rotation angles around the x-,
+	 * y- and z-axis.
+	 */
+	private final int ROTATION_ANGLE_WINDOW_SIZE = 20;
+	/**
+	 * Factor by which to multiply the calculated euler angles by that we got
+	 * from resulting the quaternion.s
+	 */
+	private final double EULER_ANGLE_FACTOR = 12.0;
 }

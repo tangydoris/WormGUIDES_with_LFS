@@ -1273,8 +1273,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
 		timeSlider.setValue(window3DController.getEndTime());
 
-		window3DController.initializeWithCannonicalOrientation();
-
 		viewTreeAction();
 
 		captureVideo = new SimpleBooleanProperty(false);

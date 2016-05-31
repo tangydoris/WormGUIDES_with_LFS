@@ -396,9 +396,9 @@ public class Quaternion {
 		return q;
 	}
 
-	private final static double NORTH_POLE = 0.4999;
-	private final static double SOUTH_POLE = -0.4999;
+	private final static double NORTH_POLE = 0.499999;
+	private final static double SOUTH_POLE = -0.499999;
 
-	private final static double TRACKBALL_SIZE = 80;
-	private final int RENORMALIZE_COUNT = 95;
+	private final static double TRACKBALL_SIZE = 100;
+	private final int RENORMALIZE_COUNT = 75;
 }
