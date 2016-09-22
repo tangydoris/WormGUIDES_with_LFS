@@ -288,7 +288,6 @@ public class InfoWindowDOM {
         html.addChild(body);
 
         buildStyleNode();
-
     }
 
     /**

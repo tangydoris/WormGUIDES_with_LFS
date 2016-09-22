@@ -21,9 +21,12 @@ import javafx.stage.Stage;
 
 import wormguides.controllers.InfoWindowLinkController;
 import wormguides.layers.SearchLayer;
+import wormguides.models.AmphidSensillaTerm;
 import wormguides.models.CasesLists;
+import wormguides.models.NonTerminalCellCase;
 import wormguides.models.ProductionInfo;
 import wormguides.models.SceneElement;
+import wormguides.models.TerminalCellCase;
 import wormguides.view.DraggableTab;
 
 import acetree.lineagedata.LineageData;
@@ -325,7 +328,18 @@ public class InfoWindow {
      * @param dom
      *         the dom to be added as a tab
      */
-    public void addTab(InfoWindowDOM dom) {
+    public void addTab(Object cellCase) {
+    	InfoWindowDOM dom;
+    	if (cellCase instanceof TerminalCellCase) {
+    		dom = new InfoWindowDOM((TerminalCellCase) cellCase);
+    	} else if (cellCase instanceof NonTerminalCellCase) {
+    		dom = new InfoWindowDOM((NonTerminalCellCase) cellCase);
+    	} else if (cellCase instanceof AmphidSensillaTerm) {
+    		dom = new InfoWindowDOM((AmphidSensillaTerm) cellCase);
+    	} else {
+    		dom = new InfoWindowDOM();
+    	}
+    	
         Platform.runLater(() -> {
             WebView webview = new WebView();
             webview.getEngine().loadContent(dom.DOMtoString());

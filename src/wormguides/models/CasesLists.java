@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import wormguides.view.infowindow.InfoWindow;
-import wormguides.view.infowindow.InfoWindowDOM;
 
 import static partslist.PartsList.getLineageNameByFunctionalName;
 import static wormguides.models.AnatomyTerm.AMPHID_SENSILLA;
@@ -85,7 +84,7 @@ public class CasesLists {
         cellCases.add(terminalCase);
         if (infoWindow != null) {
             // add dom(tab) to InfoWindow
-            infoWindow.addTab(new InfoWindowDOM(terminalCase));
+            infoWindow.addTab(terminalCase);
         }
     }
 
@@ -116,7 +115,7 @@ public class CasesLists {
         cellCases.add(nonTerminalCase);
         // add dom(tab) to InfoWindow
         if (infoWindow != null) {
-            infoWindow.addTab(new InfoWindowDOM(nonTerminalCase));
+            infoWindow.addTab(nonTerminalCase);
         }
     }
 
@@ -131,12 +130,9 @@ public class CasesLists {
         if (amphidSensillaTermCase != null) {
             anatomyTermCases.add(amphidSensillaTermCase);
 
-            //create dom
-            InfoWindowDOM termCaseDOM = new InfoWindowDOM(amphidSensillaTermCase);
-
             //add dom to InfoWindow
             if (infoWindow != null) {
-                infoWindow.addTab(termCaseDOM);
+                infoWindow.addTab(amphidSensillaTermCase);
             }
 
         }

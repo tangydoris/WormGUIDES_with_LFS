@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import wormguides.view.infowindow.HTMLNode;
-import wormguides.view.infowindow.InfoWindowDOM;
-
 /**
  * Record of {@link SceneElement}s over the life of embryo
  */
