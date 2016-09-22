@@ -236,43 +236,4 @@ public class PartsList {
         return new ArrayList<>(descriptions);
     }
 
-    /**
-     * @return info window DOM display for the parts list
-     */
-    public static InfoWindowDOM createPartsListDOM() {
-        final HTMLNode html = new HTMLNode("html");
-        final HTMLNode head = new HTMLNode("head");
-        final HTMLNode body = new HTMLNode("body");
-
-        final HTMLNode partsListTableDiv = new HTMLNode("div");
-        final HTMLNode partsListTable = new HTMLNode("table");
-
-        for (int i = 0; i < functionalNames.size(); i++) {
-            final HTMLNode tr = new HTMLNode("tr");
-
-            tr.addChild(new HTMLNode("td", "", "", functionalNames.get(i)));
-
-            if (lineageNames.get(i) != null) {
-                tr.addChild(new HTMLNode("td", "", "", lineageNames.get(i)));
-            }
-
-            if (descriptions.get(i) != null) {
-                tr.addChild(new HTMLNode("td", "", "", descriptions.get(i)));
-            }
-
-            partsListTable.addChild(tr);
-        }
-
-        partsListTableDiv.addChild(partsListTable);
-        body.addChild(partsListTableDiv);
-
-        html.addChild(head);
-        html.addChild(body);
-
-        final InfoWindowDOM dom = new InfoWindowDOM(html);
-        dom.buildStyleNode();
-
-        return dom;
-    }
-
 }

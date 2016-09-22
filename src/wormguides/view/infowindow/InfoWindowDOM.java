@@ -4,12 +4,17 @@
 
 package wormguides.view.infowindow;
 
+import static java.util.Collections.sort;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import connectome.NeuronalSynapse;
 import wormguides.models.AmphidSensillaTerm;
 import wormguides.models.NonTerminalCellCase;
+import wormguides.models.ProductionInfo;
+import wormguides.models.SceneElement;
 import wormguides.models.TerminalCellCase;
 import wormguides.models.TerminalDescendant;
 
@@ -21,22 +26,13 @@ import partslist.PartsList;
  */
 public class InfoWindowDOM {
 
-    private final static String AMPHID = "amphid";
-    private final static String AMPHID_ANCHOR = "<a href=\"#\" onclick=\"handleAmphidClick()\">Amphid</a>";
-
-    private final static String DOCTYPE_TAG = "<!DOCTYPE html>";
-
-    private final static String NL = "\n";
-
     private HTMLNode html;
-
     private String name;
 
     /*
      * TODO - when necessary getNode(String ID) removeNode(String ID)
      * addChildToNode(String parentID, HTMLNode child) -- need this? add title
      * tag to head
-     *
      */
     public InfoWindowDOM() {
         this.html = new HTMLNode("html");
@@ -48,6 +44,251 @@ public class InfoWindowDOM {
         } else {
             this.html = html;
         }
+    }
+    
+    /**
+     * Class constructor to create a DOM for the Cell Shapes Index window
+     * 
+     * @param sceneElementsList
+     */
+    public InfoWindowDOM(ArrayList<SceneElement> sceneElementsList) {
+    	 this.html = new HTMLNode("html");
+    	 this.name = cellShapesIndexName;
+    	 
+         HTMLNode head = new HTMLNode("head");
+         HTMLNode body = new HTMLNode("body");
+
+
+         HTMLNode sceneElementsListDiv = new HTMLNode("div");
+         HTMLNode sceneElementsListTable = new HTMLNode("table");
+
+         // title row
+         HTMLNode trH = new HTMLNode("tr");
+         HTMLNode th1 = new HTMLNode("th", "", "", "Scene Name");
+         HTMLNode th2 = new HTMLNode("th", "", "", "Cell Names");
+         HTMLNode th3 = new HTMLNode("th", "", "", "Marker");
+         HTMLNode th4 = new HTMLNode("th", "", "", "Start Time");
+         HTMLNode th5 = new HTMLNode("th", "", "", "End Time");
+         HTMLNode th6 = new HTMLNode("th", "", "", "Comments");
+
+         trH.addChild(th1);
+         trH.addChild(th2);
+         trH.addChild(th3);
+         trH.addChild(th4);
+         trH.addChild(th5);
+         trH.addChild(th6);
+
+         sceneElementsListTable.addChild(trH);
+
+         for (SceneElement se : sceneElementsList) {
+             HTMLNode tr = new HTMLNode("tr");
+             tr.addChild(new HTMLNode("td", "", "", se.getSceneName()));
+             tr.addChild(new HTMLNode("td", "", "", se.getAllCellNames().toString()));
+             tr.addChild(new HTMLNode("td", "", "", se.getMarkerName()));
+             tr.addChild(new HTMLNode("td", "", "", Integer.toString(se.getStartTime())));
+             tr.addChild(new HTMLNode("td", "", "", Integer.toString(se.getEndTime())));
+             tr.addChild(new HTMLNode("td", "", "", se.getComments()));
+             sceneElementsListTable.addChild(tr);
+         }
+
+         sceneElementsListDiv.addChild(sceneElementsListTable);
+         body.addChild(sceneElementsListDiv);
+         
+         // add head and body to html
+         html.addChild(head);
+         html.addChild(body);
+
+         // add style node
+         buildStyleNode();
+    }
+    
+    public InfoWindowDOM(ArrayList<String> functionalNames, ArrayList<String> lineageNames, ArrayList<String> descriptions) {
+    	this.html = new HTMLNode("html");
+    	this.name = partsListName;
+    	
+    	HTMLNode head = new HTMLNode("head");
+        HTMLNode body = new HTMLNode("body");
+
+        final HTMLNode partsListTableDiv = new HTMLNode("div");
+        final HTMLNode partsListTable = new HTMLNode("table");
+
+        for (int i = 0; i < functionalNames.size(); i++) {
+            final HTMLNode tr = new HTMLNode("tr");
+
+            tr.addChild(new HTMLNode("td", "", "", functionalNames.get(i)));
+
+            if (lineageNames.get(i) != null) {
+                tr.addChild(new HTMLNode("td", "", "", lineageNames.get(i)));
+            }
+
+            if (descriptions.get(i) != null) {
+                tr.addChild(new HTMLNode("td", "", "", descriptions.get(i)));
+            }
+
+            partsListTable.addChild(tr);
+        }
+
+        partsListTableDiv.addChild(partsListTable);
+        body.addChild(partsListTableDiv);
+
+        // add head and body to html
+        html.addChild(head);
+        html.addChild(body);
+
+        // add style node
+        buildStyleNode();
+    }
+    
+    /**
+     * Class construction to create a DOM for the connectome data
+     * 
+     * @param synapses - the synapses in the connectome
+     */
+    public InfoWindowDOM(List<NeuronalSynapse> synapses) {
+    	this.html = new HTMLNode("html");
+    	this.name = connectomeName;
+    	
+        HTMLNode head = new HTMLNode("head");
+        HTMLNode body = new HTMLNode("body");
+
+        HTMLNode connectomeTablesDiv = new HTMLNode("div");
+
+        // add formatted wiring partners for each cell in synapses
+
+        // collect all unique cells
+        List<String> cells = new ArrayList<>();
+        for (NeuronalSynapse ns : synapses) {
+            String cell_1 = ns.getCell1();
+            String cell_2 = ns.getCell2();
+
+            // add unique entries to list
+            if (!cells.contains(cell_1)) {
+                cells.add(cell_1);
+            }
+
+            if (!cells.contains(cell_2)) {
+                cells.add(cell_2);
+            }
+        }
+
+        // alphabetize the synapses cells
+        sort(cells);
+
+        // add tables of wiring partners for each unique entry
+        for (String cell : cells) {
+            connectomeTablesDiv.addChild(queryWiringPartnersAsHTMLTable(cell, synapses));
+            connectomeTablesDiv.addChild(new HTMLNode("br"));
+            connectomeTablesDiv.addChild(new HTMLNode("br"));
+        }
+
+        body.addChild(connectomeTablesDiv);
+        html.addChild(head);
+        html.addChild(body);
+
+        buildStyleNode();
+    }
+    
+    /**
+     * Class constructor to create a DOM for the cell deaths window
+     * @param cellDeaths
+     */
+    public InfoWindowDOM(Object[] cellDeaths) {
+    	this.html = new HTMLNode("html");
+    	this.name = cellDeathsName;
+    	
+    	HTMLNode head = new HTMLNode("head");
+        HTMLNode body = new HTMLNode("body");
+
+        HTMLNode deathsDiv = new HTMLNode("div");
+        HTMLNode deathsTable = new HTMLNode("table");
+    	
+    	for (Object s : cellDeaths) {
+    		String cd = (String) s;
+    		if (cd.length() > 0) {
+    			if (cd.length() > 1) {
+    				cd = Character.toUpperCase(cd.charAt(0)) + cd.substring(1);
+    			} else {
+    				cd = Character.toString(Character.toUpperCase(cd.charAt(0)));
+    			}	
+    		}
+    		
+    		HTMLNode tr = new HTMLNode("tr");
+            tr.addChild(new HTMLNode("td", "", "", cd));
+            deathsTable.addChild(tr);
+    	}
+    	
+    	deathsDiv.addChild(deathsTable);
+        body.addChild(deathsDiv);
+        html.addChild(head);
+        html.addChild(body);
+        
+        buildStyleNode();
+    }
+    
+    public InfoWindowDOM(ProductionInfo productionInfo) {
+    	this.html = new HTMLNode("html");
+    	this.name = productionInfoName;
+    	
+        HTMLNode head = new HTMLNode("head");
+        HTMLNode body = new HTMLNode("body");
+
+        HTMLNode productionInfoDiv = new HTMLNode("div");
+        HTMLNode productionInfoTable = new HTMLNode("table");
+
+        // title row
+        HTMLNode trH = new HTMLNode("tr");
+        HTMLNode th1 = new HTMLNode("th", "", "", "Cells");
+        HTMLNode th2 = new HTMLNode("th", "", "", "Image Series");
+        HTMLNode th3 = new HTMLNode("th", "", "", "Marker");
+        HTMLNode th4 = new HTMLNode("th", "", "", "Strain");
+        HTMLNode th5 = new HTMLNode("th", "", "", "Compressed Embryo?");
+        HTMLNode th6 = new HTMLNode("th", "", "", "Temporal Resolution");
+        HTMLNode th7 = new HTMLNode("th", "", "", "Segmentation");
+        HTMLNode th8 = new HTMLNode("th", "", "", "Cytoshow Link");
+        HTMLNode th9 = new HTMLNode("th", "", "", "Movie Start Time (min)");
+        HTMLNode th10 = new HTMLNode("th", "", "", "isSulstonMode?");
+        HTMLNode th11 = new HTMLNode("th", "", "", "Total Time Points");
+        HTMLNode th12 = new HTMLNode("th", "", "", "X_SCALE");
+        HTMLNode th13 = new HTMLNode("th", "", "", "Y_SCALE");
+        HTMLNode th14 = new HTMLNode("th", "", "", "Z_SCALE");
+        trH.addChild(th1);
+        trH.addChild(th2);
+        trH.addChild(th3);
+        trH.addChild(th4);
+        trH.addChild(th5);
+        trH.addChild(th6);
+        trH.addChild(th7);
+        trH.addChild(th8);
+        trH.addChild(th9);
+        trH.addChild(th10);
+        trH.addChild(th11);
+        trH.addChild(th12);
+        trH.addChild(th13);
+        trH.addChild(th14);
+
+        productionInfoTable.addChild(trH);
+
+        List<List<String>> productionInfoData = productionInfo.getProductionInfoData();
+        int rows = productionInfoData.get(0).size();
+        for (int i = 0; i < rows; i++) {
+            HTMLNode tr = new HTMLNode("tr");
+            for (List<String> aProductionInfoData : productionInfoData) {
+                String data = aProductionInfoData.get(i);
+                HTMLNode td = new HTMLNode("td", "", "", data);
+                tr.addChild(td);
+            }
+            productionInfoTable.addChild(tr);
+        }
+
+        productionInfoDiv.addChild(productionInfoTable);
+
+        body.addChild(productionInfoDiv);
+
+        html.addChild(head);
+        html.addChild(body);
+
+        buildStyleNode();
+
     }
 
     /**
@@ -61,7 +302,6 @@ public class InfoWindowDOM {
         this.name = terminalCase.getCellName();
 
         HTMLNode head = new HTMLNode("head");
-
         HTMLNode body = new HTMLNode("body");
 
         // external info
@@ -1345,6 +1585,157 @@ public class InfoWindowDOM {
                 + AMPHID_ANCHOR
                 + anatomyInfo.substring(idx + AMPHID.length());
     }
+    
+    /**
+     * Generates a table of synaptic partners for a given cell
+     *
+     * @param queryCell
+     *         the cell for which the table is generated
+     *
+     * @return the table HTML node for the DOM
+     */
+    public HTMLNode queryWiringPartnersAsHTMLTable(String queryCell, List<NeuronalSynapse> synapses) {
+        // FORMAT Cell Name presynaptic: cellname (numconnections), cellname (numconnections) postsynaptic: ...
+        List<String> presynapticPartners = new ArrayList<>();
+        List<String> postsynapticPartners = new ArrayList<>();
+        List<String> electricalPartners = new ArrayList<>();
+        List<String> neuromuscularPartners = new ArrayList<>();
+
+        // get wiring partners
+        for (NeuronalSynapse ns : synapses) {
+            String cell_1 = ns.getCell1();
+            String cell_2 = ns.getCell2();
+
+            if (queryCell.equals(cell_1)) {
+                // add cell_2 as a wiring partner
+
+                // extract number of synapses
+                int numberOfSynapses = ns.numberOfSynapses();
+
+                // extract synapse type
+                String synapseTypeDescription = ns.getSynapseType().getDescription();
+
+                // format wiring partner with cell_2
+                String wiringPartner = cell_2 + formatNumberOfSynapses(Integer.toString(numberOfSynapses));
+
+                switch (synapseTypeDescription) {
+                    case s_presynapticDescription:
+                        presynapticPartners.add(wiringPartner);
+                        break;
+                    case r_postsynapticDescription:
+                        postsynapticPartners.add(wiringPartner);
+                        break;
+                    case ej_electricalDescription:
+                        electricalPartners.add(wiringPartner);
+                        break;
+                    case nmj_neuromuscularDescrpition:
+                        neuromuscularPartners.add(wiringPartner);
+                        break;
+                }
+
+            } else if (queryCell.equals(cell_2)) {
+                // add cell_1 as a wiring partner
+
+                // extract number of synapses
+                int numberOfSynapses = ns.numberOfSynapses();
+
+                // extract synapse type
+                String synapseTypeDescription = ns.getSynapseType().getDescription();
+
+                // format wiring partner with cell_1
+                String wiringPartner = cell_1 + formatNumberOfSynapses(Integer.toString(numberOfSynapses));
+
+                switch (synapseTypeDescription) {
+                    case s_presynapticDescription:
+                        presynapticPartners.add(wiringPartner);
+                        break;
+                    case r_postsynapticDescription:
+                        postsynapticPartners.add(wiringPartner);
+                        break;
+                    case ej_electricalDescription:
+                        electricalPartners.add(wiringPartner);
+                        break;
+                    case nmj_neuromuscularDescrpition:
+                        neuromuscularPartners.add(wiringPartner);
+                        break;
+                }
+            }
+        }
+
+        HTMLNode table = new HTMLNode("table");
+        HTMLNode trH = new HTMLNode("th");
+        HTMLNode th = new HTMLNode("th", "", "", "Cell: " + queryCell.toUpperCase());
+
+        trH.addChild(th);
+        table.addChild(trH);
+
+        HTMLNode trPre;
+        HTMLNode trPost;
+        HTMLNode trNeuro;
+        HTMLNode trElec;
+
+        sort(presynapticPartners); // alphabetize
+        if (presynapticPartners.size() > 0) {
+            trPre = new HTMLNode("tr");
+
+            HTMLNode tdPreTitle = new HTMLNode("td", "", "", presynapticPartnersTitle);
+            HTMLNode tdPre = new HTMLNode("td", "td", "td",
+                    presynapticPartners.toString().substring(1, presynapticPartners.toString().length() - 1));
+
+            trPre.addChild(tdPreTitle);
+            trPre.addChild(tdPre);
+
+            table.addChild(trPre);
+        }
+
+        sort(postsynapticPartners); // alphabetize
+        if (postsynapticPartners.size() > 0) {
+            trPost = new HTMLNode("tr");
+
+            HTMLNode tdPostTitle = new HTMLNode("td", "", "", postsynapticPartnersTitle);
+            HTMLNode tdPost = new HTMLNode("td", "td", "td",
+                    postsynapticPartners.toString().substring(1, postsynapticPartners.toString().length() - 1));
+
+            trPost.addChild(tdPostTitle);
+            trPost.addChild(tdPost);
+
+            table.addChild(trPost);
+        }
+
+        sort(electricalPartners); // alphabetize
+        if (electricalPartners.size() > 0) {
+            trElec = new HTMLNode("tr");
+
+            HTMLNode tdElecTitle = new HTMLNode("td", "", "", electricalPartnersTitle);
+            HTMLNode tdElec = new HTMLNode("td", "td", "td",
+                    electricalPartners.toString().substring(1, electricalPartners.toString().length() - 1));
+
+            trElec.addChild(tdElecTitle);
+            trElec.addChild(tdElec);
+
+            table.addChild(trElec);
+        }
+
+        sort(neuromuscularPartners); // alphabetize
+        if (neuromuscularPartners.size() > 0) {
+            trNeuro = new HTMLNode("tr");
+
+            HTMLNode tdNeuroTitle = new HTMLNode("td", "", "", neuromusclarPartnersTitle);
+            HTMLNode tdNeuro = new HTMLNode("td", "td", "td",
+                    neuromuscularPartners.toString().substring(1, neuromuscularPartners.toString().length() - 1));
+
+            trNeuro.addChild(tdNeuroTitle);
+            trNeuro.addChild(tdNeuro);
+
+            table.addChild(trNeuro);
+        }
+
+        return table;
+    }
+
+    private String formatNumberOfSynapses(String numberOfSynapses) {
+        return "(" + numberOfSynapses + ")";
+    }
 
     public HTMLNode getHTML() {
         return html;
@@ -1353,4 +1744,28 @@ public class InfoWindowDOM {
     public String getName() {
         return name;
     }
+    
+    private final static String AMPHID = "amphid";
+    private final static String AMPHID_ANCHOR = "<a href=\"#\" onclick=\"handleAmphidClick()\">Amphid</a>";
+    private final static String DOCTYPE_TAG = "<!DOCTYPE html>";
+    private final static String NL = "\n";
+    private static final String cellShapesIndexName = "Cell Shapes Index";
+    private static final String partsListName = "Parts List";
+    private static final String connectomeName = "Connectome";
+    private static final String cellDeathsName = "Cell Deaths";
+    private static final String productionInfoName = "Experimental Data";
+    
+    
+    // strings for building the connectome DOM --> synapse types as strings for search logic
+    private final static String s_presynapticDescription = "S presynaptic";
+    private final static String r_postsynapticDescription = "R postsynaptic";
+    private final static String ej_electricalDescription = "EJ electrical";
+    private final static String nmj_neuromuscularDescrpition = "Nmj neuromuscular";
+
+    private final String presynapticPartnersTitle = "Presynaptic: ";
+    private final String postsynapticPartnersTitle = "Postsynaptic: ";
+    private final String electricalPartnersTitle = "Electrical: ";
+    private final String neuromusclarPartnersTitle = "Neuromusclar: ";
+    
+    
 }

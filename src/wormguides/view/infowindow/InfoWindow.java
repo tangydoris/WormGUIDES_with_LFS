@@ -5,6 +5,7 @@
 package wormguides.view.infowindow;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
@@ -14,6 +15,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
@@ -21,10 +23,12 @@ import wormguides.controllers.InfoWindowLinkController;
 import wormguides.layers.SearchLayer;
 import wormguides.models.CasesLists;
 import wormguides.models.ProductionInfo;
+import wormguides.models.SceneElement;
 import wormguides.view.DraggableTab;
 
 import acetree.lineagedata.LineageData;
 import connectome.Connectome;
+import connectome.NeuronalSynapse;
 import netscape.javascript.JSObject;
 import partslist.PartsList;
 
@@ -49,11 +53,18 @@ public class InfoWindow {
 
     private Service<Void> addNameService;
     private Service<Void> showLoadingService;
+    
+    // stages for various info windows
+    private Stage cellShapesIndexStage;
+    private Stage partsListStage;
+    private Stage connectomeStage;
+    private Stage cellDeathsStage;
+    private Stage productionInfoStage;
 
     /** Used to show that loading is in progress */
     private int count;
 
-    public InfoWindow(
+    public InfoWindow (
             Stage stage,
             StringProperty cellNameProperty,
             CasesLists cases,
@@ -346,5 +357,115 @@ public class InfoWindow {
 
     public Stage getStage() {
         return infoWindowStage;
+    }
+    
+    /**
+     * Generate a window that contains the cell geometry information
+     * Build a stage and webview, pass the data to the DOM generator and add the content, and show the stage
+     * 
+     * @param sceneElementsList - the data to be rendered in the window
+     */
+    public void generateCellShapesIndexWindow(ArrayList<SceneElement> sceneElementsList) {
+    	if (cellShapesIndexStage == null) {
+            cellShapesIndexStage = new Stage();
+            cellShapesIndexStage.setTitle("Cell Shapes Index");
+
+            // webview to render cell shapes list i.e. sceneElementsList
+            WebView cellShapesIndexWebView = new WebView();
+            cellShapesIndexWebView.getEngine().loadContent(new InfoWindowDOM(sceneElementsList).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(cellShapesIndexWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            cellShapesIndexStage.setScene(scene);
+            cellShapesIndexStage.setResizable(true);
+        }
+        cellShapesIndexStage.show();
+    }
+    
+    public void generatePartsListWindow() {
+    	if (partsListStage == null) {
+            partsListStage = new Stage();
+            partsListStage.setTitle("Parts List");
+
+            // build webview scene to render parts list
+            WebView partsListWebView = new WebView();
+            partsListWebView.getEngine().loadContent(
+            		new InfoWindowDOM(PartsList.getFunctionalNames(), PartsList.getLineageNames(), PartsList.getDescriptions()).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(partsListWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            partsListStage.setScene(scene);
+            partsListStage.setResizable(true);
+        }
+        partsListStage.show();
+    	
+    }
+    
+    public void generateConnectomeWindow(List<NeuronalSynapse> synapses) {
+    	if (connectomeStage == null) {
+            connectomeStage = new Stage();
+            connectomeStage.setTitle("Connectome");
+
+            // build webview scene to render html
+            WebView connectomeHTML = new WebView();
+            connectomeHTML.getEngine().loadContent(new InfoWindowDOM(synapses).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(connectomeHTML);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            connectomeStage.setScene(scene);
+            connectomeStage.setResizable(true);
+        }
+        connectomeStage.show();
+    }
+    
+    public void generateCellDeathsWindow(Object[] cellDeaths) {
+    	if (cellDeathsStage == null) {
+            cellDeathsStage = new Stage();
+            cellDeathsStage.setWidth(400.);
+            cellDeathsStage.setTitle("Cell Deaths");
+
+            WebView cellDeathsWebView = new WebView();
+            cellDeathsWebView.getEngine().loadContent(new InfoWindowDOM(cellDeaths).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(cellDeathsWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            cellDeathsStage.setScene(scene);
+            cellDeathsStage.setResizable(true);
+        }
+        cellDeathsStage.show();
+    	
+    }
+    
+    public void generateProductionInfoWindow() {
+    	if (productionInfoStage == null) {
+            productionInfoStage = new Stage();
+            productionInfoStage.setTitle("Experimental Data");
+
+
+            WebView productionInfoWebView = new WebView();
+            productionInfoWebView.getEngine().loadContent(new InfoWindowDOM(productionInfo).DOMtoString());
+            productionInfoWebView.setContextMenuEnabled(false);
+
+            VBox root = new VBox();
+            root.getChildren().addAll(productionInfoWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            productionInfoStage.setScene(scene);
+            productionInfoStage.setResizable(true);
+        }
+        productionInfoStage.show();
     }
 }

@@ -11,9 +11,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import wormguides.view.infowindow.HTMLNode;
-import wormguides.view.infowindow.InfoWindowDOM;
-
 import partslist.PartsList;
 
 /**
@@ -22,18 +19,9 @@ import partslist.PartsList;
 public class CellDeaths {
     private final static String CellDeathsFile = "/wormguides/models/cell_deaths/CellDeaths.csv";
     private static List<String> cellDeaths;
-    private static InfoWindowDOM dom;
 
     static {
-        cellDeaths = new ArrayList<>();
-
-        // build the dom
-        dom = new InfoWindowDOM();
-        HTMLNode head = new HTMLNode("head");
-        HTMLNode body = new HTMLNode("body");
-
-        HTMLNode deathsDiv = new HTMLNode("div");
-        HTMLNode deathsTable = new HTMLNode("table");
+        cellDeaths = new ArrayList<String>();
 
         URL url = PartsList.class.getResource(CellDeathsFile);
         try (InputStream input = url.openStream();
@@ -42,34 +30,19 @@ public class CellDeaths {
 
             String line;
             while ((line = br.readLine()) != null) {
-                // add death to table
-                HTMLNode tr = new HTMLNode("tr");
-                tr.addChild(new HTMLNode("td", "", "", line));
-                deathsTable.addChild(tr);
-
-                // add to internal memory
                 cellDeaths.add(line.toLowerCase());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        deathsDiv.addChild(deathsTable);
-        body.addChild(deathsDiv);
-
-        dom.getHTML().addChild(head);
-        dom.getHTML().addChild(body);
-        dom.buildStyleNode();
     }
 
     public static boolean containsCell(String cell) {
         return cellDeaths != null && cellDeaths.contains(cell.toLowerCase());
     }
-
-    public static String getCellDeathsDOMAsString() {
-        if (dom != null) {
-            return dom.DOMtoString();
-        }
-        return "";
+    
+    public static Object[] getCellDeathsAsArray() {
+    	return cellDeaths.toArray();
     }
 }

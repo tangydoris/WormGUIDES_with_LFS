@@ -25,7 +25,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.SubScene;
 import javafx.scene.control.Button;
@@ -50,7 +49,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
@@ -113,11 +111,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private Stage treeStage;
     private Stage urlStage;
     private Stage urlLoadStage;
-    private Stage connectomeStage;
-    private Stage partsListStage;
-    private Stage cellShapesIndexStage;
-    private Stage cellDeathsStage;
-    private Stage productionInfoStage;
 
     // URL generation/loading
     private URLWindow urlWindow;
@@ -266,30 +259,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private boolean defaultEmbryoFlag;
 
     // ----- Begin menu items and buttons listeners -----
-    @FXML
-    public void productionInfoAction() {
-        if (productionInfoStage == null) {
-            productionInfoStage = new Stage();
-            productionInfoStage.setTitle("Experimental Data");
-
-            if (productionInfo == null) {
-                initProductionInfo();
-            }
-
-            WebView productionInfoWebView = new WebView();
-            productionInfoWebView.getEngine().loadContent(productionInfo.getProductionInfoDOM().DOMtoString());
-            productionInfoWebView.setContextMenuEnabled(false);
-
-            VBox root = new VBox();
-            root.getChildren().addAll(productionInfoWebView);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            productionInfoStage.setScene(scene);
-            productionInfoStage.setResizable(false);
-        }
-        productionInfoStage.show();
-    }
 
     @FXML
     public void menuLoadStory() {
@@ -462,98 +431,62 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
         infoWindow.showWindow();
     }
-
+    
+    // START View->Primary Data menu items
     @FXML
     public void viewCellShapesIndex() {
-        if (sceneElementsList == null) {
-            return;
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	if (sceneElementsList == null) {
+    		initSceneElementsList();
         }
-
-        if (cellShapesIndexStage == null) {
-            cellShapesIndexStage = new Stage();
-            cellShapesIndexStage.setTitle("Cell Shapes Index");
-
-            if (sceneElementsList == null) {
-                initSceneElementsList();
-            }
-
-            // webview to render cell shapes list i.e. sceneElementsList
-            WebView cellShapesIndexWebView = new WebView();
-            cellShapesIndexWebView.getEngine().loadContent(sceneElementsList.sceneElementsListDOM().DOMtoString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(cellShapesIndexWebView);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            cellShapesIndexStage.setScene(scene);
-            cellShapesIndexStage.setResizable(false);
-        }
-        cellShapesIndexStage.show();
+    	
+    	infoWindow.generateCellShapesIndexWindow(sceneElementsList.getElementsList());
     }
-
-    @FXML
-    public void viewCellDeaths() {
-        if (cellDeathsStage == null) {
-            cellDeathsStage = new Stage();
-            cellDeathsStage.setWidth(400.);
-            cellDeathsStage.setTitle("Cell Deaths");
-
-            WebView cellDeathsWebView = new WebView();
-            cellDeathsWebView.getEngine().loadContent(CellDeaths.getCellDeathsDOMAsString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(cellDeathsWebView);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            cellDeathsStage.setScene(scene);
-            cellDeathsStage.setResizable(false);
-        }
-        cellDeathsStage.show();
-    }
-
+    
     @FXML
     public void viewPartsList() {
-        if (partsListStage == null) {
-            partsListStage = new Stage();
-            partsListStage.setTitle("Parts List");
-
-            // build webview scene to render parts list
-            WebView partsListWebView = new WebView();
-            partsListWebView.getEngine().loadContent(PartsList.createPartsListDOM().DOMtoString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(partsListWebView);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            partsListStage.setScene(scene);
-            partsListStage.setResizable(false);
-        }
-        partsListStage.show();
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	infoWindow.generatePartsListWindow();
     }
-
+    
     @FXML
     public void viewConnectome() {
-        if (connectomeStage == null) {
-            connectomeStage = new Stage();
-            connectomeStage.setTitle("Connectome");
-
-            // build webview scene to render html
-            WebView connectomeHTML = new WebView();
-            connectomeHTML.getEngine().loadContent(connectome.connectomeDOM().DOMtoString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(connectomeHTML);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            connectomeStage.setScene(scene);
-            connectomeStage.setResizable(false);
-        }
-        connectomeStage.show();
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	infoWindow.generateConnectomeWindow(connectome.getSynapseList());
     }
+    
+    @FXML
+    public void viewCellDeaths() {
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	infoWindow.generateCellDeathsWindow(CellDeaths.getCellDeathsAsArray());
+    }
+    
+    @FXML
+    public void productionInfoAction() {
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	if (productionInfo == null) {
+    		initProductionInfo();
+    	}
+    	
+    	infoWindow.generateProductionInfoWindow();
+    }
+    // END View->Primary Data menu items
+    
     // ----- End menu items and buttons listeners -----
 
     @FXML
