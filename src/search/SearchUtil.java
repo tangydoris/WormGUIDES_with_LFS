@@ -81,6 +81,7 @@ public class SearchUtil {
      * @param searched
      *         searched term, the lineage name
      *         
+     * ***Note: this method must use 'equals()' condition so as not to necessarily imply descendants search
      *
      * @return lineage names with the searched prefix, in alphabetical order
      */
@@ -98,7 +99,9 @@ public class SearchUtil {
 
     /**
      * @param searched
-     *         searched term, the functional names
+     *         searched term, the prefix functional names
+     *         
+     * ***Note: this method must use 'startsWith()' so as to find similar cells in different geospatial location e.g. 'siav' -> 'siavl', 'siavr'        
      *
      * @return lineage names whose functional name has the searched prefix, in alphabetical order
      */
@@ -106,7 +109,7 @@ public class SearchUtil {
         final List<String> cells = new ArrayList<>();
         final String searchedLower = searched.toLowerCase();
         functionalNames.forEach(name -> {
-            if (name.toLowerCase().equals(searchedLower)) {
+            if (name.toLowerCase().startsWith(searchedLower)) {
                 cells.add(getLineageNameByFunctionalName(name));
             }
         });
