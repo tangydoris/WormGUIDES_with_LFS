@@ -79,7 +79,8 @@ public class SearchUtil {
 
     /**
      * @param searched
-     *         searched term, prefix of the lineage names
+     *         searched term, the lineage name
+     *         
      *
      * @return lineage names with the searched prefix, in alphabetical order
      */
@@ -87,7 +88,7 @@ public class SearchUtil {
         final List<String> cells = new ArrayList<>();
         final String searchedLower = searched.toLowerCase();
         activeLineageNames.forEach(name -> {
-            if (name.toLowerCase().startsWith(searchedLower)) {
+            if (name.toLowerCase().equals(searchedLower)) {
                 cells.add(name);
             }
         });
@@ -97,7 +98,7 @@ public class SearchUtil {
 
     /**
      * @param searched
-     *         searched term, prefix of the functional names
+     *         searched term, the functional names
      *
      * @return lineage names whose functional name has the searched prefix, in alphabetical order
      */
@@ -105,7 +106,7 @@ public class SearchUtil {
         final List<String> cells = new ArrayList<>();
         final String searchedLower = searched.toLowerCase();
         functionalNames.forEach(name -> {
-            if (name.toLowerCase().startsWith(searchedLower)) {
+            if (name.toLowerCase().equals(searchedLower)) {
                 cells.add(getLineageNameByFunctionalName(name));
             }
         });

@@ -551,12 +551,14 @@ public class SearchLayer {
             List<String> cellsForListView = new ArrayList<>();
             cellsForListView.addAll(cells);
 
+            
             if (descendantTicked) {
-                List<String> descendants = SearchUtil.getDescendantsList(cells, getSearchedText());
+            	List<String> descendants = SearchUtil.getDescendantsList(cells, getSearchedText());
                 descendants.stream()
                         .filter(name -> !cellsForListView.contains(name))
                         .forEachOrdered(cellsForListView::add);
             }
+            
             if (ancestorTicked) {
                 List<String> ancestors = SearchUtil.getAncestorsList(cells);
                 ancestors.stream()
