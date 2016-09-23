@@ -67,8 +67,6 @@ import static javafx.scene.control.ContentDisplay.GRAPHIC_ONLY;
 import static javafx.scene.control.Tooltip.install;
 import static javafx.scene.input.KeyCode.F5;
 import static javafx.scene.input.KeyEvent.KEY_PRESSED;
-import static javafx.scene.input.MouseButton.PRIMARY;
-import static javafx.scene.input.MouseButton.SECONDARY;
 import static javafx.scene.paint.Color.BLACK;
 import static javafx.scene.paint.Color.WHITE;
 import static javafx.scene.paint.Color.web;

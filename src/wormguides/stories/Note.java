@@ -609,19 +609,28 @@ public class Note {
     }
 
     public class TagDisplayEnumException extends Exception {
-        public TagDisplayEnumException() {
+    	// default variable needed for some reason
+		private static final long serialVersionUID = 1L;
+
+		public TagDisplayEnumException() {
             super("Invalid note tag display enum, must be one of the " + "following: " + Display.valuesToString());
         }
     }
 
     public class AttachmentTypeEnumException extends Exception {
-        public AttachmentTypeEnumException() {
+    	// default variable needed for some reason
+		private static final long serialVersionUID = 1L;
+
+		public AttachmentTypeEnumException() {
             super("Invalid note attachment type enum, must be one of the " + "following: " + Type.valuesToString());
         }
     }
 
     public class LocationStringFormatException extends Exception {
-        public LocationStringFormatException() {
+    	// default variable needed for some reason
+		private static final long serialVersionUID = 1L;
+
+		public LocationStringFormatException() {
             super("Invalid note location string format, must be 3 " + "integers separated by spaces.");
         }
     }

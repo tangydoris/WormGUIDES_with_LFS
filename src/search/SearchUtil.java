@@ -41,7 +41,8 @@ public class SearchUtil {
 
     private static Connectome connectome;
 
-    private static CasesLists casesList;
+    @SuppressWarnings("unused")
+	private static CasesLists casesList;
 
     private static LineageData lineageData;
 
