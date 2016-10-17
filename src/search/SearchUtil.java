@@ -49,7 +49,7 @@ public class SearchUtil {
 
     private static Connectome connectome;
 
-    private static CasesLists casesList;
+	private static CasesLists casesList;
 
     private static LineageData lineageData;
 
@@ -87,39 +87,29 @@ public class SearchUtil {
     }
 
     /**
+     * Returns the list of cells with a searched lineage name
+     *
      * @param searched
-     *         searched term
+     *         searched term, the lineage name
      *
      * @return lineage name that is searched
      */
-    public static List<String> getCellsWithLineageName(String searched) {
+    public static List<String> getCellsWithLineageName(final String searched) {
         final List<String> cells = new ArrayList<>();
-        searched = searched.trim();
-
-        final String ab = "AB";
-        final String p0 = "P0";
-
-        if (searched.equalsIgnoreCase(ab)) {
-            cells.add(ab);
-
-        } else if (searched.equalsIgnoreCase(p0)) {
-            cells.add(p0);
-
-        } else {
-            searched = searched.toLowerCase();
-            for (String name : activeLineageNames) {
-                if (name.equalsIgnoreCase(searched)) {
-                    cells.add(name);
-                    break;
-                }
+        final String searchedLower = searched.toLowerCase();
+        activeLineageNames.forEach(name -> {
+            if (name.toLowerCase().equals(searchedLower)) {
+                cells.add(name);
             }
-        }
+        });
         return cells;
     }
 
     /**
      * @param searched
-     *         searched term, prefix of the functional names
+     *         searched term, the prefix functional names
+     *         
+     * ***Note: this method must use 'startsWith()' so as to find similar cells in different geospatial location e.g. 'siav' -> 'siavl', 'siavr'        
      *
      * @return lineage names whose functional name has the searched prefix, in alphabetical order
      */

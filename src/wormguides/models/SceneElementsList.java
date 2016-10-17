@@ -16,13 +16,10 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import wormguides.view.infowindow.HTMLNode;
-import wormguides.view.infowindow.InfoWindowDOM;
-
 import static java.lang.Integer.MIN_VALUE;
 
 /**
- * Record of {@link SceneElement}s over the life of embryo
+ * Record of {@link SceneElement}s over the life of the embryo
  */
 public class SceneElementsList {
 
@@ -215,7 +212,7 @@ public class SceneElementsList {
     public List<String> getAllMulticellSceneNames() {
         final List<String> names = new ArrayList<>();
         elementsList.stream()
-                .filter(se -> se.isMulticellular() && !names.contains(se))
+                .filter(se -> se.isMulticellular() && !names.contains(se.getSceneName()))
                 .forEachOrdered(se -> names.add(se.getSceneName()));
         return names;
     }
@@ -252,56 +249,6 @@ public class SceneElementsList {
 
     public Map<String, List<String>> getNameToCellsMap() {
         return nameCellsMap;
-    }
-
-    public InfoWindowDOM sceneElementsListDOM() {
-        final HTMLNode html = new HTMLNode("html");
-        final HTMLNode head = new HTMLNode("head");
-        final HTMLNode body = new HTMLNode("body");
-
-        // add nodes to html
-        html.addChild(head);
-        html.addChild(body);
-
-        final HTMLNode sceneElementsListDiv = new HTMLNode("div");
-        final HTMLNode sceneElementsListTable = new HTMLNode("table");
-
-        // title row
-        final HTMLNode trH = new HTMLNode("tr");
-        final HTMLNode th1 = new HTMLNode("th", "", "", "Scene Name");
-        final HTMLNode th2 = new HTMLNode("th", "", "", "Cell Names");
-        final HTMLNode th3 = new HTMLNode("th", "", "", "Marker");
-        final HTMLNode th4 = new HTMLNode("th", "", "", "Start Time");
-        final HTMLNode th5 = new HTMLNode("th", "", "", "End Time");
-        final HTMLNode th6 = new HTMLNode("th", "", "", "Comments");
-
-        trH.addChild(th1);
-        trH.addChild(th2);
-        trH.addChild(th3);
-        trH.addChild(th4);
-        trH.addChild(th5);
-        trH.addChild(th6);
-
-        sceneElementsListTable.addChild(trH);
-
-        for (SceneElement se : elementsList) {
-            final HTMLNode tr = new HTMLNode("tr");
-            tr.addChild(new HTMLNode("td", "", "", se.getSceneName()));
-            tr.addChild(new HTMLNode("td", "", "", se.getAllCellNames().toString()));
-            tr.addChild(new HTMLNode("td", "", "", se.getMarkerName()));
-            tr.addChild(new HTMLNode("td", "", "", Integer.toString(se.getStartTime())));
-            tr.addChild(new HTMLNode("td", "", "", Integer.toString(se.getEndTime())));
-            tr.addChild(new HTMLNode("td", "", "", se.getComments()));
-            sceneElementsListTable.addChild(tr);
-        }
-
-        sceneElementsListDiv.addChild(sceneElementsListTable);
-
-        body.addChild(sceneElementsListDiv);
-
-        final InfoWindowDOM dom = new InfoWindowDOM(html);
-        dom.buildStyleNode();
-        return dom;
     }
 
     public List<SceneElement> getElementsList() {
