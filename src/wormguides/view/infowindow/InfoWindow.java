@@ -5,6 +5,7 @@
 package wormguides.view.infowindow;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Service;
@@ -13,17 +14,23 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 import acetree.LineageData;
 import connectome.Connectome;
+import connectome.NeuronalSynapse;
 import netscape.javascript.JSObject;
 import partslist.PartsList;
 import wormguides.controllers.InfoWindowLinkController;
 import wormguides.layers.SearchLayer;
+import wormguides.models.AmphidSensillaTerm;
 import wormguides.models.CasesLists;
+import wormguides.models.NonTerminalCellCase;
 import wormguides.models.ProductionInfo;
+import wormguides.models.SceneElement;
+import wormguides.models.TerminalCellCase;
 import wormguides.view.DraggableTab;
 
 import static java.util.Objects.requireNonNull;
@@ -39,44 +46,50 @@ public class InfoWindow {
     /** Wait time between the changing the number of ellipses shown during loading */
     private final long WAIT_TIME_MILLI = 750;
 
-    private final Stage infoWindowStage;
-    private final TabPane tabPane;
-    private final Scene scene;
-    private final Stage parentStage;
-
-    private final SearchLayer searchLayer;
+    private Stage infoWindowStage;
+    private TabPane tabPane;
+    private Scene scene;
+    private Stage parentStage;
 
     private InfoWindowLinkController linkController;
     private ProductionInfo productionInfo;
     private String nameToQuery;
 
+    private SearchLayer searchLayer;
+
     private Service<Void> addNameService;
     private Service<Void> showLoadingService;
+    
+    // stages for various info windows
+    private Stage cellShapesIndexStage;
+    private Stage partsListStage;
+    private Stage connectomeStage;
+    private Stage cellDeathsStage;
+    private Stage productionInfoStage;
 
     /** Used to show that loading is in progress */
     private int count;
 
-    public InfoWindow(
-            final Stage parentStage,
-            final SearchLayer searchLayer,
-            final StringProperty cellNameProperty,
-            final CasesLists casesLists,
-            final ProductionInfo productionInfo,
-            final Connectome connectome,
-            final boolean defaultEmbryoFlag,
-            final LineageData lineageData) {
-
-        this.parentStage = requireNonNull(parentStage);
-        this.searchLayer = requireNonNull(searchLayer);
+    public InfoWindow (
+            Stage stage,
+            StringProperty cellNameProperty,
+            CasesLists cases,
+            ProductionInfo info,
+            Connectome connectome,
+            boolean defaultEmbryoFlag,
+            LineageData lineageData,
+            SearchLayer searchLayer) {
 
         infoWindowStage = new Stage();
         infoWindowStage.setTitle("Cell Info Window");
 
-        this.productionInfo = requireNonNull(productionInfo);
+        productionInfo = info;
         tabPane = new TabPane();
 
         scene = new Scene(new Group());
         scene.setRoot(tabPane);
+
+        this.searchLayer = requireNonNull(searchLayer);
 
         infoWindowStage.setScene(scene);
 
@@ -87,10 +100,8 @@ public class InfoWindow {
 
         infoWindowStage.setResizable(true);
 
-        linkController = new InfoWindowLinkController(
-                this.parentStage,
-                this.searchLayer,
-                requireNonNull(cellNameProperty));
+        parentStage = stage;
+        linkController = new InfoWindowLinkController(parentStage, searchLayer, cellNameProperty);
 
         count = 0;
         showLoadingService = new Service<Void>() {
@@ -122,6 +133,7 @@ public class InfoWindow {
                                         loading += "....";
                                         break;
                                     default:
+                                        //loading = "Cell Info Window";
                                         break;
                                 }
                                 infoWindowStage.setTitle(loading);
@@ -142,10 +154,6 @@ public class InfoWindow {
             }
         };
 
-        requireNonNull(productionInfo);
-        requireNonNull(casesLists);
-        requireNonNull(connectome);
-        requireNonNull(lineageData);
         addNameService = new Service<Void>() {
             @Override
             protected Task<Void> createTask() {
@@ -167,13 +175,13 @@ public class InfoWindow {
                         }
 
                         if (lineageName != null && !lineageName.isEmpty()) {
-                            if (casesLists == null) {
+                            if (cases == null) {
                                 System.out.println("null cell cases");
                                 return null; // error check
                             }
 
                             if (PartsList.isLineageName(lineageName)) {
-                                if (casesLists.containsCellCase(lineageName)) {
+                                if (cases.containsCellCase(lineageName)) {
 
                                     // show the tab
                                 } else {
@@ -187,7 +195,7 @@ public class InfoWindow {
                                     // check default flag for image series info validation
                                     if (defaultEmbryoFlag) {
                                         String funcName = connectome.checkQueryCell(lineageName).toUpperCase();
-                                        casesLists.makeTerminalCase(
+                                        cases.makeTerminalCase(
                                                 lineageName,
                                                 funcName,
                                                 connectome.queryConnectivity(
@@ -223,7 +231,7 @@ public class InfoWindow {
                                     } else {
                                         System.out.println("here");
                                         String funcName = connectome.checkQueryCell(lineageName).toUpperCase();
-                                        casesLists.makeTerminalCase(
+                                        cases.makeTerminalCase(
                                                 lineageName,
                                                 funcName,
                                                 connectome.queryConnectivity(
@@ -260,19 +268,19 @@ public class InfoWindow {
 
                                 }
                             } else { // not in connectome --> non terminal case
-                                if (casesLists.containsCellCase(lineageName)) {
+                                if (cases.containsCellCase(lineageName)) {
 
                                     // show tab
                                 } else {
                                     // add a non terminal case
                                     if (defaultEmbryoFlag) {
-                                        casesLists.makeNonTerminalCase(
+                                        cases.makeNonTerminalCase(
                                                 lineageName,
-                                                InfoWindow.this.productionInfo.getNuclearInfo(),
-                                                InfoWindow.this.productionInfo.getCellShapeData(lineageName));
+                                                productionInfo.getNuclearInfo(),
+                                                productionInfo.getCellShapeData(lineageName));
                                     } else {
                                         System.out.println("third one");
-                                        casesLists.makeNonTerminalCase(
+                                        cases.makeNonTerminalCase(
                                                 lineageName,
                                                 new ArrayList<>(),
                                                 new ArrayList<>());
@@ -321,12 +329,22 @@ public class InfoWindow {
     }
 
     /**
-     * Adds a tab to the window in a separate thread
+     * Adds a tab for a cell case object
      *
-     * @param dom
-     *         the dom to be added as a tab
+     * @param cellCase the cell case to add
      */
-    public void addTab(InfoWindowDOM dom) {
+    public void addTab(Object cellCase) {
+    	InfoWindowDOM dom;
+    	if (cellCase instanceof TerminalCellCase) {
+    		dom = new InfoWindowDOM((TerminalCellCase) cellCase);
+    	} else if (cellCase instanceof NonTerminalCellCase) {
+    		dom = new InfoWindowDOM((NonTerminalCellCase) cellCase);
+    	} else if (cellCase instanceof AmphidSensillaTerm) {
+    		dom = new InfoWindowDOM((AmphidSensillaTerm) cellCase);
+    	} else {
+    		dom = new InfoWindowDOM();
+    	}
+    	
         runLater(() -> {
             WebView webview = new WebView();
             webview.getEngine().loadContent(dom.DOMtoString());
@@ -358,5 +376,115 @@ public class InfoWindow {
 
     public Stage getStage() {
         return infoWindowStage;
+    }
+    
+    /**
+     * Generate a window that contains the cell geometry information
+     * Build a stage and webview, pass the data to the DOM generator and add the content, and show the stage
+     * 
+     * @param sceneElementsList - the data to be rendered in the window
+     */
+    public void generateCellShapesIndexWindow(final List<SceneElement> sceneElementsList) {
+    	if (cellShapesIndexStage == null) {
+            cellShapesIndexStage = new Stage();
+            cellShapesIndexStage.setTitle("Cell Shapes Index");
+
+            // webview to render cell shapes list i.e. sceneElementsList
+            WebView cellShapesIndexWebView = new WebView();
+            cellShapesIndexWebView.getEngine().loadContent(new InfoWindowDOM(sceneElementsList, true).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(cellShapesIndexWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            cellShapesIndexStage.setScene(scene);
+            cellShapesIndexStage.setResizable(true);
+        }
+        cellShapesIndexStage.show();
+    }
+    
+    public void generatePartsListWindow() {
+    	if (partsListStage == null) {
+            partsListStage = new Stage();
+            partsListStage.setTitle("Parts List");
+
+            // build webview scene to render parts list
+            WebView partsListWebView = new WebView();
+            partsListWebView.getEngine().loadContent(
+            		new InfoWindowDOM(PartsList.getFunctionalNames(), PartsList.getLineageNames(), PartsList.getDescriptions()).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(partsListWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            partsListStage.setScene(scene);
+            partsListStage.setResizable(true);
+        }
+        partsListStage.show();
+    	
+    }
+    
+    public void generateConnectomeWindow(List<NeuronalSynapse> synapses) {
+    	if (connectomeStage == null) {
+            connectomeStage = new Stage();
+            connectomeStage.setTitle("Connectome");
+
+            // build webview scene to render html
+            WebView connectomeHTML = new WebView();
+            connectomeHTML.getEngine().loadContent(new InfoWindowDOM(synapses).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(connectomeHTML);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            connectomeStage.setScene(scene);
+            connectomeStage.setResizable(true);
+        }
+        connectomeStage.show();
+    }
+    
+    public void generateCellDeathsWindow(Object[] cellDeaths) {
+    	if (cellDeathsStage == null) {
+            cellDeathsStage = new Stage();
+            cellDeathsStage.setWidth(400.);
+            cellDeathsStage.setTitle("Cell Deaths");
+
+            WebView cellDeathsWebView = new WebView();
+            cellDeathsWebView.getEngine().loadContent(new InfoWindowDOM(cellDeaths).DOMtoString());
+
+            VBox root = new VBox();
+            root.getChildren().addAll(cellDeathsWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            cellDeathsStage.setScene(scene);
+            cellDeathsStage.setResizable(true);
+        }
+        cellDeathsStage.show();
+    	
+    }
+    
+    public void generateProductionInfoWindow() {
+    	if (productionInfoStage == null) {
+            productionInfoStage = new Stage();
+            productionInfoStage.setTitle("Experimental Data");
+
+
+            WebView productionInfoWebView = new WebView();
+            productionInfoWebView.getEngine().loadContent(new InfoWindowDOM(productionInfo).DOMtoString());
+            productionInfoWebView.setContextMenuEnabled(false);
+
+            VBox root = new VBox();
+            root.getChildren().addAll(productionInfoWebView);
+            Scene scene = new Scene(new Group());
+            scene.setRoot(root);
+
+            productionInfoStage.setScene(scene);
+            productionInfoStage.setResizable(true);
+        }
+        productionInfoStage.show();
     }
 }

@@ -26,7 +26,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.SubScene;
 import javafx.scene.control.Button;
@@ -50,7 +49,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
@@ -61,7 +59,6 @@ import acetree.LineageData;
 import connectome.Connectome;
 import partslist.PartsList;
 import partslist.celldeaths.CellDeaths;
-import search.SearchUtil;
 import wormguides.MainApp;
 import wormguides.layers.DisplayLayer;
 import wormguides.layers.SearchLayer;
@@ -93,13 +90,16 @@ import static acetree.tablelineagedata.AceTreeLineageTableLoader.getAvgYOffsetFr
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.getAvgZOffsetFromZero;
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.loadNucFiles;
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.setOriginToZero;
+import static partslist.celldeaths.CellDeaths.isInCellDeaths;
+import static search.SearchUtil.getStructureComment;
+import static search.SearchUtil.isStructureWithComment;
 import static wormguides.loaders.URLLoader.process;
 
 public class RootLayoutController extends BorderPane implements Initializable {
 
-    private final static String UNLINEAGED_START = "Nuc";
+    private final String UNLINEAGED_START = "Nuc";
 
-    private final static String ROOT = "ROOT";
+    private final String ROOT = "ROOT";
 
     /** Default transparency of 'other' entities on startup */
     private final double DEFAULT_OTHERS_OPACITY = 25;
@@ -114,11 +114,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private Stage sulstonTreeStage;
     private Stage urlDisplayStage;
     private Stage urlLoadStage;
-    private Stage connectomeStage;
-    private Stage partsListStage;
-    private Stage cellShapesIndexStage;
-    private Stage cellDeathsStage;
-    private Stage productionInfoStage;
 
     // URL generation/loading
     private URLWindow urlWindow;
@@ -281,32 +276,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private MenuItem stopCaptureVideoMenuItem;
     private BooleanProperty captureVideo;
     private boolean defaultEmbryoFlag;
-
-    // ----- Begin menu items and buttons listeners -----
-    @FXML
-    public void productionInfoAction() {
-        if (productionInfoStage == null) {
-            productionInfoStage = new Stage();
-            productionInfoStage.setTitle("Experimental Data");
-
-            if (productionInfo == null) {
-                initProductionInfo();
-            }
-
-            final WebView productionInfoWebView = new WebView();
-            productionInfoWebView.getEngine().loadContent(productionInfo.getProductionInfoDOM().DOMtoString());
-            productionInfoWebView.setContextMenuEnabled(false);
-
-            final VBox root = new VBox();
-            root.getChildren().addAll(productionInfoWebView);
-            final Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            productionInfoStage.setScene(scene);
-            productionInfoStage.setResizable(false);
-        }
-        productionInfoStage.show();
-    }
 
     @FXML
     public void menuLoadStory() {
@@ -480,98 +449,62 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
         infoWindow.showWindow();
     }
-
+    
+    // START View->Primary Data menu items
     @FXML
     public void viewCellShapesIndex() {
-        if (sceneElementsList == null) {
-            return;
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	if (sceneElementsList == null) {
+    		initSceneElementsList();
         }
-
-        if (cellShapesIndexStage == null) {
-            cellShapesIndexStage = new Stage();
-            cellShapesIndexStage.setTitle("Cell Shapes Index");
-
-            if (sceneElementsList == null) {
-                initSceneElementsList();
-            }
-
-            // webview to render cell shapes list i.e. sceneElementsList
-            WebView cellShapesIndexWebView = new WebView();
-            cellShapesIndexWebView.getEngine().loadContent(sceneElementsList.sceneElementsListDOM().DOMtoString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(cellShapesIndexWebView);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            cellShapesIndexStage.setScene(scene);
-            cellShapesIndexStage.setResizable(false);
-        }
-        cellShapesIndexStage.show();
+    	
+    	infoWindow.generateCellShapesIndexWindow(sceneElementsList.getElementsList());
     }
-
-    @FXML
-    public void viewCellDeaths() {
-        if (cellDeathsStage == null) {
-            cellDeathsStage = new Stage();
-            cellDeathsStage.setWidth(400.);
-            cellDeathsStage.setTitle("Cell Deaths");
-
-            WebView cellDeathsWebView = new WebView();
-            cellDeathsWebView.getEngine().loadContent(CellDeaths.getCellDeathsDOMAsString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(cellDeathsWebView);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            cellDeathsStage.setScene(scene);
-            cellDeathsStage.setResizable(false);
-        }
-        cellDeathsStage.show();
-    }
-
+    
     @FXML
     public void viewPartsList() {
-        if (partsListStage == null) {
-            partsListStage = new Stage();
-            partsListStage.setTitle("Parts List");
-
-            // build webview scene to render parts list
-            WebView partsListWebView = new WebView();
-            partsListWebView.getEngine().loadContent(PartsList.createPartsListDOM().DOMtoString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(partsListWebView);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            partsListStage.setScene(scene);
-            partsListStage.setResizable(false);
-        }
-        partsListStage.show();
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	infoWindow.generatePartsListWindow();
     }
-
+    
     @FXML
     public void viewConnectome() {
-        if (connectomeStage == null) {
-            connectomeStage = new Stage();
-            connectomeStage.setTitle("Connectome");
-
-            // build webview scene to render html
-            WebView connectomeHTML = new WebView();
-            connectomeHTML.getEngine().loadContent(connectome.connectomeDOM().DOMtoString());
-
-            VBox root = new VBox();
-            root.getChildren().addAll(connectomeHTML);
-            Scene scene = new Scene(new Group());
-            scene.setRoot(root);
-
-            connectomeStage.setScene(scene);
-            connectomeStage.setResizable(false);
-        }
-        connectomeStage.show();
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	infoWindow.generateConnectomeWindow(connectome.getSynapseList());
     }
+    
+    @FXML
+    public void viewCellDeaths() {
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	infoWindow.generateCellDeathsWindow(CellDeaths.getCellDeathsAsArray());
+    }
+    
+    @FXML
+    public void productionInfoAction() {
+    	if (infoWindow == null) {
+    		initInfoWindow();
+    	}
+    	
+    	if (productionInfo == null) {
+    		initProductionInfo();
+    	}
+    	
+    	infoWindow.generateProductionInfoWindow();
+    }
+    // END View->Primary Data menu items
+    
     // ----- End menu items and buttons listeners -----
 
     @FXML
@@ -852,8 +785,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
         }
 
         // Cell body/structue
-        if (SearchUtil.isStructureWithComment(name)) {
-            displayedDescription.setText(SearchUtil.getStructureComment(name));
+        if (isStructureWithComment(name)) {
+            displayedDescription.setText(getStructureComment(name));
         }
 
         // Cell lineage name
@@ -863,7 +796,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
             if (functionalName != null) {
                 displayedName.setText("Active Cell: " + name + " (" + functionalName + ")");
                 displayedDescription.setText(PartsList.getDescriptionByFunctionalName(functionalName));
-            } else if (CellDeaths.isInCellDeaths(name)) {
+            } else if (isInCellDeaths(name)) {
                 displayedName.setText("Active Cell: " + name);
                 displayedDescription.setText("Cell Death");
             }
@@ -1090,13 +1023,13 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
             infoWindow = new InfoWindow(
                     window3DController.getStage(),
-                    searchLayer,
                     window3DController.getSelectedNameLabeled(),
                     cases,
                     productionInfo,
                     connectome,
                     defaultEmbryoFlag,
-                    lineageData);
+                    lineageData,
+                    searchLayer);
         }
     }
 
