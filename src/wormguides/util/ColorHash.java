@@ -69,8 +69,6 @@ public class ColorHash {
         if (opacityMaterialHash.get(opacity) == null) {
             final Material material = makeOthersMaterial(opacity);
             opacityMaterialHash.put(opacity, material);
-            final Set<Color> othersSet = new HashSet<>();
-            othersSet.add(web(othersColor.toString(), opacity));
             opacityHash.put(material, opacity);
         }
 
@@ -85,7 +83,7 @@ public class ColorHash {
      *
      * @return the material created
      */
-    public Material makeOthersMaterial(double opacity) {
+    private Material makeOthersMaterial(double opacity) {
         String colorString = "#";
         final StringBuilder builder = new StringBuilder();
         builder.append(toHexString((int) (round(opacity * 255))));
@@ -98,19 +96,19 @@ public class ColorHash {
         return new PhongMaterial(web(colorString, opacity));
     }
 
-    private Material makeMaterial(Color color) {
+    private Material makeMaterial(final Color color) {
         final Set<Color> colors = new HashSet<>();
         colors.add(color);
         return makeMaterial(colors);
     }
 
-    private Material makeMaterial(Set<Color> colors) {
+    private Material makeMaterial(final Set<Color> colors) {
         final WritableImage wImage = new WritableImage(90, 90);
         final PixelWriter writer = wImage.getPixelWriter();
         final Color[] temp = colors.toArray(new Color[colors.size()]);
         double opacity = 1.0;
 
-        Color[] copy;
+        final Color[] copy;
         if (colors.isEmpty()) {
             copy = new Color[1];
             copy[0] = WHITE;
@@ -134,7 +132,6 @@ public class ColorHash {
         // for more than two colors, we want segments
         int segmentLength = (int) (wImage.getHeight() / copy.length);
         Color color = BLACK;
-
         for (int i = 0; i < copy.length; i++) {
             color = copy[i];
             for (int j = i * segmentLength; j < (i + 1) * segmentLength; j++) {
@@ -150,7 +147,13 @@ public class ColorHash {
         return material;
     }
 
-    public double getMaterialOpacity(Material material) {
+    /**
+     * @param material
+     *         the material to check
+     *
+     * @return opacity of the least opaque color in the material
+     */
+    public double getMaterialOpacity(final Material material) {
         if (material != null) {
             return opacityHash.get(material);
         }

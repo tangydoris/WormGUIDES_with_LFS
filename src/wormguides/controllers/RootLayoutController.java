@@ -866,20 +866,20 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private void setLabels() {
         timeProperty.addListener((observable, oldValue, newValue) -> {
             if (defaultEmbryoFlag) {
-                timeLabel.setText("~" + (timeProperty.get() + movieTimeOffset) + " min p.f.c.");
+                timeLabel.setText("~" + (newValue.intValue() + movieTimeOffset) + " min p.f.c.");
             } else {
-                timeLabel.setText("~" + (timeProperty.get()) + " min");
+                timeLabel.setText("~" + newValue.intValue() + " min");
             }
         });
         timeLabel.setText("~" + (timeProperty.get() + movieTimeOffset) + " min p.f.c.");
         timeLabel.toFront();
 
         totalNucleiProperty.addListener((observable, oldValue, newValue) -> {
-            String suffix = " Nuclei";
             if (newValue.intValue() == 1) {
-                suffix = " Nucleus";
+                totalNucleiLabel.setText(newValue.intValue() + " Nucleus");
+            } else {
+                totalNucleiLabel.setText(newValue.intValue() + " Nuclei");
             }
-            totalNucleiLabel.setText(newValue.intValue() + suffix);
         });
         totalNucleiLabel.setText(totalNucleiProperty.get() + " Nuclei");
         totalNucleiLabel.toFront();
@@ -1150,7 +1150,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
         addListeners();
 
         setIcons();
-        setLabels();
 
         sizeSubscene();
         sizeInfoPane();
@@ -1158,6 +1157,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
         viewTreeAction();
 
         initWindow3DController();
+
+        setLabels();
     }
 
     private void initSharedVariables() {
