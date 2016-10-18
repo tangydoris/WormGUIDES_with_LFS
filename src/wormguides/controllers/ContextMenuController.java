@@ -65,34 +65,26 @@ public class ContextMenuController extends AnchorPane implements Initializable {
     /** Default color of the rules that are created by the context menu */
     private final Color DEFAULT_COLOR = WHITE;
 
-    private Stage ownStage;
+    private final Stage ownStage;
 
-    private SearchLayer searchLayer;
+    private final SearchLayer searchLayer;
 
     @FXML
     private VBox mainVBox;
-
     @FXML
     private HBox expressesHBox;
-
     @FXML
     private HBox wiredToHBox;
-
     @FXML
     private Text nameText;
-
     @FXML
     private Button info;
-
     @FXML
     private Button color;
-
     @FXML
     private Button expresses;
-
     @FXML
     private Button wiredTo;
-
     @FXML
     private Button colorNeighbors;
 
@@ -130,17 +122,23 @@ public class ContextMenuController extends AnchorPane implements Initializable {
      */
     public ContextMenuController(
             final Stage parentStage,
+            final Stage ownStage,
             final SearchLayer searchLayer,
-            final BooleanProperty bringUpInfoProperty,
             final CasesLists cases,
             final ProductionInfo productionInfo,
-            final Connectome connectome) {
+            final Connectome connectome,
+            final BooleanProperty bringUpInfoProperty) {
 
         super();
+
         this.parentStage = requireNonNull(parentStage);
+        this.ownStage = requireNonNull(ownStage);
+
         this.searchLayer = requireNonNull(searchLayer);
-        this.bringUpInfoProperty = requireNonNull(bringUpInfoProperty);
         this.productionInfo = requireNonNull(productionInfo);
+
+        this.bringUpInfoProperty = requireNonNull(bringUpInfoProperty);
+
         loadingService = new Service<Void>() {
             @Override
             protected Task<Void> createTask() {
@@ -332,26 +330,6 @@ public class ContextMenuController extends AnchorPane implements Initializable {
     }
 
     /**
-     * Returns the stage that the popup context menu lives in
-     *
-     * @return Stage the stage that the menu lives in (its own stage)
-     */
-    public Stage getOwnStage() {
-        return ownStage;
-    }
-
-    /**
-     * Sets the stage to which this popup menu belongs.
-     *
-     * @param stage
-     *         the stage to which this popup menu belongs. This is different from the parent's stage that owns this
-     *         stage
-     */
-    public void setOwnStage(Stage stage) {
-        ownStage = stage;
-    }
-
-    /**
      * Sets the listener for the 'more info' button click in the menu. Called by
      * Window3DController
      *
@@ -364,18 +342,28 @@ public class ContextMenuController extends AnchorPane implements Initializable {
     }
 
     /**
-     * Sets te listener for the 'color this cell' button click in the menu.
-     * Called by Window3DController and SulstonTreePane since they handle the
-     * click differently. A different mouse click listener is set depending on
+     * Sets te listener for the 'color this cell' button click in the menu. Called by Window3DController and
+     * SulstonTreePane since they handle the click differently. A different mouse click listener is set depending on
      * where the menu pops up (whether in the 3D subscene or the sulston tree)
      *
      * @param handler
-     *         the handler (provided by Window3DController or
-     *         SulstonTreePane) that handles the 'color this cell' button
+     *         the handler (provided by Window3DController or SulstonTreePane) that handles the 'color this cell' button
      *         click action
      */
     public void setColorButtonListener(EventHandler<MouseEvent> handler) {
         color.setOnMouseClicked(handler);
+    }
+
+    public void setColorButtonText(
+            final boolean isMulticellularStructure,
+            final boolean isCellBody) {
+        if (isMulticellularStructure) {
+            color.setText("Color this Structure");
+        } else if (isCellBody) {
+            color.setText("Color this Body");
+        } else {
+            color.setText("Color this Cell");
+        }
     }
 
     /**

@@ -9,6 +9,8 @@ import java.util.List;
 
 import wormguides.view.infowindow.InfoWindow;
 
+import static java.util.Objects.requireNonNull;
+
 import static partslist.PartsList.getLineageNameByFunctionalName;
 import static wormguides.models.AnatomyTerm.AMPHID_SENSILLA;
 
@@ -18,19 +20,18 @@ import static wormguides.models.AnatomyTerm.AMPHID_SENSILLA;
  */
 public class CasesLists {
 
-    private List<CellCase> cellCases;
-    private List<AnatomyTermCase> anatomyTermCases;
+    private final List<CellCase> cellCases;
+    private final List<AnatomyTermCase> anatomyTermCases;
 
     private InfoWindow infoWindow;
 
-    public CasesLists(InfoWindow infoWindow) {
+    public CasesLists() {
         this.cellCases = new ArrayList<>();
         this.anatomyTermCases = new ArrayList<>();
-        this.infoWindow = infoWindow;
     }
 
-    public void setInfoWindow(InfoWindow window) {
-        infoWindow = window;
+    public void setInfoWindow(final InfoWindow infoWindow) {
+        this.infoWindow = requireNonNull(infoWindow);
     }
 
     /**

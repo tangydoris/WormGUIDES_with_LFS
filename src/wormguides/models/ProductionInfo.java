@@ -17,7 +17,7 @@ import static wormguides.loaders.ProductionInfoLoader.buildProductionInfo;
  */
 public class ProductionInfo {
 
-    private final static String TRUE = "TRUE";
+    private final String TRUE = "TRUE";
 
     private final int DEFAULT_START_TIME = 1;
 
@@ -77,25 +77,25 @@ public class ProductionInfo {
     }
 
     public List<String> getCellShapeData(String queryCell) {
-        List<String> cellShapeData = new ArrayList<>();
-
+        final List<String> cellShapeData = new ArrayList<>();
+        String cells;
+        StringTokenizer tokenizer;
+        String token;
         for (int i = 0; i < productionInfoData.get(0).size(); i++) {
-            String cells = productionInfoData.get(0).get(i);
-
+             cells = productionInfoData.get(0).get(i);
             //delimit cells by ';'
-            StringTokenizer st = new StringTokenizer(cells, ";");
-            while (st.hasMoreTokens()) {
-                String str = st.nextToken().trim();
-
-                if (str.toLowerCase().equals(queryCell.toLowerCase())) {
-                    cellShapeData.add(productionInfoData.get(3).get(i) + ", " + productionInfoData.get(2)
-                            .get(i)); // store strain, marker data
-                    cellShapeData.add(productionInfoData.get(1).get(i)); // store image series data
+            tokenizer = new StringTokenizer(cells, ";");
+            while (tokenizer.hasMoreTokens()) {
+                 token = tokenizer.nextToken().trim();
+                if (token.equalsIgnoreCase(queryCell)) {
+                    // store strain, marker data
+                    cellShapeData.add(productionInfoData.get(3).get(i) + ", " + productionInfoData.get(2).get(i));
+                    // store image series data
+                    cellShapeData.add(productionInfoData.get(1).get(i));
                     break;
                 }
             }
         }
-
         return cellShapeData;
     }
 

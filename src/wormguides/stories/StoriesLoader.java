@@ -15,7 +15,7 @@ import java.net.URL;
 import javafx.collections.ObservableList;
 
 /**
- * Loader for wormguides.stories specified in the internal wormguides.stories config file
+ * Loader for stories specified in the internal stories config file
  */
 public class StoriesLoader {
 

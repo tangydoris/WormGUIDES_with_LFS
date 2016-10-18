@@ -19,7 +19,7 @@ import javafx.util.Callback;
 
 import wormguides.models.Rule;
 
-import static javafx.collections.FXCollections.observableArrayList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * This class is the controller for the 'Display' tab where the list of rules are shown. It contains an
@@ -49,12 +49,12 @@ public class DisplayLayer {
      *         true when the application should use the program's internal color rules (such as in the case where
      *         no story is active), false otherwise
      */
-    public DisplayLayer(final BooleanProperty useInternalRules) {
+    public DisplayLayer(final ObservableList<Rule> rulesList, final BooleanProperty useInternalRules) {
         internalRulesList = new ArrayList<>();
         buttonMap = new HashMap<>();
 
-        currentRulesList = observableArrayList();
-        currentRulesList.addListener(new ListChangeListener<Rule>() {
+        this.currentRulesList = requireNonNull(rulesList);
+        this.currentRulesList.addListener(new ListChangeListener<Rule>() {
             @Override
             public void onChanged(Change<? extends Rule> change) {
                 while (change.next()) {
@@ -72,7 +72,7 @@ public class DisplayLayer {
             }
         });
 
-        useInternalRules.addListener((observable, oldValue, newValue) -> {
+        requireNonNull(useInternalRules).addListener((observable, oldValue, newValue) -> {
             // using internal rules now
             // copy all internal rules to current list
             if (newValue) {
@@ -86,10 +86,6 @@ public class DisplayLayer {
                 internalRulesList.addAll(currentRulesList);
             }
         });
-    }
-
-    public ObservableList<Rule> getRulesList() {
-        return currentRulesList;
     }
 
     /**

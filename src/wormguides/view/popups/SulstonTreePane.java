@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -89,42 +90,44 @@ public class SulstonTreePane extends ScrollPane {
     private final Color ZOOM_BUTTONS_SHADOW_COLOR = web("AAAAAA");
 
     private final LineageData lineageData;
-
     private final SearchLayer searchLayer;
+
+    private final Stage contextMenuStage;
+    private final ContextMenuController contextMenuController;
+    private final StringProperty selectedNameLabeledProperty;
+    private final Stage ownStage;
+    private final AnchorPane canvas;
+    private final EventHandler<MouseEvent> clickHandler;
 
     private final int movieTimeOffset;
 
-    private HashMap<String, Integer> nameXUseMap;
-    private HashMap<String, Integer> nameYStartUseMap;
-    private ArrayList<String> hiddenNodes;
-    private TreeItem<String> lineageTreeRoot;
-    private ColorHash colorHash;
+    private final Map<String, Integer> nameXUseMap;
+    private final Map<String, Integer> nameYStartUseMap;
+    private final List<String> hiddenNodes;
+    private final TreeItem<String> lineageTreeRoot;
+    private final ColorHash colorHash;
+    private final IntegerProperty timeProperty;
+
+    private final ObservableList<Rule> rules;
+    private final AnchorPane mainPane;
+    private final Group zoomGroup;
 
     /** Keeps track of the current x layout position */
     private int maxX = 0;
-
-    private ObservableList<Rule> rules;
-    private AnchorPane mainPane;
-    private Group zoomGroup;
 
     // branch gap seems to be some multiple of this?
     private Scale scaleTransform;
     private Line timeIndicatorBar;
     private Text timeIndicator;
     private int ttduration = 0;
-    private IntegerProperty time;
+
 
     // =XScale minimal spacing between branches, inter
     private int xsc = 5;
     // left margin
     private int iXmax = 25;
     private int iYmin = 19;
-    private Stage contextMenuStage;
-    private ContextMenuController contextMenuController;
-    private StringProperty selectedNameLabeled;
-    private Stage ownStage;
-    private AnchorPane canvas;
-    private EventHandler<MouseEvent> clickHandler;
+
     private boolean defaultEmbryoFlag;
 
     public SulstonTreePane(
@@ -135,19 +138,20 @@ public class SulstonTreePane extends ScrollPane {
             final TreeItem<String> lineageTreeRoot,
             final ObservableList<Rule> rules,
             final ColorHash colorHash,
-            final IntegerProperty time,
-            final ContextMenuController controller,
-            final StringProperty selectedNameLabeled,
+            final IntegerProperty timeProperty,
+            final Stage contextMenuStage,
+            final ContextMenuController contextMenuController,
+            final StringProperty selectedNameLabeledProperty,
             final boolean defaultEmbryoFlag) {
 
         super();
 
         this.searchLayer = requireNonNull(searchLayer);
-        this.defaultEmbryoFlag = defaultEmbryoFlag;
+        this.defaultEmbryoFlag = requireNonNull(defaultEmbryoFlag);
 
-        this.clickHandler = event -> {
+        hiddenNodes = new ArrayList<>();
+        clickHandler = event -> {
             final String sourceName = ((Node) event.getSource()).getId();
-
             // right click
             if (event.getButton() == SECONDARY
                     || (event.getButton() == PRIMARY
@@ -155,13 +159,11 @@ public class SulstonTreePane extends ScrollPane {
                     || event.isMetaDown()))) {
                 showContextMenu(sourceName, event.getScreenX(), event.getScreenY());
             }
-
             // left click
             else if (event.getButton() == PRIMARY) {
                 // reset the name to activate navigate3d in 3d cell window
                 resetSelectedNameLabeled(sourceName);
             }
-
             // on a double click, also expand the clicked node
             if (event.getButton() == PRIMARY && event.getClickCount() == 2) {
                 if (hiddenNodes.contains(sourceName)) {
@@ -180,10 +182,9 @@ public class SulstonTreePane extends ScrollPane {
         this.lineageData = lineageData;
         this.movieTimeOffset = movieTimeOffset;
 
-        this.time = time;
-        this.time.addListener((observable, oldValue, newValue) -> repositionTimeLine());
+        this.timeProperty = timeProperty;
+        this.timeProperty.addListener((observable, oldValue, newValue) -> repositionTimeLine());
 
-        this.hiddenNodes = new ArrayList<>();
         setUpDefaultView();
 
         this.rules = rules;
@@ -264,10 +265,10 @@ public class SulstonTreePane extends ScrollPane {
         bindLocation(plusButton, this, yetanotherlevel);
         bindLocation(minusButton, this, yetanotherlevel);
 
-        contextMenuController = controller;
-        contextMenuStage = contextMenuController.getOwnStage();
+        this.contextMenuController = requireNonNull(contextMenuController);
+        this.contextMenuStage = requireNonNull(contextMenuStage);
 
-        this.selectedNameLabeled = selectedNameLabeled;
+        this.selectedNameLabeledProperty = selectedNameLabeledProperty;
 
         // keyboard shortcut for screenshot
         ownStage.addEventHandler(KEY_PRESSED, keyEvent -> {
@@ -331,8 +332,8 @@ public class SulstonTreePane extends ScrollPane {
     }
 
     private void resetSelectedNameLabeled(String name) {
-        selectedNameLabeled.set("");
-        selectedNameLabeled.set(name);
+        selectedNameLabeledProperty.set("");
+        selectedNameLabeledProperty.set(name);
     }
 
     public void setUpDefaultView() {
@@ -419,13 +420,13 @@ public class SulstonTreePane extends ScrollPane {
     }
 
     private void repositionTimeLine() {
-        timeIndicatorBar.setEndY(iYmin + time.getValue());
-        timeIndicatorBar.setStartY(iYmin + time.getValue());
-        timeIndicator.setY(iYmin + time.getValue());
+        timeIndicatorBar.setEndY(iYmin + timeProperty.getValue());
+        timeIndicatorBar.setStartY(iYmin + timeProperty.getValue());
+        timeIndicator.setY(iYmin + timeProperty.getValue());
         if (defaultEmbryoFlag) {
-            timeIndicator.setText(Integer.toString(time.get() + movieTimeOffset));
+            timeIndicator.setText(Integer.toString(timeProperty.get() + movieTimeOffset));
         } else {
-            timeIndicator.setText(Integer.toString(time.get()));
+            timeIndicator.setText(Integer.toString(timeProperty.get()));
         }
     }
 
@@ -471,7 +472,7 @@ public class SulstonTreePane extends ScrollPane {
                             currline.setStroke(lnewcolors);
                         } else {
                             if (currline != null && currline.getId() != null) {
-                                if (!currline.getId().equals("time")) {
+                                if (!currline.getId().equals("timeProperty")) {
                                     currline.setStroke(BLACK);
                                 }
                             }
@@ -484,20 +485,20 @@ public class SulstonTreePane extends ScrollPane {
         if (lineageTreeRoot != null) {
             recursiveDraw(mainPane, 400, 10, lineageTreeRoot, 10);
         }
-        // add time indicator bar
-        int timevalue = time.getValue();
+        // add timeProperty indicator bar
+        int timevalue = timeProperty.getValue();
         timeIndicatorBar = new Line(0, iYmin + timevalue, maxX + iXmax, iYmin + timevalue);
         timeIndicatorBar.setStroke(new Color(.5, .5, .5, .5));
-        timeIndicatorBar.setId("time");
+        timeIndicatorBar.setId("timeProperty");
 
-        // add time indicator
+        // add timeProperty indicator
         if (defaultEmbryoFlag) {
             timeIndicator = new Text(
                     TIME_LABEL_OFFSET_X,
                     iYmin + timevalue,
-                    Integer.toString(time.get() + movieTimeOffset));
+                    Integer.toString(timeProperty.get() + movieTimeOffset));
         } else {
-            timeIndicator = new Text(TIME_LABEL_OFFSET_X, iYmin + timevalue, Integer.toString(time.get()));
+            timeIndicator = new Text(TIME_LABEL_OFFSET_X, iYmin + timevalue, Integer.toString(timeProperty.get()));
         }
 
         timeIndicator.setFont(new Font(6));

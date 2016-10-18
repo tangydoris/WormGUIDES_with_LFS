@@ -6,7 +6,6 @@ package wormguides.loaders;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -28,8 +27,8 @@ public class ProductionInfoLoader {
     private static final String PRODUCT_INFO_LINE = "Production Information,,,,,,,,,,,,,";
 
     private static final String HEADER_LINE = "Cells,Image Series,Marker,Strain,Compressed Embryo?,Temporal "
-            + "Resolution,Segmentation,cytoshow link,Movie start time (min),isSulstonMode?,Total Time Points,X_SCALE,"
-            + "Y_SCALE,Z_SCALE";
+            + "Resolution,Segmentation,cytoshow link,Movie start timeProperty (min),isSulstonMode?,Total Time Points,"
+            + "X_SCALE,Y_SCALE,Z_SCALE";
 
     /**
      * Tokenizes each line in the config file and creates a 2D array of the file
@@ -40,48 +39,40 @@ public class ProductionInfoLoader {
         final URL url = ProductionInfoLoader.class
                 .getResource("/wormguides/models/production_info_file/Production_Info.csv");
 
-        List<List<String>> productionInfo = new ArrayList<>();
-        List<String> cells = new ArrayList<>();
-        List<String> imageSeries = new ArrayList<>();
-        List<String> markers = new ArrayList<>();
-        List<String> strains = new ArrayList<>();
-        List<String> compressedEmbryo = new ArrayList<>();
-        List<String> temporalResolutions = new ArrayList<>();
-        List<String> segmentations = new ArrayList<>();
-        List<String> cytoshowLinks = new ArrayList<>();
-        List<String> movieStartTime = new ArrayList<>();
-        List<String> isSulston = new ArrayList<>();
-        List<String> totalTimePoints = new ArrayList<>();
-        List<String> xScale = new ArrayList<>();
-        List<String> yScale = new ArrayList<>();
-        List<String> zScale = new ArrayList<>();
+        final List<List<String>> productionInfo = new ArrayList<>();
+        final List<String> cells = new ArrayList<>();
+        final List<String> imageSeries = new ArrayList<>();
+        final List<String> markers = new ArrayList<>();
+        final List<String> strains = new ArrayList<>();
+        final List<String> compressedEmbryo = new ArrayList<>();
+        final List<String> temporalResolutions = new ArrayList<>();
+        final List<String> segmentations = new ArrayList<>();
+        final List<String> cytoshowLinks = new ArrayList<>();
+        final List<String> movieStartTime = new ArrayList<>();
+        final List<String> isSulston = new ArrayList<>();
+        final List<String> totalTimePoints = new ArrayList<>();
+        final List<String> xScale = new ArrayList<>();
+        final List<String> yScale = new ArrayList<>();
+        final List<String> zScale = new ArrayList<>();
 
-        try (InputStream stream = url.openStream();
-             InputStreamReader streamReader = new InputStreamReader(stream);
-             BufferedReader reader = new BufferedReader(streamReader)) {
+        try (final InputStreamReader streamReader = new InputStreamReader(url.openStream());
+             final BufferedReader reader = new BufferedReader(streamReader)) {
 
             String line;
-
             while ((line = reader.readLine()) != null) {
                 // skip product info line and header line
                 if (line.equals(PRODUCT_INFO_LINE)) {
                     line = reader.readLine();
-
                     if (line.equals(HEADER_LINE)) {
                         line = reader.readLine();
                     }
-
-                    if (line == null) {
-                        break;
-                    }
                 }
-
                 // make sure valid line
                 if (line.length() <= 1) {
                     break;
                 }
 
-                StringTokenizer tokenizer = new StringTokenizer(line, ",");
+                final StringTokenizer tokenizer = new StringTokenizer(line, ",");
                 // check if valid line
                 if (tokenizer.countTokens() == NUMBER_OF_FIELDS) {
                     cells.add(tokenizer.nextToken());
@@ -101,7 +92,7 @@ public class ProductionInfoLoader {
                 }
             }
 
-            // add array lists
+            // add lists to production info
             productionInfo.add(cells);
             productionInfo.add(imageSeries);
             productionInfo.add(markers);
@@ -116,9 +107,6 @@ public class ProductionInfoLoader {
             productionInfo.add(xScale);
             productionInfo.add(yScale);
             productionInfo.add(zScale);
-
-            return productionInfo;
-
         } catch (IOException e) {
             System.out.println("The production info file "
                     + PRODUCTION_INFO_FILE_PATH

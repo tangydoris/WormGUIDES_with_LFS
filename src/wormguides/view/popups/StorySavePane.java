@@ -36,15 +36,16 @@ public class StorySavePane extends AnchorPane {
     private Text promptText;
 
     public StorySavePane(
-            final String prompt,
-            final String yesButtonText,
-            final String noButtonText,
-            final String cancelButtonText,
             final EventHandler<ActionEvent> yesHandler,
             final EventHandler<ActionEvent> noHandler,
             final EventHandler<ActionEvent> cancelHandler) {
 
         super();
+
+        final String prompt = "Would you like to save the current active story before exiting WormGUIDES?";
+        final String yesButtonText = "Yes";
+        final String noButtonText = "No";
+        final String cancelButtonText = "Cancel";
 
         final VBox mainVBox = new VBox(10);
         setTopAnchor(mainVBox, 10.0);

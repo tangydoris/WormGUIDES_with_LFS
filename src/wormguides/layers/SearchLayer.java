@@ -99,10 +99,7 @@ public class SearchLayer {
     private final ColorPicker colorPicker;
     private final Button addRuleButton;
 
-    /**
-     * Tells the {@link wormguides.controllers.Window3DController} to update the subscene according to the fetched
-     * gene results
-     */
+    /** Tells the subscene controller to update according to the fetched gene results */
     private final BooleanProperty geneResultsUpdated;
     private final Queue<String> geneSearchQueue;
 
@@ -203,17 +200,12 @@ public class SearchLayer {
         geneResultsUpdated = new SimpleBooleanProperty(false);
 
         geneSearchService = new GeneSearchService();
-        geneSearchService.setOnScheduled(event -> {
-//            System.out.println("search service scheduled");
-            showLoadingService.restart();
-        });
+        geneSearchService.setOnScheduled(event -> showLoadingService.restart());
         geneSearchService.setOnCancelled(event -> {
-//            System.out.println("search service cancelled");
             geneSearchService.resetSearchedGene();
             showLoadingService.cancel();
         });
         geneSearchService.setOnSucceeded(event -> {
-//            System.out.println("search service succeeded");
             showLoadingService.cancel();
             searchResultsList.clear();
 
@@ -602,9 +594,9 @@ public class SearchLayer {
         };
     }
 
-    public BooleanProperty getGeneResultsUpdated() {
-        return geneResultsUpdated;
-    }
+//    public BooleanProperty getGeneResultsUpdated() {
+//        return geneResultsUpdated;
+//    }
 
     public ObservableList<String> getSearchResultsList() {
         return searchResultsList;

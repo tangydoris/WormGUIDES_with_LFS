@@ -7,16 +7,18 @@ package wormguides.loaders;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.collections.ObservableList;
 
 import search.SearchType;
-import wormguides.controllers.Window3DController;
 import wormguides.layers.SearchLayer;
 import wormguides.models.Rule;
 import wormguides.models.SearchOption;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.parseInt;
+import static java.util.Objects.requireNonNull;
 
 import static javafx.scene.paint.Color.web;
 
@@ -44,21 +46,19 @@ public class URLLoader {
      *
      * @param url
      *         subscene parameters and rules URL consisting of a prefix url, rules to be parsed, and view arguments
-     * @param window3DController
-     *         the controller for the 3D subscene
-     * @param useInternalScaleFactor
-     *         true when called by the {@link wormguides.layers.StoriesLayer} telling the 3D subscene to use the
-     *         internal scale factor, false otherwise
      */
     public static void process(
             final String url,
-            final Window3DController window3DController,
-            final boolean useInternalScaleFactor,
-            final SearchLayer searchLayer) {
-
-        if (window3DController == null) {
-            return;
-        }
+            final ObservableList<Rule> rulesList,
+            final SearchLayer searchLayer,
+            final IntegerProperty timeProperty,
+            final DoubleProperty rotateXAngleProperty,
+            final DoubleProperty rotateYAngleProperty,
+            final DoubleProperty rotateZAngleProperty,
+            final DoubleProperty translateXProperty,
+            final DoubleProperty translateYProperty,
+            final DoubleProperty zoomProperty,
+            final DoubleProperty othersOpacityProperty) {
 
         if (!url.contains("testurlscript?/")) {
             return;
@@ -69,11 +69,9 @@ public class URLLoader {
             return;
         }
 
-        ObservableList<Rule> rulesList = window3DController.getObservableColorRulesList();
-
-        String[] args = url.split("/");
-        List<String> ruleArgs = new ArrayList<>();
-        List<String> viewArgs = new ArrayList<>();
+        final String[] args = url.split("/");
+        final List<String> ruleArgs = new ArrayList<>();
+        final List<String> viewArgs = new ArrayList<>();
 
         // add rules and view parameters to their ArrayList's
         int i = 0;
@@ -98,10 +96,19 @@ public class URLLoader {
             }
         }
 
-        // process rules, add to current rules list
+        // process rules
         parseRules(ruleArgs, rulesList, searchLayer);
         // process view arguments
-        parseViewArgs(viewArgs, window3DController, useInternalScaleFactor);
+        parseViewArgs(
+                viewArgs,
+                timeProperty,
+                rotateXAngleProperty,
+                rotateYAngleProperty,
+                rotateZAngleProperty,
+                translateXProperty,
+                translateYProperty,
+                zoomProperty,
+                othersOpacityProperty);
     }
 
     private static void parseRules(
@@ -253,8 +260,14 @@ public class URLLoader {
 
     private static void parseViewArgs(
             final List<String> viewArgs,
-            final Window3DController window3DController,
-            final boolean useInternalScaleFactor) {
+            final IntegerProperty timeProperty,
+            final DoubleProperty rotateXAngleProperty,
+            final DoubleProperty rotateYAngleProperty,
+            final DoubleProperty rotateZAngleProperty,
+            final DoubleProperty translateXProperty,
+            final DoubleProperty translateYProperty,
+            final DoubleProperty zoomProperty,
+            final DoubleProperty othersOpacityProperty) {
 
         // manipulate viewArgs arraylist so that rx ry and rz are grouped together to facilitate loading rotations in
         // x and y
@@ -273,9 +286,11 @@ public class URLLoader {
                     double rx = parseDouble(tokens[0].split("=")[1]);
                     double ry = parseDouble(tokens[1].split("=")[1]);
                     double rz = parseDouble(tokens[2].split("=")[1]);
-                    window3DController.setRotations(rx, ry, rz);
+                    requireNonNull(rotateXAngleProperty).set(rx);
+                    requireNonNull(rotateYAngleProperty).set(ry);
+                    requireNonNull(rotateZAngleProperty).set(rz);
                 } catch (NumberFormatException nfe) {
-                    System.out.println("error in parsing time variable");
+                    System.out.println("error in parsing rotation variables");
                     nfe.printStackTrace();
                 }
                 continue;
@@ -286,7 +301,7 @@ public class URLLoader {
                 switch (tokens[0]) {
                     case "time":
                         try {
-                            window3DController.setTime(parseInt(tokens[1]));
+                            requireNonNull(timeProperty).set(parseInt(tokens[1]));
                         } catch (NumberFormatException nfe) {
                             System.out.println("error in parsing time variable");
                             nfe.printStackTrace();
@@ -295,29 +310,25 @@ public class URLLoader {
 
                     case "tX":
                         try {
-                            window3DController.setTranslationX(parseDouble(tokens[1]));
+                            requireNonNull(translateXProperty).set(parseDouble(tokens[1]));
                         } catch (NumberFormatException nfe) {
-                            System.out.println("error in parsing translation variable");
+                            System.out.println("error in parsing x translation");
                             nfe.printStackTrace();
                         }
                         break;
 
                     case "tY":
                         try {
-                            window3DController.setTranslationY(parseDouble(tokens[1]));
+                            requireNonNull(translateYProperty).set(parseDouble(tokens[1]));
                         } catch (NumberFormatException nfe) {
-                            System.out.println("error in parsing translation variable");
+                            System.out.println("error in parsing y translation");
                             nfe.printStackTrace();
                         }
                         break;
 
                     case "scale":
                         try {
-                            if (useInternalScaleFactor) {
-                                window3DController.setScaleInternal(parseDouble(tokens[1]));
-                            } else {
-                                window3DController.setScale(parseDouble(tokens[1]));
-                            }
+                            requireNonNull(zoomProperty).set(parseDouble(tokens[1]));
                         } catch (NumberFormatException nfe) {
                             System.out.println("error in parsing scale variable");
                             nfe.printStackTrace();
@@ -326,7 +337,7 @@ public class URLLoader {
 
                     case "dim":
                         try {
-                            window3DController.setOthersVisibility(parseDouble(tokens[1]));
+                            requireNonNull(othersOpacityProperty).set(parseDouble(tokens[1]));
                         } catch (NumberFormatException nfe) {
                             System.out.println("error in parsing dim variable");
                             nfe.printStackTrace();

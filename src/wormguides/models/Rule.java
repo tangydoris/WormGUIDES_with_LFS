@@ -61,7 +61,7 @@ import static wormguides.models.SearchOption.MULTICELLULAR_NAME_BASED;
 public class Rule {
 
     /** Length and width of color rule UI buttons */
-    private static final int UI_SIDE_LENGTH = 22;
+    private final int UI_SIDE_LENGTH = 22;
 
     private Stage editStage;
 
@@ -506,15 +506,13 @@ public class Rule {
      * @return true if the rule is visible and applies to cell body with specified name, false otherwise
      */
     public boolean appliesToCellBody(final String name) {
-        if (!visible) {
+        if (!visible || !options.contains(CELL_BODY)) {
             return false;
         }
-
         final boolean containsDescendantOption = options.contains(DESCENDANT);
-        final boolean containsCellNucleusOption = options.contains(CELL_NUCLEUS);
         if (options.contains(CELL_BODY)) {
             for (String cell : cells) {
-                if (containsCellNucleusOption && cell.equalsIgnoreCase(name)) {
+                if (cell.equalsIgnoreCase(name)) {
                     return true;
                 }
                 // no need to check the ancestor option since cell bodies only apply to terminal cells
@@ -523,7 +521,6 @@ public class Rule {
                 }
             }
         }
-        
         return false;
     }
 
@@ -564,16 +561,13 @@ public class Rule {
             if (editController != null) {
                 setColor(editController.getColor());
                 editStage.hide();
-
                 // because the multicellular name based rule is not a check option, we need to override this function
                 // to avoid overwriting the multicellular search option
                 if (!options.contains(MULTICELLULAR_NAME_BASED)) {
                     setOptions(editController.getOptions());
                 }
-
                 label.setText(toStringFull());
                 toolTip.setText(toStringFull());
-
                 ruleChanged.set(true);
                 ruleChanged.set(false);
             }

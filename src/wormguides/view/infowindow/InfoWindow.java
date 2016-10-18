@@ -71,19 +71,19 @@ public class InfoWindow {
     private int count;
 
     public InfoWindow (
-            Stage stage,
-            StringProperty cellNameProperty,
-            CasesLists cases,
-            ProductionInfo info,
-            Connectome connectome,
-            boolean defaultEmbryoFlag,
-            LineageData lineageData,
-            SearchLayer searchLayer) {
+            final Stage stage,
+            final StringProperty cellNameProperty,
+            final CasesLists casesLists,
+            final ProductionInfo productionInfo,
+            final Connectome connectome,
+            final boolean defaultEmbryoFlag,
+            final LineageData lineageData,
+            final SearchLayer searchLayer) {
 
         infoWindowStage = new Stage();
         infoWindowStage.setTitle("Cell Info Window");
 
-        productionInfo = info;
+        this.productionInfo = requireNonNull(productionInfo);
         tabPane = new TabPane();
 
         scene = new Scene(new Group());
@@ -175,27 +175,19 @@ public class InfoWindow {
                         }
 
                         if (lineageName != null && !lineageName.isEmpty()) {
-                            if (cases == null) {
+                            if (casesLists == null) {
                                 System.out.println("null cell cases");
                                 return null; // error check
                             }
 
                             if (PartsList.isLineageName(lineageName)) {
-                                if (cases.containsCellCase(lineageName)) {
-
+                                if (casesLists.containsCellCase(lineageName)) {
                                     // show the tab
                                 } else {
-                                    // translate the name if necessary
-                                    // String tabTitle =
-                                    // connectome.checkQueryCell(queryName).toUpperCase();
-                                    // String tabTitle = queryName;
-                                    // add a terminal case --> pass the wiring
-                                    // partners
-
                                     // check default flag for image series info validation
                                     if (defaultEmbryoFlag) {
                                         String funcName = connectome.checkQueryCell(lineageName).toUpperCase();
-                                        cases.makeTerminalCase(
+                                        casesLists.makeTerminalCase(
                                                 lineageName,
                                                 funcName,
                                                 connectome.queryConnectivity(
@@ -226,12 +218,12 @@ public class InfoWindow {
                                                         false,
                                                         true,
                                                         false),
-                                                productionInfo.getNuclearInfo(),
-                                                productionInfo.getCellShapeData(funcName));
+                                                InfoWindow.this.productionInfo.getNuclearInfo(),
+                                                InfoWindow.this.productionInfo.getCellShapeData(funcName));
                                     } else {
                                         System.out.println("here");
                                         String funcName = connectome.checkQueryCell(lineageName).toUpperCase();
-                                        cases.makeTerminalCase(
+                                        casesLists.makeTerminalCase(
                                                 lineageName,
                                                 funcName,
                                                 connectome.queryConnectivity(
@@ -268,19 +260,19 @@ public class InfoWindow {
 
                                 }
                             } else { // not in connectome --> non terminal case
-                                if (cases.containsCellCase(lineageName)) {
+                                if (casesLists.containsCellCase(lineageName)) {
 
                                     // show tab
                                 } else {
                                     // add a non terminal case
                                     if (defaultEmbryoFlag) {
-                                        cases.makeNonTerminalCase(
+                                        casesLists.makeNonTerminalCase(
                                                 lineageName,
-                                                productionInfo.getNuclearInfo(),
-                                                productionInfo.getCellShapeData(lineageName));
+                                                InfoWindow.this.productionInfo.getNuclearInfo(),
+                                                InfoWindow.this.productionInfo.getCellShapeData(lineageName));
                                     } else {
                                         System.out.println("third one");
-                                        cases.makeNonTerminalCase(
+                                        casesLists.makeNonTerminalCase(
                                                 lineageName,
                                                 new ArrayList<>(),
                                                 new ArrayList<>());
@@ -472,14 +464,13 @@ public class InfoWindow {
             productionInfoStage = new Stage();
             productionInfoStage.setTitle("Experimental Data");
 
-
-            WebView productionInfoWebView = new WebView();
+            final WebView productionInfoWebView = new WebView();
             productionInfoWebView.getEngine().loadContent(new InfoWindowDOM(productionInfo).DOMtoString());
             productionInfoWebView.setContextMenuEnabled(false);
 
-            VBox root = new VBox();
+            final VBox root = new VBox();
             root.getChildren().addAll(productionInfoWebView);
-            Scene scene = new Scene(new Group());
+            final Scene scene = new Scene(new Group());
             scene.setRoot(root);
 
             productionInfoStage.setScene(scene);

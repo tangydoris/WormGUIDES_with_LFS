@@ -17,8 +17,11 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -26,6 +29,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
+import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.SubScene;
 import javafx.scene.control.Button;
@@ -51,7 +56,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Modality;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 
@@ -71,6 +75,7 @@ import wormguides.models.ProductionInfo;
 import wormguides.models.Rule;
 import wormguides.models.SceneElementsList;
 import wormguides.stories.Story;
+import wormguides.util.ColorHash;
 import wormguides.util.StringListCellFactory;
 import wormguides.view.DraggableTab;
 import wormguides.view.infowindow.InfoWindow;
@@ -84,6 +89,15 @@ import wormguides.view.urlwindow.URLWindow;
 import static java.util.Collections.sort;
 
 import static javafx.application.Platform.runLater;
+import static javafx.collections.FXCollections.observableArrayList;
+import static javafx.scene.SceneAntialiasing.BALANCED;
+import static javafx.scene.layout.AnchorPane.setBottomAnchor;
+import static javafx.scene.layout.AnchorPane.setLeftAnchor;
+import static javafx.scene.layout.AnchorPane.setRightAnchor;
+import static javafx.scene.layout.AnchorPane.setTopAnchor;
+import static javafx.scene.paint.Color.web;
+import static javafx.stage.Modality.NONE;
+import static javafx.stage.StageStyle.UNDECORATED;
 
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.getAvgXOffsetFromZero;
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.getAvgYOffsetFromZero;
@@ -95,36 +109,14 @@ import static search.SearchUtil.getStructureComment;
 import static search.SearchUtil.isStructureWithComment;
 import static wormguides.loaders.URLLoader.process;
 
+/**
+ * Controller for RootLayout.fxml that contains all GUI components of the main WormGUIDES application window
+ */
 public class RootLayoutController extends BorderPane implements Initializable {
 
     private final String UNLINEAGED_START = "Nuc";
-
     private final String ROOT = "ROOT";
-
-    /** Default transparency of 'other' entities on startup */
-    private final double DEFAULT_OTHERS_OPACITY = 25;
-
-    private RotationController rotationController;
-
-    // Root layout's own stage
-    private Stage mainStage;
-
-    // Popup windows
-    private Stage aboutStage;
-    private Stage sulstonTreeStage;
-    private Stage urlDisplayStage;
-    private Stage urlLoadStage;
-
-    // URL generation/loading
-    private URLWindow urlWindow;
-    private URLLoadWindow urlLoadWindow;
-    private URLLoadWarningDialog warning;
-
-    // 3D subscene stuff
-    private Window3DController window3DController;
-    private SubScene subscene;
-    private DoubleProperty subsceneWidth;
-    private DoubleProperty subsceneHeight;
+    private final String FILL_COLOR_HEX = "#272727";
 
     // Panels stuff
     @FXML
@@ -137,6 +129,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private ScrollPane infoPane;
     @FXML
     private HBox sceneControlsBox;
+
     // Subscene controls
     @FXML
     private Button backwardButton,
@@ -150,7 +143,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
     @FXML
     private Button zoomInButton,
             zoomOutButton;
-    // Tab
+
+    // Tab stuff
     @FXML
     private TabPane mainTabPane;
     @FXML
@@ -166,8 +160,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     @FXML
     private Tab displayTab;
 
-    // Cells tab
-    private SearchLayer searchLayer;
+    // Search stuff
     @FXML
     private TextField searchField;
     @FXML
@@ -192,20 +185,11 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private ColorPicker colorPicker;
     @FXML
     private Button addSearchBtn;
-
-    // Connectome stuff
-    private Connectome connectome;
     @FXML
     private CheckBox presynapticCheckBox,
             postsynapticCheckBox,
             electricalCheckBox,
             neuromuscularCheckBox;
-
-    // Cell selection
-    private StringProperty selectedName;
-    // Display Layer stuff
-    private DisplayLayer displayLayer;
-    private BooleanProperty useInternalRules;
     @FXML
     private ListView<Rule> rulesListView;
     @FXML
@@ -214,6 +198,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private Button clearAllLabelsButton;
     @FXML
     private Slider opacitySlider;
+
     // Structures tab
     private StructuresLayer structuresLayer;
     @FXML
@@ -226,22 +211,20 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private Button addStructureRuleBtn;
     @FXML
     private ColorPicker structureRuleColorPicker;
-    // Cell information
+
+    // Cell information panel
     @FXML
     private Text displayedName;
     @FXML
     private Text moreInfoClickableText;
     @FXML
     private Text displayedDescription;
-    // scene elements stuff
-    // average x-, y- and z-coordinate offsets of nuclei from zero
-    private SceneElementsList sceneElementsList;
-    // Story stuff
     @FXML
     private Text displayedStory;
     @FXML
     private Text displayedStoryDescription;
-    private StoriesLayer storiesLayer;
+
+    // Stories tab
     @FXML
     private ListView<Story> storiesListView;
     @FXML
@@ -250,32 +233,90 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private Button newStoryButton;
     @FXML
     private Button deleteStoryButton;
-    private Popup exitSavePopup;
 
-    // production information
-    private ProductionInfo productionInfo;
-    private int movieTimeOffset;
-
-    // info window Stuff
-    private CasesLists cases;
-    private InfoWindow infoWindow;
-    private BooleanProperty bringUpInfoProperty;
-    private ImageView playIcon, pauseIcon;
-    private IntegerProperty time;
-    private IntegerProperty totalNuclei;
-    private BooleanProperty playingMovie;
-    // Lineage tree
-    private TreeItem<String> lineageTreeRoot;
-    private LineageData lineageData;
-    // rotation controller
-    private Stage rotationControllerStage;
-    // movie capture
+    // Movie capture stuff
     @FXML
     private MenuItem captureVideoMenuItem;
     @FXML
     private MenuItem stopCaptureVideoMenuItem;
-    private BooleanProperty captureVideo;
+
+    // Root layout's own stage (the main application stage)
+    private Stage mainStage;
+
+    // Other windows
+    private Stage aboutStage;
+    private Stage sulstonTreeStage;
+    private Stage urlDisplayStage;
+    private Stage urlLoadStage;
+    private Stage rotationControllerStage;
+    private Stage contextMenuStage;
+    private Popup exitSavePopup;
+
+    // URL generation/loading
+    private URLWindow urlWindow;
+    private URLLoadWindow urlLoadWindow;
+    private URLLoadWarningDialog warning;
+
+    private RotationController rotationController;
+
+    private Window3DController window3DController;
+    private DoubleProperty subsceneWidth;
+    private DoubleProperty subsceneHeight;
+
+    private SearchLayer searchLayer;
+
+    private Connectome connectome;
+
+    private StoriesLayer storiesLayer;
+
+    private SceneElementsList sceneElementsList;
+
+    private DisplayLayer displayLayer;
+
+    private ProductionInfo productionInfo;
+
+    // Info window stuff
+    private CasesLists casesLists;
+    private InfoWindow infoWindow;
+    private ImageView playIcon, pauseIcon;
+
+    // Lineage tree stuff
+    private TreeItem<String> lineageTreeRoot;
+    private LineageData lineageData;
+
+    // Shared properties
+    private StringProperty selectedNameProperty;
+    private StringProperty selectedNameLabeledProperty;
+    private StringProperty activeStoryProperty;
+    private BooleanProperty updatedGeneResultsFlag;
+    private BooleanProperty usingInternalRulesFlag;
+    private BooleanProperty bringUpInfoFlag;
+    private BooleanProperty playingMovieFlag;
+    private BooleanProperty capturingVideoFlag;
+    private BooleanProperty cellClickedFlag;
+    private BooleanProperty rebuildSubsceneFlag;
+    private IntegerProperty timeProperty;
+    private IntegerProperty totalNucleiProperty;
+    private DoubleProperty rotateXAngleProperty;
+    private DoubleProperty rotateYAngleProperty;
+    private DoubleProperty rotateZAngleProperty;
+    private DoubleProperty translateXProperty;
+    private DoubleProperty translateYProperty;
+    private DoubleProperty zoomProperty;
+    private DoubleProperty othersOpacityProperty;
+
+    // Other shared variables
+    private ObservableList<Rule> rulesList;
+    private int startTime;
+    private int endTime;
+    private int movieTimeOffset;
     private boolean defaultEmbryoFlag;
+    private Service<Void> searchResultsUpdateService;
+    private ContextMenuController contextMenuController;
+    private ColorHash colorHash;
+    private SubScene subscene;
+    private Group rootEntitiesGroup;
+    private ObservableList<String> searchResultsList;
 
     @FXML
     public void menuLoadStory() {
@@ -286,16 +327,12 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
     @FXML
     public void menuSaveStory() {
-        if (storiesLayer != null) {
-            storiesLayer.saveActiveStory();
-        }
+        storiesLayer.saveActiveStory();
     }
 
     @FXML
     public void menuSaveImageAction() {
-        if (window3DController != null) {
-            window3DController.stillscreenCapture();
-        }
+        window3DController.stillscreenCapture();
     }
 
     @FXML
@@ -309,8 +346,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
             aboutStage = new Stage();
             aboutStage.setScene(new Scene(new AboutPane()));
             aboutStage.setTitle("About WormGUIDES");
-            aboutStage.initModality(Modality.NONE);
-
+            aboutStage.initModality(NONE);
             aboutStage.setHeight(400.0);
             aboutStage.setWidth(300.0);
             aboutStage.setResizable(false);
@@ -328,19 +364,18 @@ public class RootLayoutController extends BorderPane implements Initializable {
                     lineageData,
                     movieTimeOffset,
                     lineageTreeRoot,
-                    displayLayer.getRulesList(),
-                    window3DController.getColorHash(),
-                    window3DController.getTimeProperty(),
-                    window3DController.getContextMenuController(),
-                    window3DController.getSelectedNameLabeled(),
+                    rulesList,
+                    colorHash,
+                    timeProperty,
+                    contextMenuStage,
+                    contextMenuController,
+                    selectedNameLabeledProperty,
                     defaultEmbryoFlag);
-
             sulstonTreeStage.setScene(new Scene(sp));
             sulstonTreeStage.setTitle("LineageTree");
-            sulstonTreeStage.initModality(Modality.NONE);
+            sulstonTreeStage.initModality(NONE);
             sulstonTreeStage.show();
             mainStage.show();
-
         } else {
             sulstonTreeStage.show();
             runLater(() -> ((Stage) sulstonTreeStage.getScene().getWindow()).toFront());
@@ -351,17 +386,22 @@ public class RootLayoutController extends BorderPane implements Initializable {
     public void generateURLAction() {
         if (urlDisplayStage == null) {
             urlDisplayStage = new Stage();
-
-            urlWindow = new URLWindow();
-            urlWindow.setScene(window3DController);
+            urlWindow = new URLWindow(
+                    rulesList,
+                    timeProperty,
+                    rotateXAngleProperty,
+                    rotateYAngleProperty,
+                    rotateZAngleProperty,
+                    translateXProperty,
+                    translateYProperty,
+                    zoomProperty,
+                    othersOpacityProperty);
             urlWindow.getCloseButton().setOnAction(event -> urlDisplayStage.hide());
-
             urlDisplayStage.setScene(new Scene(urlWindow));
             urlDisplayStage.setTitle("Share Scene");
             urlDisplayStage.setResizable(false);
-            urlDisplayStage.initModality(Modality.NONE);
+            urlDisplayStage.initModality(NONE);
         }
-
         urlWindow.resetURLs();
         urlDisplayStage.show();
     }
@@ -380,11 +420,33 @@ public class RootLayoutController extends BorderPane implements Initializable {
                     final Optional<ButtonType> result = warning.showAndWait();
                     if (result.get() == warning.getButtonTypeOkay()) {
                         urlLoadStage.hide();
-                        process(urlLoadWindow.getInputURL(), window3DController, false, searchLayer);
+                        process(
+                                urlLoadWindow.getInputURL(),
+                                rulesList,
+                                searchLayer,
+                                timeProperty,
+                                rotateXAngleProperty,
+                                rotateYAngleProperty,
+                                rotateZAngleProperty,
+                                translateXProperty,
+                                translateYProperty,
+                                zoomProperty,
+                                othersOpacityProperty);
                     }
                 } else {
                     urlLoadStage.hide();
-                    process(urlLoadWindow.getInputURL(), window3DController, false, searchLayer);
+                    process(
+                            urlLoadWindow.getInputURL(),
+                            rulesList,
+                            searchLayer,
+                            timeProperty,
+                            rotateXAngleProperty,
+                            rotateYAngleProperty,
+                            rotateZAngleProperty,
+                            translateXProperty,
+                            translateYProperty,
+                            zoomProperty,
+                            othersOpacityProperty);
                 }
             });
             urlLoadWindow.getCancelButton().setOnAction(event -> urlLoadStage.hide());
@@ -392,7 +454,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
             urlLoadStage.setScene(new Scene(urlLoadWindow));
             urlLoadStage.setTitle("Load Scene");
             urlLoadStage.setResizable(false);
-            urlLoadStage.initModality(Modality.NONE);
+            urlLoadStage.initModality(NONE);
         }
 
         urlLoadWindow.clearField();
@@ -439,73 +501,52 @@ public class RootLayoutController extends BorderPane implements Initializable {
     public void openInfoWindow() {
         if (infoWindow == null) {
             initInfoWindow();
-
-            if (cases == null) {
-                initCases();
-            } else {
-                cases.setInfoWindow(infoWindow);
-            }
+            casesLists.setInfoWindow(infoWindow);
         }
-
         infoWindow.showWindow();
     }
-    
+
     // START View->Primary Data menu items
     @FXML
     public void viewCellShapesIndex() {
-    	if (infoWindow == null) {
-    		initInfoWindow();
-    	}
-    	
-    	if (sceneElementsList == null) {
-    		initSceneElementsList();
+        if (infoWindow == null) {
+            initInfoWindow();
         }
-    	
-    	infoWindow.generateCellShapesIndexWindow(sceneElementsList.getElementsList());
+        infoWindow.generateCellShapesIndexWindow(sceneElementsList.getElementsList());
     }
-    
+
     @FXML
     public void viewPartsList() {
-    	if (infoWindow == null) {
-    		initInfoWindow();
-    	}
-    	
-    	infoWindow.generatePartsListWindow();
+        if (infoWindow == null) {
+            initInfoWindow();
+        }
+        infoWindow.generatePartsListWindow();
     }
-    
+
     @FXML
     public void viewConnectome() {
-    	if (infoWindow == null) {
-    		initInfoWindow();
-    	}
-    	
-    	infoWindow.generateConnectomeWindow(connectome.getSynapseList());
+        if (infoWindow == null) {
+            initInfoWindow();
+        }
+        infoWindow.generateConnectomeWindow(connectome.getSynapseList());
     }
-    
+
     @FXML
     public void viewCellDeaths() {
-    	if (infoWindow == null) {
-    		initInfoWindow();
-    	}
-    	
-    	infoWindow.generateCellDeathsWindow(CellDeaths.getCellDeathsAsArray());
+        if (infoWindow == null) {
+            initInfoWindow();
+        }
+        infoWindow.generateCellDeathsWindow(CellDeaths.getCellDeathsAsArray());
     }
-    
+
     @FXML
     public void productionInfoAction() {
-    	if (infoWindow == null) {
-    		initInfoWindow();
-    	}
-    	
-    	if (productionInfo == null) {
-    		initProductionInfo();
-    	}
-    	
-    	infoWindow.generateProductionInfoWindow();
+        if (infoWindow == null) {
+            initInfoWindow();
+        }
+        infoWindow.generateProductionInfoWindow();
     }
     // END View->Primary Data menu items
-    
-    // ----- End menu items and buttons listeners -----
 
     @FXML
     public void openRotationController() {
@@ -514,8 +555,10 @@ public class RootLayoutController extends BorderPane implements Initializable {
             loader.setLocation(MainApp.class.getResource("view/layouts/RotationControllerLayout.fxml"));
 
             if (rotationController == null) {
-                rotationController = new RotationController(window3DController.getRotateXAngleProperty(),
-                        window3DController.getRotateYAngleProperty(), window3DController.getRotateZAngleProperty());
+                rotationController = new RotationController(
+                        rotateXAngleProperty,
+                        rotateYAngleProperty,
+                        rotateZAngleProperty);
             }
 
             rotationControllerStage = new Stage();
@@ -527,7 +570,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
                 rotationControllerStage.setTitle("Rotation Controller");
                 rotationControllerStage.initOwner(mainStage);
-                rotationControllerStage.initModality(Modality.NONE);
+                rotationControllerStage.initModality(NONE);
                 rotationControllerStage.setResizable(true);
 
             } catch (IOException e) {
@@ -551,7 +594,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 // error saving movie, update UI
                 captureVideoMenuItem.setDisable(false);
                 stopCaptureVideoMenuItem.setDisable(true);
-                captureVideo.set(false);
+                capturingVideoFlag.set(false);
             }
         }
     }
@@ -560,7 +603,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     public void stopCaptureAndSave() {
         captureVideoMenuItem.setDisable(false);
         stopCaptureVideoMenuItem.setDisable(true);
-        captureVideo.set(false);
+        capturingVideoFlag.set(false);
 
         // convert captured images to movie
         if (window3DController != null) {
@@ -594,17 +637,11 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 };
                 final EventHandler<ActionEvent> cancelHandler = event -> exitSavePopup.hide();
 
-                final StorySavePane storySaveDialog = new StorySavePane(
-                        "Would you like to save the current active story before exiting WormGUIDES?",
-                        "Yes",
-                        "No",
-                        "Cancel",
+                exitSavePopup = new Popup();
+                exitSavePopup.getContent().add(new StorySavePane(
                         yesHandler,
                         noHandler,
-                        cancelHandler);
-
-                exitSavePopup = new Popup();
-                exitSavePopup.getContent().add(storySaveDialog);
+                        cancelHandler));
 
                 // position dialog on screen
                 exitSavePopup.setAutoFix(true);
@@ -625,30 +662,21 @@ public class RootLayoutController extends BorderPane implements Initializable {
         System.exit(0);
     }
 
-    private void init3DWindow(final LineageData data, final ObservableList<Rule> rulesList) {
-        if (cases == null) {
-            initCases();
-        }
-        if (productionInfo == null) {
-            initProductionInfo();
-        }
-        if (connectome == null) {
-            initConnectome();
-        }
-
-        // for context menu
-        // info window
-        bringUpInfoProperty = new SimpleBooleanProperty(false);
-
-        double[] xyzScale = lineageData.getXYZScale();
+    private void initWindow3DController() {
+        final double[] xyzScale = lineageData.getXYZScale();
         window3DController = new Window3DController(
                 mainStage,
+                rootEntitiesGroup,
+                subscene,
                 modelAnchorPane,
-                data,
-                cases,
+                lineageData,
+                casesLists,
                 productionInfo,
                 connectome,
-                bringUpInfoProperty,
+                sceneElementsList,
+                storiesLayer,
+                searchLayer,
+                bringUpInfoFlag,
                 getAvgXOffsetFromZero(),
                 getAvgYOffsetFromZero(),
                 getAvgZOffsetFromZero(),
@@ -667,20 +695,47 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 uniformSizeCheckBox,
                 cellNucleusCheckBox,
                 cellBodyCheckBox,
-                multiRadioBtn);
+                multiRadioBtn,
+                startTime,
+                endTime,
+                timeProperty,
+                totalNucleiProperty,
+                zoomProperty,
+                othersOpacityProperty,
+                rotateXAngleProperty,
+                rotateYAngleProperty,
+                rotateZAngleProperty,
+                translateXProperty,
+                translateYProperty,
+                selectedNameProperty,
+                selectedNameLabeledProperty,
+                cellClickedFlag,
+                playingMovieFlag,
+                updatedGeneResultsFlag,
+                rebuildSubsceneFlag,
+                rulesList,
+                colorHash,
+                contextMenuStage,
+                contextMenuController,
+                searchResultsUpdateService,
+                searchResultsList);
 
-        subscene = window3DController.getSubScene();
-        setPropertiesFrom3DWindow();
+        timeProperty.addListener((observable, oldValue, newValue) -> {
+            timeSlider.setValue(timeProperty.get());
+            if (timeProperty.get() >= endTime - 1) {
+                playButton.setGraphic(playIcon);
+                playingMovieFlag.set(false);
+            }
+        });
+        timeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            final int value = newValue.intValue();
+            if (value != oldValue.intValue()) {
+                timeProperty.set(newValue.intValue());
+            }
+        });
 
-        window3DController.setRulesList(rulesList);
-    }
-
-    private void setPropertiesFrom3DWindow() {
-        time = window3DController.getTimeProperty();
-        window3DController.getZoomProperty();
-        totalNuclei = window3DController.getTotalNucleiProperty();
-        playingMovie = window3DController.getPlayingMovieProperty();
-        selectedName = window3DController.getSelectedName();
+        // initial start at movie end (builds subscene automatically)
+        timeProperty.set(endTime);
     }
 
     public void setStage(final Stage stage) {
@@ -688,26 +743,10 @@ public class RootLayoutController extends BorderPane implements Initializable {
     }
 
     private void addListeners() {
-        // time integer property that dictates the current time point
-        time.addListener((observable, oldValue, newValue) -> {
-            timeSlider.setValue(time.get());
-            if (time.get() >= window3DController.getEndTime() - 1) {
-                playButton.setGraphic(playIcon);
-                playingMovie.set(false);
-            }
-        });
-
-        timeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            int newTime = newValue.intValue();
-            if (window3DController != null) {
-                window3DController.setTime(newTime);
-            }
-        });
-
         // searchLayer stuff
         searchResultsListView.getSelectionModel()
                 .selectedItemProperty()
-                .addListener((observable, oldValue, newValue) -> selectedName.set(newValue));
+                .addListener((observable, oldValue, newValue) -> selectedNameProperty.set(newValue));
 
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.isEmpty()) {
@@ -717,10 +756,10 @@ public class RootLayoutController extends BorderPane implements Initializable {
         });
 
         // selectedName string property that has the name of the clicked sphere
-        selectedName.addListener((observable, oldValue, newValue) -> {
+        selectedNameProperty.addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 if (!newValue.isEmpty()) {
-                    setSelectedEntityInfo(selectedName.get());
+                    setSelectedEntityInfo(selectedNameProperty.get());
                 }
             }
         });
@@ -733,30 +772,19 @@ public class RootLayoutController extends BorderPane implements Initializable {
         allStructuresListView.setCellFactory(structuresLayer.getCellFactory());
         searchResultsListView.setCellFactory(new StringListCellFactory());
 
-        timeSlider.setValue(0);
-
-        // 'Others' opacity
-        opacitySlider.setValue(DEFAULT_OTHERS_OPACITY);
-
-        // Uniform nuclei size
-        uniformSizeCheckBox.setSelected(true);
-
-        // Cell Nucleus searchLayer option
-        cellNucleusCheckBox.setSelected(true);
-
         // More info clickable text
         moreInfoClickableText.setOnMouseClicked(event -> {
             openInfoWindow();
-            infoWindow.addName(selectedName.get());
+            infoWindow.addName(selectedNameProperty.get());
         });
         moreInfoClickableText.setOnMouseEntered(event -> moreInfoClickableText.setCursor(Cursor.HAND));
         moreInfoClickableText.setOnMouseExited(event -> moreInfoClickableText.setCursor(Cursor.DEFAULT));
 
         // More info in context menu
-        bringUpInfoProperty.addListener((observable, oldValue, newValue) -> {
+        bringUpInfoFlag.addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 openInfoWindow();
-                infoWindow.addName(selectedName.get());
+                infoWindow.addName(selectedNameProperty.get());
                 infoWindow.showWindow();
             }
         });
@@ -803,22 +831,28 @@ public class RootLayoutController extends BorderPane implements Initializable {
         }
     }
 
+    /**
+     * Binds the subscene width and height to those of its parent anchor pane
+     */
     private void sizeSubscene() {
-        this.subsceneWidth = new SimpleDoubleProperty();
+        subsceneWidth = new SimpleDoubleProperty();
         subsceneWidth.bind(modelAnchorPane.widthProperty());
-        this.subsceneHeight = new SimpleDoubleProperty();
+        subsceneHeight = new SimpleDoubleProperty();
         subsceneHeight.bind(modelAnchorPane.heightProperty());
 
-        AnchorPane.setTopAnchor(subscene, 0.0);
-        AnchorPane.setLeftAnchor(subscene, 0.0);
-        AnchorPane.setRightAnchor(subscene, 0.0);
-        AnchorPane.setBottomAnchor(subscene, 0.0);
+        setTopAnchor(subscene, 0.0);
+        setLeftAnchor(subscene, 0.0);
+        setRightAnchor(subscene, 0.0);
+        setBottomAnchor(subscene, 0.0);
 
         subscene.widthProperty().bind(subsceneWidth);
         subscene.heightProperty().bind(subsceneHeight);
         subscene.setManaged(false);
     }
 
+    /**
+     * Binds the widths and heights of components in the information panel below the subscene so that it scales nicely
+     */
     private void sizeInfoPane() {
         infoPane.prefHeightProperty().bind(displayVBox.heightProperty().divide(6.5));
         displayedDescription.wrappingWidthProperty().bind(infoPane.widthProperty().subtract(15));
@@ -826,30 +860,35 @@ public class RootLayoutController extends BorderPane implements Initializable {
         displayedStoryDescription.wrappingWidthProperty().bind(infoPane.widthProperty().subtract(15));
     }
 
+    /**
+     * Sets the appropriate labels for movie timeProperty and number of nuclei in a timeProperty frame
+     */
     private void setLabels() {
-        time.addListener((observable, oldValue, newValue) -> {
+        timeProperty.addListener((observable, oldValue, newValue) -> {
             if (defaultEmbryoFlag) {
-                timeLabel.setText("~" + (time.get() + movieTimeOffset) + " min p.f.c.");
+                timeLabel.setText("~" + (timeProperty.get() + movieTimeOffset) + " min p.f.c.");
             } else {
-                timeLabel.setText("~" + (time.get()) + " min");
+                timeLabel.setText("~" + (timeProperty.get()) + " min");
             }
-
         });
-        timeLabel.setText("~" + (time.get() + movieTimeOffset) + " min p.f.c.");
+        timeLabel.setText("~" + (timeProperty.get() + movieTimeOffset) + " min p.f.c.");
         timeLabel.toFront();
 
-        totalNuclei.addListener((observable, oldValue, newValue) -> {
+        totalNucleiProperty.addListener((observable, oldValue, newValue) -> {
             String suffix = " Nuclei";
             if (newValue.intValue() == 1) {
                 suffix = " Nucleus";
             }
             totalNucleiLabel.setText(newValue.intValue() + suffix);
         });
-        totalNucleiLabel.setText(totalNuclei.get() + " Nuclei");
+        totalNucleiLabel.setText(totalNucleiProperty.get() + " Nuclei");
         totalNucleiLabel.toFront();
     }
 
-    public void setIcons() {
+    /**
+     * Sets the icons for the GUI buttons
+     */
+    private void setIcons() {
         backwardButton.setGraphic(ImageLoader.getBackwardIcon());
         forwardButton.setGraphic(ImageLoader.getForwardIcon());
         zoomInButton.setGraphic(new ImageView(ImageLoader.getPlusIcon()));
@@ -859,9 +898,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
         pauseIcon = ImageLoader.getPauseIcon();
         playButton.setGraphic(playIcon);
         playButton.setOnAction(event -> {
-            playingMovie.set(!playingMovie.get());
-
-            if (playingMovie.get()) {
+            playingMovieFlag.set(!playingMovieFlag.get());
+            if (playingMovieFlag.get()) {
                 playButton.setGraphic(pauseIcon);
             } else {
                 playButton.setGraphic(playIcon);
@@ -870,20 +908,15 @@ public class RootLayoutController extends BorderPane implements Initializable {
     }
 
     private void setSlidersProperties() {
-        if (defaultEmbryoFlag) {
-            timeSlider.setMin(1);
-        } else {
-            timeSlider.setMin(0);
-        }
-
-        timeSlider.setMax(window3DController.getEndTime());
+        timeSlider.setMin(startTime);
+        timeSlider.setMax(endTime);
 
         opacitySlider.setMin(0);
         opacitySlider.setMax(100);
-        opacitySlider.setValue(DEFAULT_OTHERS_OPACITY);
     }
 
-    private void initSearchLayer(final ObservableList<Rule> rulesList) {
+    private void initSearchLayer() {
+        cellNucleusCheckBox.setSelected(true);
         searchLayer = new SearchLayer(
                 rulesList,
                 searchField,
@@ -905,13 +938,16 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 colorPicker,
                 addSearchBtn);
         searchLayer.addDefaultColorRules();
-        window3DController.setSearchLayer(searchLayer);
+        searchResultsUpdateService = searchLayer.getResultsUpdateService();
+        searchResultsList = searchLayer.getSearchResultsList();
+        searchResultsListView.setItems(searchResultsList);
     }
 
     private void initDisplayLayer() {
-        useInternalRules = new SimpleBooleanProperty(true);
-        displayLayer = new DisplayLayer(useInternalRules);
-        rulesListView.setItems(displayLayer.getRulesList());
+        rulesList = observableArrayList();
+        usingInternalRulesFlag = new SimpleBooleanProperty(true);
+        displayLayer = new DisplayLayer(rulesList, usingInternalRulesFlag);
+        rulesListView.setItems(rulesList);
         rulesListView.setCellFactory(displayLayer.getRuleCellFactory());
     }
 
@@ -935,7 +971,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         lineageTreeRoot = lineageTree.getRoot();
     }
 
-    private void initStructuresLayer(final ObservableList<Rule> rulesList) {
+    private void initStructuresLayer() {
         structuresLayer = new StructuresLayer(
                 searchLayer,
                 sceneElementsList,
@@ -944,40 +980,42 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 allStructuresListView,
                 addStructureRuleBtn,
                 structureRuleColorPicker);
-
         structuresLayer.addSelectedNameListener((observable, oldValue, newValue) -> {
             if (!newValue.isEmpty()) {
-                selectedName.set(newValue);
+                selectedNameProperty.set(newValue);
             }
         });
     }
 
-    private void initStoriesLayer(final ObservableList<Rule> rulesList) {
-        if (structuresLayer == null) {
-            initStructuresLayer(rulesList);
-        }
-
+    private void initStoriesLayer() {
         storiesLayer = new StoriesLayer(
                 mainStage,
                 searchLayer,
                 sceneElementsList,
-                selectedName,
+                rulesList,
+                selectedNameProperty,
+                activeStoryProperty,
+                cellClickedFlag,
+                timeProperty,
+                rotateXAngleProperty,
+                rotateYAngleProperty,
+                rotateZAngleProperty,
+                translateXProperty,
+                translateYProperty,
+                zoomProperty,
+                othersOpacityProperty,
+                usingInternalRulesFlag,
+                rebuildSubsceneFlag,
                 lineageData,
-                window3DController,
-                useInternalRules,
-                productionInfo.getMovieTimeOffset(),
                 newStoryButton,
                 deleteStoryButton,
                 editNoteButton,
+                movieTimeOffset,
                 defaultEmbryoFlag);
-
-        window3DController.setStoriesLayer(storiesLayer);
 
         storiesListView.setItems(storiesLayer.getStories());
         storiesListView.setCellFactory(storiesLayer.getStoryCellFactory());
         storiesListView.widthProperty().addListener(storiesLayer.getListViewWidthListener());
-
-        window3DController.addListenerToRebuildSceneFlag(storiesLayer.getRebuildSceneFlag());
 
         storiesLayer.getActiveStoryProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.isEmpty()) {
@@ -988,78 +1026,38 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 displayedStoryDescription.setText(storiesLayer.getActiveStoryDescription());
             }
         });
+
         displayedStory.setText("Active Story: " + storiesLayer.getActiveStory().getName());
         displayedStoryDescription.setText(storiesLayer.getActiveStoryDescription());
     }
 
-    /**
-     * Initializes the {@link SceneElementsList} that contains all the {@link wormguides.models.SceneElement} objects
-     * visible in all time frames.
-     */
-    private void initSceneElementsList() {
-        sceneElementsList = new SceneElementsList();
-
-        if (window3DController != null) {
-            window3DController.setSceneElementsList(sceneElementsList);
-        }
-    }
-
-    private void initConnectome() {
-        connectome = new Connectome();
-    }
-
     private void initInfoWindow() {
-        if (window3DController != null) {
-
-            if (connectome == null) {
-                initConnectome();
-            }
-            if (productionInfo == null) {
-                initProductionInfo();
-            }
-            if (cases == null) {
-                initCases();
-            }
-
-            infoWindow = new InfoWindow(
-                    window3DController.getStage(),
-                    window3DController.getSelectedNameLabeled(),
-                    cases,
-                    productionInfo,
-                    connectome,
-                    defaultEmbryoFlag,
-                    lineageData,
-                    searchLayer);
-        }
-    }
-
-    private void initCases() {
-        cases = new CasesLists(infoWindow);
-    }
-
-    private void initProductionInfo() {
-        productionInfo = new ProductionInfo();
-
-        if (defaultEmbryoFlag) {
-            movieTimeOffset = productionInfo.getMovieTimeOffset();
-        } else {
-            movieTimeOffset = 0;
-        }
+        infoWindow = new InfoWindow(
+                mainStage,
+                selectedNameLabeledProperty,
+                casesLists,
+                productionInfo,
+                connectome,
+                defaultEmbryoFlag,
+                lineageData,
+                searchLayer);
     }
 
     /**
-     * Replaces all application tabs with dockable ones ({@link DraggableTab})
+     * Replaces all application tabs with dockable ones
+     *
+     * @see DraggableTab
      */
     private void replaceTabsWithDraggableTabs() {
-        DraggableTab cellsDragTab = new DraggableTab(cellsTab.getText());
+        final DraggableTab cellsDragTab = new DraggableTab(cellsTab.getText());
         cellsDragTab.setCloseable(false);
         cellsDragTab.setContent(cellsTab.getContent());
 
-        DraggableTab structuresDragTab = new DraggableTab(structuresTab.getText());
+        final DraggableTab structuresDragTab = new DraggableTab(structuresTab.getText());
         structuresDragTab.setCloseable(false);
         structuresDragTab.setContent(structuresTab.getContent());
 
-        DraggableTab displayDragTab = new DraggableTab(displayTab.getText());
+        final DraggableTab displayDragTab = new DraggableTab(displayTab.getText());
         displayDragTab.setCloseable(false);
         displayDragTab.setContent(displayTab.getContent());
 
@@ -1070,11 +1068,11 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
         colorAndDisplayTabPane.getTabs().addAll(cellsTab, structuresTab, displayTab);
 
-        DraggableTab storiesDragTab = new DraggableTab(storiesTab.getText());
+        final DraggableTab storiesDragTab = new DraggableTab(storiesTab.getText());
         storiesDragTab.setCloseable(false);
         storiesDragTab.setContent(storiesTab.getContent());
 
-        DraggableTab colorAndDisplayDragTab = new DraggableTab(colorAndDisplayTab.getText());
+        final DraggableTab colorAndDisplayDragTab = new DraggableTab(colorAndDisplayTab.getText());
         colorAndDisplayDragTab.setCloseable(false);
         colorAndDisplayDragTab.setContent(colorAndDisplayTab.getContent());
 
@@ -1087,18 +1085,31 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle bundle) {
-        initProductionInfo();
+        productionInfo = new ProductionInfo();
+        if (defaultEmbryoFlag) {
+            movieTimeOffset = productionInfo.getMovieTimeOffset();
+        } else {
+            movieTimeOffset = 0;
+        }
+
+        casesLists = new CasesLists();
 
         if (bundle != null) {
             lineageData = (LineageData) bundle.getObject("lineageData");
             defaultEmbryoFlag = false;
             setOriginToZero(lineageData, defaultEmbryoFlag);
-
         } else {
             lineageData = loadNucFiles(productionInfo);
             defaultEmbryoFlag = true;
             lineageData.setIsSulstonModeFlag(productionInfo.getIsSulstonFlag());
         }
+        if (defaultEmbryoFlag) {
+            startTime = productionInfo.getDefaultStartTime();
+        } else {
+            startTime = 0;
+        }
+        endTime = lineageData.getNumberOfTimePoints() - 1;
+        movieTimeOffset = productionInfo.getMovieTimeOffset();
 
         // takes about 58ms
         replaceTabsWithDraggableTabs();
@@ -1112,35 +1123,29 @@ public class RootLayoutController extends BorderPane implements Initializable {
         // takes about 3ms
         initDisplayLayer();
 
-        // takes about 1050ms
-        initializeWithLineageData();
-
-        mainTabPane.getSelectionModel().select(storiesTab);
-    }
-
-    public void initializeWithLineageData() {
-        initLineageTree(lineageData.getAllCellNames());
-
-        final ObservableList<Rule> rulesList = displayLayer.getRulesList();
-
-        init3DWindow(lineageData, rulesList);
-
         setSlidersProperties();
 
-        initSearchLayer(rulesList);
+        mainTabPane.getSelectionModel().select(storiesTab);
 
-        initSceneElementsList();
-        initConnectome();
-        initStoriesLayer(rulesList);
+        // takes about 1050ms
+        initializeWithLineageData();
+    }
 
-        searchLayer.initDatabases(lineageData, sceneElementsList, connectome, cases, productionInfo);
+    private void initializeWithLineageData() {
+        initLineageTree(lineageData.getAllCellNames());
 
-        final ObservableList<String> searchRsultsList = searchLayer.getSearchResultsList();
-        window3DController.setSearchResultsList(searchRsultsList);
-        searchResultsListView.setItems(searchRsultsList);
+        sceneElementsList = new SceneElementsList();
+        connectome = new Connectome();
 
-        window3DController.setSearchResultsUpdateService(searchLayer.getResultsUpdateService());
-        window3DController.setGeneResultsUpdated(searchLayer.getGeneResultsUpdated());
+        initSharedVariables();
+
+        initSearchLayer();
+        searchLayer.initDatabases(lineageData, sceneElementsList, connectome, casesLists, productionInfo);
+
+        initStoriesLayer();
+        initStructuresLayer();
+
+        initContextMenuStage();
 
         addListeners();
 
@@ -1150,11 +1155,78 @@ public class RootLayoutController extends BorderPane implements Initializable {
         sizeSubscene();
         sizeInfoPane();
 
-        timeSlider.setValue(window3DController.getEndTime());
-
         viewTreeAction();
 
-        captureVideo = new SimpleBooleanProperty(false);
-        window3DController.setCaptureVideo(captureVideo);
+        initWindow3DController();
+    }
+
+    private void initSharedVariables() {
+        timeProperty = new SimpleIntegerProperty(startTime);
+        totalNucleiProperty = new SimpleIntegerProperty(0);
+
+        othersOpacityProperty = new SimpleDoubleProperty(1.0);
+        rotateXAngleProperty = new SimpleDoubleProperty();
+        rotateYAngleProperty = new SimpleDoubleProperty();
+        rotateZAngleProperty = new SimpleDoubleProperty();
+        translateXProperty = new SimpleDoubleProperty();
+        translateYProperty = new SimpleDoubleProperty();
+        zoomProperty = new SimpleDoubleProperty();
+
+        selectedNameProperty = new SimpleStringProperty("");
+        selectedNameLabeledProperty = new SimpleStringProperty("");
+        activeStoryProperty = new SimpleStringProperty("");
+
+        cellClickedFlag = new SimpleBooleanProperty();
+        updatedGeneResultsFlag = new SimpleBooleanProperty();
+        rebuildSubsceneFlag = new SimpleBooleanProperty();
+        usingInternalRulesFlag = new SimpleBooleanProperty();
+        bringUpInfoFlag = new SimpleBooleanProperty();
+        playingMovieFlag = new SimpleBooleanProperty();
+        capturingVideoFlag = new SimpleBooleanProperty();
+        bringUpInfoFlag = new SimpleBooleanProperty();
+
+        colorHash = new ColorHash();
+        rootEntitiesGroup = new Group();
+        subscene = new SubScene(
+                rootEntitiesGroup,
+                mainStage.widthProperty().get(),
+                mainStage.heightProperty().get(),
+                true,
+                BALANCED);
+        subscene.setFill(web(FILL_COLOR_HEX));
+    }
+
+    private void initContextMenuStage() {
+        if (contextMenuStage == null) {
+            contextMenuStage = new Stage();
+            contextMenuStage.initStyle(UNDECORATED);
+
+            contextMenuController = new ContextMenuController(
+                    mainStage,
+                    contextMenuStage,
+                    searchLayer,
+                    casesLists,
+                    productionInfo,
+                    connectome,
+                    bringUpInfoFlag);
+
+            final FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("view/layouts/ContextMenuLayout.fxml"));
+            loader.setController(contextMenuController);
+            loader.setRoot(contextMenuController);
+            try {
+                contextMenuStage.setScene(new Scene(loader.load()));
+                contextMenuStage.initModality(NONE);
+                contextMenuStage.setResizable(false);
+                contextMenuStage.setTitle("Menu");
+                for (Node node : contextMenuStage.getScene().getRoot().getChildrenUnmodifiable()) {
+                    node.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
+                }
+                contextMenuController.setInfoButtonListener(event -> contextMenuStage.hide());
+            } catch (IOException e) {
+                System.out.println("Error in initializing context menu");
+                e.printStackTrace();
+            }
+        }
     }
 }

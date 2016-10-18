@@ -6,9 +6,10 @@ package wormguides.view.urlwindow;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.util.List;
 
-import javafx.geometry.Pos;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TextField;
@@ -18,36 +19,65 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-import wormguides.controllers.Window3DController;
 import wormguides.loaders.ImageLoader;
 import wormguides.models.Rule;
 import wormguides.util.AppFont;
-import wormguides.util.URLGenerator;
 
 import static java.awt.Toolkit.getDefaultToolkit;
+import static java.util.Objects.requireNonNull;
+
+import static javafx.geometry.Pos.CENTER;
 import static javafx.scene.layout.HBox.setHgrow;
+
+import static wormguides.util.URLGenerator.generateAndroid;
 
 public class URLWindow extends AnchorPane {
 
-    private Window3DController scene;
+    private final TextField urlField;
+    private final Button resetBtn;
+    private final Button closeBtn;
+    private final Clipboard cb;
 
-    private TextField urlField;
+    private final ObservableList<Rule> rulesList;
+    private final IntegerProperty timeProperty;
+    private final DoubleProperty rotateXAngleProperty;
+    private final DoubleProperty rotateYAngleProperty;
+    private final DoubleProperty rotateZAngleProperty;
+    private final DoubleProperty translateXProperty;
+    private final DoubleProperty translateYProperty;
+    private final DoubleProperty zoomProperty;
+    private final DoubleProperty othersOpacityProperty;
 
     private String urlString;
 
-    private Button resetBtn;
-    private Button closeBtn;
+    public URLWindow(
+            final ObservableList<Rule> rulesList,
+            final IntegerProperty timeProperty,
+            final DoubleProperty rotateXAngleProperty,
+            final DoubleProperty rotateYAngleProperty,
+            final DoubleProperty rotateZAngleProperty,
+            final DoubleProperty translateXProperty,
+            final DoubleProperty translateYProperty,
+            final DoubleProperty zoomProperty,
+            final DoubleProperty othersOpacityProperty) {
 
-    private Clipboard cb;
-
-    public URLWindow() {
         super();
         setPrefWidth(430);
 
-        cb = getDefaultToolkit().getSystemClipboard();
-        Tooltip tooltip = new Tooltip("copy");
+        this.rulesList = requireNonNull(rulesList);
+        this.timeProperty = requireNonNull(timeProperty);
+        this.rotateXAngleProperty = requireNonNull(rotateXAngleProperty);
+        this.rotateYAngleProperty = requireNonNull(rotateYAngleProperty);
+        this.rotateZAngleProperty = requireNonNull(rotateZAngleProperty);
+        this.translateXProperty = requireNonNull(translateXProperty);
+        this.translateYProperty = requireNonNull(translateYProperty);
+        this.zoomProperty = requireNonNull(zoomProperty);
+        this.othersOpacityProperty = requireNonNull(othersOpacityProperty);
 
-        VBox vBox = new VBox();
+        cb = getDefaultToolkit().getSystemClipboard();
+        final Tooltip tooltip = new Tooltip("copy");
+
+        final VBox vBox = new VBox();
         vBox.setSpacing(10);
         AnchorPane.setTopAnchor(vBox, 10.0);
         AnchorPane.setLeftAnchor(vBox, 10.0);
@@ -55,7 +85,7 @@ public class URLWindow extends AnchorPane {
         AnchorPane.setBottomAnchor(vBox, 10.0);
         getChildren().add(vBox);
 
-        HBox androidHBox = new HBox(10);
+        final HBox androidHBox = new HBox(10);
         urlField = new TextField();
         urlField.setFont(AppFont.getFont());
         urlField.setPrefHeight(28);
@@ -86,27 +116,27 @@ public class URLWindow extends AnchorPane {
         closeBtn.setPrefWidth(100);
         closeBtn.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
         closeBtn.setFont(AppFont.getFont());
-        HBox hBox = new HBox();
+
+        final HBox hBox = new HBox();
         hBox.setSpacing(20);
-        hBox.setAlignment(Pos.CENTER);
+        hBox.setAlignment(CENTER);
         hBox.getChildren().addAll(resetBtn, closeBtn);
 
         vBox.getChildren().addAll(androidHBox, hBox);
     }
 
-    public void setScene(Window3DController window3D) {
-        scene = window3D;
-    }
-
     public void resetURLs() {
-        if (scene != null) {
-            List<Rule> list = scene.getColorRulesList();
-            urlString = URLGenerator.generateAndroid(list, scene.getTime(), scene.getRotationX(), scene.getRotationY(),
-                    scene.getRotationZ(), scene.getTranslationX(), scene.getTranslationY(), scene.getScale(),
-                    scene.getOthersVisibility());
-
-            urlField.setText(urlString);
-        }
+        urlString = generateAndroid(
+                rulesList,
+                timeProperty.get(),
+                rotateXAngleProperty.get(),
+                rotateYAngleProperty.get(),
+                rotateZAngleProperty.get(),
+                translateXProperty.get(),
+                translateYProperty.get(),
+                zoomProperty.get(),
+                othersOpacityProperty.get());
+        urlField.setText(urlString);
     }
 
     public Button getCloseButton() {

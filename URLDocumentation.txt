@@ -51,13 +51,13 @@ Old API: "http://scene.wormguides.org/wormguides/testurlscript?/
 	set/ash-n$+#ff8fbc8f/rib-n$+#ff663366/avg-n$+#ffb41919/dd-n+#ff4a24c1/da-n+#ffc56002/
 	dd-n$+#ffb30a95/da-n$+#ffe6b34d/rivl-n+#ffc14d0e/rivr-n+#ffdbdd15/siavl-n+#ff50b428/
 	siavr-n+#ff278edb/sibdl-n+#ff6350dd/sibdr-n+#ffc95aa9/
-	view/time=400/rX=0.0/rY=0.0/rZ=0.0/tX=0.0/tY=0.0/scale=0.8461538461538461/dim=0.2/Android/"
+	view/timeProperty=400/rX=0.0/rY=0.0/rZ=0.0/tX=0.0/tY=0.0/scale=0.8461538461538461/dim=0.2/Android/"
 
 Internal (new) API: "http://scene.wormguides.org/wormguides/testurlscript?/
 	set/ash-n$#+#ff8fbc8f/rib-n$@+#ff663366/avg-n$@+#ffb41919/dd-n@+#ff4a24c1/da-n@+#ffc56002/
 	dd-n$+#ffb30a95/da-n$+#ffe6b34d/rivl-n@+#ffc14d0e/rivr-n@+#ffdbdd15/siavl-n@+#ff50b428/
 	siavr-n@+#ff278edb/sibdl-n@+#ff6350dd/sibdr-n@+#ffc95aa9/amphid commissure right-M+#ffffa500/
 	amphid commissure left-M+#ffff0000/
-	view/time=400/rX=0.0/rY=0.0/rZ=0.0/tX=0.0/tY=0.0/scale=1.5/dim=0.2/browser/"
+	view/timeProperty=400/rX=0.0/rY=0.0/rZ=0.0/tX=0.0/tY=0.0/scale=1.5/dim=0.2/browser/"
 
 	

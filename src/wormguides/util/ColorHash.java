@@ -19,6 +19,7 @@ import javafx.scene.paint.PhongMaterial;
 import wormguides.view.popups.SulstonTreePane;
 
 import static java.lang.Integer.toHexString;
+import static java.lang.Math.round;
 import static java.lang.System.arraycopy;
 
 import static javafx.scene.paint.Color.BLACK;
@@ -76,12 +77,18 @@ public class ColorHash {
         return opacityMaterialHash.get(opacity);
     }
 
-    // Input opacity is between 0 and 1
+    /**
+     * Creates a material for the 'other' cells
+     *
+     * @param opacity
+     *         opacity between 0 and 1
+     *
+     * @return the material created
+     */
     public Material makeOthersMaterial(double opacity) {
-        int darkness = (int) (Math.round(opacity * 255));
         String colorString = "#";
         final StringBuilder builder = new StringBuilder();
-        builder.append(toHexString(darkness));
+        builder.append(toHexString((int) (round(opacity * 255))));
         if (builder.length() < 2) {
             builder.insert(0, "0");
         }

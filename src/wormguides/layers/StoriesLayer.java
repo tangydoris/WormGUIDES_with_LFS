@@ -12,9 +12,8 @@ import java.util.Iterator;
 
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
@@ -36,29 +35,29 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import acetree.LineageData;
 import wormguides.MainApp;
 import wormguides.controllers.StoryEditorController;
-import wormguides.controllers.Window3DController;
 import wormguides.models.Rule;
 import wormguides.models.SceneElementsList;
 import wormguides.stories.Note;
-import wormguides.stories.StoriesLoader;
 import wormguides.stories.Story;
-import wormguides.stories.StoryFileUtil;
 import wormguides.util.AppFont;
-import wormguides.util.URLGenerator;
 
 import static java.util.Objects.requireNonNull;
 
 import static javafx.collections.FXCollections.observableArrayList;
 import static javafx.scene.text.FontSmoothingType.LCD;
+import static javafx.stage.Modality.NONE;
 
 import static wormguides.loaders.URLLoader.process;
+import static wormguides.stories.StoriesLoader.loadConfigFile;
+import static wormguides.stories.StoryFileUtil.loadFromCSVFile;
+import static wormguides.stories.StoryFileUtil.saveToCSVFile;
+import static wormguides.util.URLGenerator.generateInternal;
 
 /**
  * Controller of the list view in the 'Stories' tab
@@ -67,73 +66,106 @@ public class StoriesLayer {
 
     private final String NEW_STORY_TITLE = "New Story";
     private final String NEW_STORY_DESCRIPTION = "New story description here";
-
     private final String TEMPLATE_STORY_NAME = "Template to Make Your Own Story";
     private final String TEMPLATE_STORY_DESCRIPTION = "Shows all segmented neurons without further annotation.";
+
+    private final double defaultViewArg = 0;
+    private final double defaultViewScale = 100;
+    private final double defaultOthersOpacity = 50;
+
+    private final Stage parentStage;
+
+    private final LineageData lineageData;
+    private final SceneElementsList sceneElementsList;
     private final SearchLayer searchLayer;
-    private Stage parentStage;
+
+    private final IntegerProperty timeProperty;
+    private final DoubleProperty rotateXAngleProperty;
+    private final DoubleProperty rotateYAngleProperty;
+    private final DoubleProperty rotateZAngleProperty;
+    private final DoubleProperty translateXProperty;
+    private final DoubleProperty translateYProperty;
+    private final DoubleProperty zoomProperty;
+    private final DoubleProperty othersOpacityProperty;
+    private final BooleanProperty useInternalRulesFlag;
+    private final BooleanProperty rebuildSceneFlag;
+    private final BooleanProperty cellClickedFlag;
+    private final StringProperty activeCellNameProperty;
+    private final StringProperty activeStoryProperty;
+
+    private final ObservableList<Rule> activeRulesList;
+    private final ObservableList<Story> stories;
+
     private Stage editStage;
     private StoryEditorController editController;
+
     private Story activeStory;
-    private StringProperty activeStoryProperty;
     private Note activeNote;
-    private ObservableList<Story> stories;
-
-    private StringProperty activeCellProperty;
-    private BooleanProperty cellClickedProperty;
-
-    private SceneElementsList sceneElementsList;
-
-    private BooleanProperty rebuildSceneFlag;
-
-    private int timeOffset;
+    private Comparator<Note> noteComparator;
+    private int movieTimeOffset;
     private double width;
 
-    private IntegerProperty timeProperty;
-    private LineageData cellData;
-    private Comparator<Note> noteComparator;
-    private ObservableList<Rule> currentRules;
-    private BooleanProperty useInternalRules;
-    private Window3DController window3DController;
-    private BooleanProperty update3D;
-
-    /**
-     * Class constructor called by {@link wormguides.controllers.RootLayoutController}
-     *
-     * @param parentStage
-     *         stage that the main application belongs to. This is used for initializing modality of the story editor
-     *         popup window.
-     * @param elementsList
-     *         list of all scene elements loaded on application start
-     * @param cellNameProperty
-     *         the currently active cell, cell body, or multiceulluar structure name
-     * @param data
-     *         lineage data loaded on application start
-     * @param sceneController
-     *         controller for the 3D subscene
-     * @param useInternalRulesFlag
-     *         true if the application is using its internal rules, false if it is using a story's rules
-     * @param movieTimeOffset
-     *         offset time of the movie from the application's internal start time of 1
-     * @param newStoryButton
-     *         the 'New Story' button in the Stories tab
-     */
     public StoriesLayer(
             final Stage parentStage,
             final SearchLayer searchLayer,
             final SceneElementsList elementsList,
-            final StringProperty cellNameProperty,
-            final LineageData data,
-            final Window3DController sceneController,
+            final ObservableList<Rule> rulesList,
+            final StringProperty activeCellNameProperty,
+            final StringProperty activeStoryProperty,
+            final BooleanProperty cellClickedFlag,
+            final IntegerProperty timeProperty,
+            final DoubleProperty rotateXAngleProperty,
+            final DoubleProperty rotateYAngleProperty,
+            final DoubleProperty rotateZAngleProperty,
+            final DoubleProperty translateXProperty,
+            final DoubleProperty translateYProperty,
+            final DoubleProperty zoomProperty,
+            final DoubleProperty othersOpacityProperty,
             final BooleanProperty useInternalRulesFlag,
-            final int movieTimeOffset,
+            final BooleanProperty rebuildSceneFlag,
+            final LineageData lineageData,
             final Button newStoryButton,
             final Button deleteStoryButton,
             final Button editNoteButton,
+            final int movieTimeOffset,
             final boolean defaultEmbryoFlag) {
 
         this.parentStage = requireNonNull(parentStage);
         this.searchLayer = requireNonNull(searchLayer);
+        this.lineageData = requireNonNull(lineageData);
+        this.sceneElementsList = requireNonNull(elementsList);
+
+        this.activeRulesList = requireNonNull(rulesList);
+
+        this.cellClickedFlag = requireNonNull(cellClickedFlag);
+        this.rebuildSceneFlag = requireNonNull(rebuildSceneFlag);
+
+        this.timeProperty = requireNonNull(timeProperty);
+        this.rotateXAngleProperty = requireNonNull(rotateXAngleProperty);
+        this.rotateYAngleProperty = requireNonNull(rotateYAngleProperty);
+        this.rotateZAngleProperty = requireNonNull(rotateZAngleProperty);
+        this.translateXProperty = requireNonNull(translateXProperty);
+        this.translateYProperty = requireNonNull(translateYProperty);
+        this.zoomProperty = requireNonNull(zoomProperty);
+        this.othersOpacityProperty = requireNonNull(othersOpacityProperty);
+
+        this.activeCellNameProperty = requireNonNull(activeCellNameProperty);
+        this.activeStoryProperty = requireNonNull(activeStoryProperty);
+
+        this.useInternalRulesFlag = useInternalRulesFlag;
+        this.movieTimeOffset = movieTimeOffset;
+
+        stories = observableArrayList(story -> new Observable[]{
+                story.getChangedProperty(),
+                story.getActiveProperty()});
+        stories.addListener(new ListChangeListener<Story>() {
+            @Override
+            public void onChanged(Change<? extends Story> c) {
+                while (c.next()) {
+                    // need this listener to detect change for some reason leave this empty
+                }
+            }
+        });
 
         newStoryButton.setOnAction(event -> {
             Story story = new Story(NEW_STORY_TITLE, NEW_STORY_DESCRIPTION, "");
@@ -153,50 +185,20 @@ public class StoriesLayer {
 
         editNoteButton.setOnAction(event -> bringUpEditor());
 
-        this.window3DController = sceneController;
-        this.useInternalRules = useInternalRulesFlag;
-        this.currentRules = window3DController.getObservableColorRulesList();
-
-        this.sceneElementsList = requireNonNull(elementsList);
-
-        this.timeOffset = movieTimeOffset;
-
-        this.stories = observableArrayList(story -> new Observable[]{
-                story.getChangedProperty(),
-                story.getActiveProperty()});
-        this.stories.addListener(new ListChangeListener<Story>() {
-            @Override
-            public void onChanged(ListChangeListener.Change<? extends Story> c) {
-                while (c.next()) {
-                    // need this listener to detect change for some reason leave this empty
-                }
-            }
-        });
-
-        this.timeProperty = window3DController.getTimeProperty();
-        this.rebuildSceneFlag = new SimpleBooleanProperty(false);
-        this.cellData = data;
-
-        this.width = 0;
-
-        this.activeStoryProperty = new SimpleStringProperty("");
-
-        this.activeCellProperty = cellNameProperty;
-        this.cellClickedProperty = window3DController.getCellClicked();
+        width = 0;
 
         if (defaultEmbryoFlag) {
-            StoriesLoader.loadConfigFile(stories, timeOffset);
+            loadConfigFile(stories, this.movieTimeOffset);
         }
 
         addBlankStory();
 
-        this.noteComparator = (o1, o2) -> {
-            Integer t1 = getEffectiveStartTime(o1);
-            Integer t2 = getEffectiveStartTime(o2);
+        noteComparator = (o1, o2) -> {
+            final Integer t1 = getEffectiveStartTime(o1);
+            final Integer t2 = getEffectiveStartTime(o2);
             if (t1.equals(t2)) {
                 return o1.getTagName().compareTo(o2.getTagName());
             }
-
             return t1.compareTo(t2);
         };
 
@@ -233,9 +235,9 @@ public class StoriesLayer {
         chooser.setInitialFileName("WormGUIDES Story.csv");
         chooser.getExtensionFilters().addAll(new ExtensionFilter("CSV Files", "*.csv"));
 
-        File file = chooser.showOpenDialog(parentStage);
+        final File file = chooser.showOpenDialog(parentStage);
         if (file != null) {
-            StoryFileUtil.loadFromCSVFile(stories, file, timeOffset);
+            loadFromCSVFile(stories, file, movieTimeOffset);
         }
     }
 
@@ -255,7 +257,7 @@ public class StoriesLayer {
 
             if (activeStory != null) {
                 updateColorURL();
-                StoryFileUtil.saveToCSVFile(activeStory, file, timeOffset);
+                saveToCSVFile(activeStory, file, movieTimeOffset);
             } else {
                 System.out.println("No active story to save");
             }
@@ -265,20 +267,22 @@ public class StoriesLayer {
     }
 
     /**
-     * Because the Color URL is set on New Note, we need to update the color URL
-     * before saving to account for additions and deletions
+     * Because the Color URL is set on New Note, we need to update the color URL before saving to account for
+     * additions and deletions
      */
     private void updateColorURL() {
         if (activeStory != null) {
             activeStory.setActive(false);
-            ArrayList<Rule> rulesCopy = new ArrayList<>();
-            rulesCopy.addAll(currentRules);
-
-            activeStory.setColorURL(
-                    URLGenerator.generateInternal(rulesCopy, timeProperty.get(), window3DController.getRotationX(),
-                            window3DController.getRotationY(), window3DController.getRotationZ(),
-                            window3DController.getTranslationX(), window3DController.getTranslationY(),
-                            window3DController.getScaleInternal(), window3DController.getOthersVisibility()));
+            activeStory.setColorURL(generateInternal(
+                    new ArrayList<>(activeRulesList),
+                    timeProperty.get(),
+                    rotateXAngleProperty.get(),
+                    rotateYAngleProperty.get(),
+                    rotateZAngleProperty.get(),
+                    translateXProperty.get(),
+                    translateYProperty.get(),
+                    zoomProperty.get(),
+                    othersOpacityProperty.get()));
         }
     }
 
@@ -316,9 +320,9 @@ public class StoriesLayer {
      * inactive, then makes the input note active.
      *
      * @param note
-     *         The {@link Note} that should become active
+     *         the note that should become active
      */
-    public void setActiveNote(Note note) {
+    public void setActiveNote(final Note note) {
         // deactivate the previous active note
         if (activeNote != null) {
             activeNote.setActive(false);
@@ -334,26 +338,15 @@ public class StoriesLayer {
                 if (startTime < 1) {
                     startTime = 1;
                 }
-
-                timeProperty.set(startTime);
+                if (timeProperty != null) {
+                    timeProperty.set(startTime);
+                }
             }
         }
 
         if (editController != null) {
             editController.setActiveNote(activeNote);
         }
-    }
-
-    /**
-     * Sets the flag that tells the {@link Window3DController} whether to update
-     * the subscene.
-     *
-     * @param update3D
-     *         The {@link BooleanProperty} flag that is set to TRUE when the
-     *         3D subscene should be udpated, FALSE otherwise
-     */
-    public void setUpdate3DProperty(BooleanProperty update3D) {
-        this.update3D = update3D;
     }
 
     /**
@@ -376,8 +369,8 @@ public class StoriesLayer {
                 int entityEndTime;
 
                 if (note.attachedToCell()) {
-                    entityStartTime = cellData.getFirstOccurrenceOf(note.getCellName());
-                    entityEndTime = cellData.getLastOccurrenceOf(note.getCellName());
+                    entityStartTime = lineageData.getFirstOccurrenceOf(note.getCellName());
+                    entityEndTime = lineageData.getLastOccurrenceOf(note.getCellName());
                 } else {
                     entityStartTime = sceneElementsList.getFirstOccurrenceOf(note.getCellName());
                     entityEndTime = sceneElementsList.getLastOccurrenceOf(note.getCellName());
@@ -429,8 +422,8 @@ public class StoriesLayer {
                 int entityEndTime;
 
                 if (note.attachedToCell()) {
-                    entityStartTime = cellData.getFirstOccurrenceOf(note.getCellName());
-                    entityEndTime = cellData.getLastOccurrenceOf(note.getCellName());
+                    entityStartTime = lineageData.getFirstOccurrenceOf(note.getCellName());
+                    entityEndTime = lineageData.getLastOccurrenceOf(note.getCellName());
                 } else {
                     entityStartTime = sceneElementsList.getFirstOccurrenceOf(note.getCellName());
                     entityEndTime = sceneElementsList.getLastOccurrenceOf(note.getCellName());
@@ -476,46 +469,63 @@ public class StoriesLayer {
      * @param story
      *         story to make active
      */
-    public void setActiveStory(Story story) {
+    public void setActiveStory(final Story story) {
         // disable previous active story
         // copy current rules changes back to story
         if (activeStory != null) {
             activeStory.setActive(false);
-            ArrayList<Rule> rulesCopy = new ArrayList<>();
-            rulesCopy.addAll(currentRules);
-
-            activeStory.setColorURL(
-                    URLGenerator.generateInternal(rulesCopy, timeProperty.get(), window3DController.getRotationX(),
-                            window3DController.getRotationY(), window3DController.getRotationZ(),
-                            window3DController.getTranslationX(), window3DController.getTranslationY(),
-                            window3DController.getScaleInternal(), window3DController.getOthersVisibility()));
+            activeStory.setColorURL(generateInternal(
+                    new ArrayList<>(activeRulesList),
+                    timeProperty.get(),
+                    rotateXAngleProperty.get(),
+                    rotateYAngleProperty.get(),
+                    rotateZAngleProperty.get(),
+                    translateXProperty.get(),
+                    translateYProperty.get(),
+                    zoomProperty.get(),
+                    othersOpacityProperty.get()));
         }
 
         setActiveNote(null);
-        useInternalRules.set(true);
+        useInternalRulesFlag.set(true);
 
         activeStory = story;
-        int startTime = timeProperty.get();
+        int startTime = 1;
+        if (timeProperty != null) {
+            startTime = timeProperty.get();
+        }
 
         if (activeStory != null) {
             activeStory.setActive(true);
             activeStoryProperty.set(activeStory.getName());
 
-            // if story does not come with a url, set its url to the
-            // program's internal rules
+            // if story does not come with a url, set its url to the program's internal color rules
             if (activeStory.getColorURL().isEmpty()) {
-                ArrayList<Rule> rulesCopy = new ArrayList<>();
-                rulesCopy.addAll(currentRules);
-
-                activeStory.setColorURL(
-                        URLGenerator.generateInternal(rulesCopy, timeProperty.get(), window3DController.getRotationX(),
-                                window3DController.getRotationY(), window3DController.getRotationZ(),
-                                window3DController.getTranslationX(), window3DController.getTranslationY(),
-                                window3DController.getScaleInternal(), window3DController.getOthersVisibility()));
+                activeStory.setColorURL(generateInternal(
+                        new ArrayList<>(activeRulesList),
+                        timeProperty.get(),
+                        rotateXAngleProperty.get(),
+                        rotateYAngleProperty.get(),
+                        rotateZAngleProperty.get(),
+                        translateXProperty.get(),
+                        translateYProperty.get(),
+                        zoomProperty.get(),
+                        othersOpacityProperty.get()));
             } else { // if story does come with url, use it
-                useInternalRules.set(false);
+                useInternalRulesFlag.set(false);
             }
-            process(activeStory.getColorURL(), window3DController, true, searchLayer);
+            process(
+                    activeStory.getColorURL(),
+                    activeRulesList,
+                    searchLayer,
+                    timeProperty,
+                    rotateXAngleProperty,
+                    rotateYAngleProperty,
+                    rotateZAngleProperty,
+                    translateXProperty,
+                    translateYProperty,
+                    zoomProperty,
+                    othersOpacityProperty);
 
             if (activeStory.hasNotes()) {
                 startTime = getEffectiveStartTime(activeStory.getNotes().get(0));
@@ -525,14 +535,14 @@ public class StoriesLayer {
             }
         } else {
             activeStoryProperty.set("");
-            useInternalRules.set(true);
+            useInternalRulesFlag.set(true);
         }
 
         if (editController != null) {
             editController.setActiveStory(activeStory);
         }
 
-        if (timeProperty.get() != startTime) {
+        if (timeProperty != null && timeProperty.get() != startTime) {
             timeProperty.set(startTime);
         } else {
             rebuildSceneFlag.set(true);
@@ -659,15 +669,13 @@ public class StoriesLayer {
     private void bringUpEditor() {
         if (editStage == null) {
             editController = new StoryEditorController(
-                    timeOffset,
-                    cellData,
+                    movieTimeOffset,
+                    lineageData,
                     sceneElementsList.getAllMulticellSceneNames(),
-                    activeCellProperty,
-                    cellClickedProperty,
+                    activeCellNameProperty,
+                    cellClickedFlag,
                     timeProperty,
-                    update3D);
-
-            editController.setUpdate3DProperty(update3D);
+                    rebuildSceneFlag);
 
             editController.setActiveNote(activeNote);
             editController.setActiveStory(activeStory);
@@ -685,7 +693,7 @@ public class StoriesLayer {
 
                 editStage.setTitle("Story/Note Editor");
                 editStage.initOwner(parentStage);
-                editStage.initModality(Modality.NONE);
+                editStage.initModality(NONE);
                 editStage.setResizable(true);
 
                 editStage.setOnCloseRequest(event -> {
@@ -699,7 +707,6 @@ public class StoriesLayer {
                         editController.setNoteCreated(false);
                         activeStory.addNote(newNote);
                         setActiveNote(newNote);
-
                         rebuildSceneFlag.set(true);
                         rebuildSceneFlag.set(false);
                     }
@@ -709,7 +716,6 @@ public class StoriesLayer {
                     if (activeNote != null) {
                         activeStory.removeNote(activeNote);
                     }
-
                     setActiveNote(null);
                 });
 
@@ -725,14 +731,6 @@ public class StoriesLayer {
 
         editStage.show();
         editStage.toFront();
-    }
-
-    /**
-     * @return boolean property that is true if the {@link Window3DController} should rebuild the subscene, and false
-     * otherwise
-     */
-    public BooleanProperty getRebuildSceneFlag() {
-        return rebuildSceneFlag;
     }
 
     /**

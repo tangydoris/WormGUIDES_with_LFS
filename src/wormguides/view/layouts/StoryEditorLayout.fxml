@@ -277,7 +277,7 @@
                         </HBox>
                     </VBox>
                     <Region maxWidth="1.7976931348623157E308"/>
-                    <Label minWidth="33.0" text="Note is visible at time:">
+                    <Label minWidth="33.0" text="Note is visible at timeProperty:">
                         <font>
                             <Font size="14.0"/>
                         </font>
