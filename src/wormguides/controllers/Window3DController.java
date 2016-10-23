@@ -476,24 +476,28 @@ public class Window3DController {
         });
 
         this.rulesList = requireNonNull(rulesList);
+        // TODO
         this.rulesList.addListener(new ListChangeListener<Rule>() {
             @Override
             public void onChanged(Change<? extends Rule> change) {
                 while (change.next()) {
                     if (change.getAddedSize() > 0) {
-                        buildScene();
+//                        buildScene();
                         for (Rule rule : change.getAddedSubList()) {
                             rule.getRuleChangedProperty().addListener((observable, oldValue, newValue) -> {
                                 if (newValue) {
+                                    System.out.println("rule change");
                                     buildScene();
                                 }
                             });
                         }
                     }
                     if (!change.getRemoved().isEmpty()) {
-                        buildScene();
+//                        buildScene();
                     }
                 }
+                System.out.println("list change");
+                buildScene();
             }
         });
 
@@ -2431,7 +2435,7 @@ public class Window3DController {
                 @Override
                 protected Void call() throws Exception {
                     runLater(() -> {
-                        System.out.println("Run render service");
+//                        System.out.println("Run render service");
                         getSceneData();
                         refreshScene();
                         addEntitiesToScene();

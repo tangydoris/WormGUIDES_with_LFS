@@ -40,19 +40,20 @@ public class StructuresLayer {
 
     private final SearchLayer searchLayer;
 
-    private ObservableList<String> allStructuresList;
-    private ObservableList<String> searchResultsList;
+    private final ObservableList<String> allStructuresList;
+    private final ObservableList<String> searchResultsList;
+
+    private final Map<String, List<String>> nameToCellsMap;
+    private final Map<String, String> nameToCommentsMap;
+    private final Map<String, StructureListCellGraphic> nameListCellMap;
+
+    private final StringProperty selectedNameProperty;
+    private final BooleanProperty rebuildSceneFlag;
+
+    private final TextField searchField;
 
     private Color selectedColor;
     private String searchText;
-
-    private Map<String, List<String>> nameToCellsMap;
-    private Map<String, String> nameToCommentsMap;
-    private Map<String, StructureListCellGraphic> nameListCellMap;
-
-    private StringProperty selectedNameProperty;
-
-    private TextField searchField;
 
     public StructuresLayer(
             final SearchLayer searchLayer,
@@ -61,9 +62,8 @@ public class StructuresLayer {
             final ListView<String> structureSearchListView,
             final ListView<String> allStructuresListView,
             final Button addStructureRuleButton,
-            final ColorPicker colorPicker) {
-
-        this.searchLayer = requireNonNull(searchLayer);
+            final ColorPicker colorPicker,
+            final BooleanProperty rebuildSceneFlag) {
 
         selectedColor = WHITE;
 
@@ -72,6 +72,10 @@ public class StructuresLayer {
 
         nameListCellMap = new HashMap<>();
         selectedNameProperty = new SimpleStringProperty("");
+
+        this.searchLayer = requireNonNull(searchLayer);
+
+        this.rebuildSceneFlag = requireNonNull(rebuildSceneFlag);
 
         allStructuresList.addListener(new ListChangeListener<String>() {
             @Override
@@ -92,7 +96,17 @@ public class StructuresLayer {
         nameToCellsMap = sceneElementsList.getNameToCellsMap();
         nameToCommentsMap = sceneElementsList.getNameToCommentsMap();
 
-        setSearchField(requireNonNull(searchField));
+        this.searchField = requireNonNull(searchField);
+        this.searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            searchText = newValue.toLowerCase();
+            if (searchText.isEmpty()) {
+                searchResultsList.clear();
+            } else {
+                setSelectedStructure("");
+                deselectAllStructures();
+                searchAndUpdateResults(newValue.toLowerCase());
+            }
+        });
 
         requireNonNull(structureSearchListView).setItems(searchResultsList);
         requireNonNull(allStructuresListView).setItems(allStructuresList);
@@ -131,21 +145,6 @@ public class StructuresLayer {
 
     public void setSelectedColor(Color color) {
         selectedColor = color;
-    }
-
-    private void setSearchField(final TextField searchField) {
-        this.searchField = searchField;
-
-        this.searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            searchText = newValue.toLowerCase();
-            if (searchText.isEmpty()) {
-                searchResultsList.clear();
-            } else {
-                setSelectedStructure("");
-                deselectAllStructures();
-                searchAndUpdateResults(newValue.toLowerCase());
-            }
-        });
     }
 
     private void deselectAllStructures() {

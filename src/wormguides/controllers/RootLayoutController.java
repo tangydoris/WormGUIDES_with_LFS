@@ -979,7 +979,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 structuresSearchListView,
                 allStructuresListView,
                 addStructureRuleBtn,
-                structureRuleColorPicker);
+                structureRuleColorPicker,
+                rebuildSubsceneFlag);
         structuresLayer.addSelectedNameListener((observable, oldValue, newValue) -> {
             if (!newValue.isEmpty()) {
                 selectedNameProperty.set(newValue);
