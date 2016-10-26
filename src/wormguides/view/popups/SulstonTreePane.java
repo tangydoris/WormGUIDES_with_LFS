@@ -16,9 +16,9 @@ import java.util.Map;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
@@ -95,6 +95,7 @@ public class SulstonTreePane extends ScrollPane {
     private final Stage contextMenuStage;
     private final ContextMenuController contextMenuController;
     private final StringProperty selectedNameLabeledProperty;
+    private final BooleanProperty rebuildSubsceneFlag;
     private final Stage ownStage;
     private final AnchorPane canvas;
     private final EventHandler<MouseEvent> clickHandler;
@@ -142,6 +143,7 @@ public class SulstonTreePane extends ScrollPane {
             final Stage contextMenuStage,
             final ContextMenuController contextMenuController,
             final StringProperty selectedNameLabeledProperty,
+            final BooleanProperty rebuildSubsceneFlag,
             final boolean defaultEmbryoFlag) {
 
         super();
@@ -191,7 +193,12 @@ public class SulstonTreePane extends ScrollPane {
         this.colorHash = colorHash;
         this.lineageTreeRoot = lineageTreeRoot;
 
-        setRulesListener();
+        this.rebuildSubsceneFlag = requireNonNull(rebuildSubsceneFlag);
+        this.rebuildSubsceneFlag.addListener((observable, oldValue, newValue) -> {
+           if (newValue) {
+               updateColoring();
+           }
+        });
 
         this.nameXUseMap = new HashMap<>();
         this.nameYStartUseMap = new HashMap<>();
@@ -268,7 +275,7 @@ public class SulstonTreePane extends ScrollPane {
         this.contextMenuController = requireNonNull(contextMenuController);
         this.contextMenuStage = requireNonNull(contextMenuStage);
 
-        this.selectedNameLabeledProperty = selectedNameLabeledProperty;
+        this.selectedNameLabeledProperty = requireNonNull(selectedNameLabeledProperty);
 
         // keyboard shortcut for screenshot
         ownStage.addEventHandler(KEY_PRESSED, keyEvent -> {
@@ -331,7 +338,7 @@ public class SulstonTreePane extends ScrollPane {
         canvas.setPrefHeight(ownStage.heightProperty().get());
     }
 
-    private void resetSelectedNameLabeled(String name) {
+    private void resetSelectedNameLabeled(final String name) {
         selectedNameLabeledProperty.set("");
         selectedNameLabeledProperty.set(name);
     }
@@ -666,28 +673,6 @@ public class SulstonTreePane extends ScrollPane {
         mainPane.getChildren().add(lcell);
 
         return x;
-    }
-
-    private void setRulesListener() {
-        if (rules != null) {
-            rules.addListener(new ListChangeListener<Rule>() {
-                @Override
-                public void onChanged(ListChangeListener.Change<? extends Rule> change) {
-                    while (change.next()) {
-                        updateColoring();
-                        if (change.getAddedSize() > 0) {
-                            for (Rule rule : change.getAddedSubList()) {
-                                rule.getRuleChangedProperty().addListener((observable, oldValue, newValue) -> {
-                                    if (newValue) {
-                                        updateColoring();
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
-            });
-        }
     }
 
     /**

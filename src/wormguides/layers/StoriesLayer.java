@@ -47,6 +47,7 @@ import wormguides.stories.Note;
 import wormguides.stories.Story;
 import wormguides.util.AppFont;
 
+import static java.lang.Integer.MIN_VALUE;
 import static java.util.Objects.requireNonNull;
 
 import static javafx.collections.FXCollections.observableArrayList;
@@ -88,7 +89,7 @@ public class StoriesLayer {
     private final DoubleProperty zoomProperty;
     private final DoubleProperty othersOpacityProperty;
     private final BooleanProperty useInternalRulesFlag;
-    private final BooleanProperty rebuildSceneFlag;
+    private final BooleanProperty rebuildSubsceneFlag;
     private final BooleanProperty cellClickedFlag;
     private final StringProperty activeCellNameProperty;
     private final StringProperty activeStoryProperty;
@@ -96,13 +97,16 @@ public class StoriesLayer {
     private final ObservableList<Rule> activeRulesList;
     private final ObservableList<Story> stories;
 
+    private final int startTime;
+    private final int endTime;
+    private int movieTimeOffset;
+
     private Stage editStage;
     private StoryEditorController editController;
 
     private Story activeStory;
     private Note activeNote;
     private Comparator<Note> noteComparator;
-    private int movieTimeOffset;
     private double width;
 
     public StoriesLayer(
@@ -122,11 +126,13 @@ public class StoriesLayer {
             final DoubleProperty zoomProperty,
             final DoubleProperty othersOpacityProperty,
             final BooleanProperty useInternalRulesFlag,
-            final BooleanProperty rebuildSceneFlag,
+            final BooleanProperty rebuildSubsceneFlag,
             final LineageData lineageData,
             final Button newStoryButton,
             final Button deleteStoryButton,
             final Button editNoteButton,
+            final int startTime,
+            final int endTime,
             final int movieTimeOffset,
             final boolean defaultEmbryoFlag) {
 
@@ -138,7 +144,7 @@ public class StoriesLayer {
         this.activeRulesList = requireNonNull(rulesList);
 
         this.cellClickedFlag = requireNonNull(cellClickedFlag);
-        this.rebuildSceneFlag = requireNonNull(rebuildSceneFlag);
+        this.rebuildSubsceneFlag = requireNonNull(rebuildSubsceneFlag);
 
         this.timeProperty = requireNonNull(timeProperty);
         this.rotateXAngleProperty = requireNonNull(rotateXAngleProperty);
@@ -152,12 +158,16 @@ public class StoriesLayer {
         this.activeCellNameProperty = requireNonNull(activeCellNameProperty);
         this.activeStoryProperty = requireNonNull(activeStoryProperty);
 
-        this.useInternalRulesFlag = useInternalRulesFlag;
+        this.useInternalRulesFlag = requireNonNull(useInternalRulesFlag);
+
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.movieTimeOffset = movieTimeOffset;
 
         stories = observableArrayList(story -> new Observable[]{
                 story.getChangedProperty(),
                 story.getActiveProperty()});
+        // TODO look into this...
         stories.addListener(new ListChangeListener<Story>() {
             @Override
             public void onChanged(Change<? extends Story> c) {
@@ -171,7 +181,7 @@ public class StoriesLayer {
             Story story = new Story(NEW_STORY_TITLE, NEW_STORY_DESCRIPTION, "");
             stories.add(story);
             setActiveStory(story);
-            setActiveNote(null);
+            setActiveNoteWithSubsceneRebuild(null);
             bringUpEditor();
         });
 
@@ -179,7 +189,7 @@ public class StoriesLayer {
             if (activeStory != null) {
                 stories.remove(activeStory);
                 setActiveStory(null);
-                setActiveNote(null);
+                setActiveNoteWithSubsceneRebuild(null);
             }
         });
 
@@ -230,11 +240,10 @@ public class StoriesLayer {
      * {@link FileChooser} to allow the user to pick a load location.
      */
     public void loadStory() {
-        FileChooser chooser = new FileChooser();
+        final FileChooser chooser = new FileChooser();
         chooser.setTitle("Save Story");
         chooser.setInitialFileName("WormGUIDES Story.csv");
         chooser.getExtensionFilters().addAll(new ExtensionFilter("CSV Files", "*.csv"));
-
         final File file = chooser.showOpenDialog(parentStage);
         if (file != null) {
             loadFromCSVFile(stories, file, movieTimeOffset);
@@ -312,26 +321,24 @@ public class StoriesLayer {
         if (activeStory != null && activeStory.hasNotes()) {
             return getEffectiveStartTime(activeStory.getNotes().get(0));
         }
-        return Integer.MIN_VALUE;
+        return MIN_VALUE;
     }
 
     /**
-     * Sets the active note to the input note parameter. Makes the current note
-     * inactive, then makes the input note active.
+     * Sets the active note to the input note parameter. Makes the current note inactive, then makes the input note
+     * active.
      *
      * @param note
      *         the note that should become active
      */
-    public void setActiveNote(final Note note) {
+    public void setActiveNoteWithSubsceneRebuild(final Note note) {
         // deactivate the previous active note
         if (activeNote != null) {
             activeNote.setActive(false);
         }
-
         activeNote = note;
         if (activeNote != null) {
             activeNote.setActive(true);
-
             // set time property to be read by 3d window
             if (!activeNote.getTagName().equals("New Note")) {
                 int startTime = getEffectiveStartTime(activeNote);
@@ -343,7 +350,6 @@ public class StoriesLayer {
                 }
             }
         }
-
         if (editController != null) {
             editController.setActiveNote(activeNote);
         }
@@ -360,7 +366,7 @@ public class StoriesLayer {
      * so that it can be passed into the note comparator
      */
     private Integer getEffectiveEndTime(Note note) {
-        int time = Integer.MIN_VALUE;
+        int time = MIN_VALUE;
 
         if (note != null) {
             if (note.attachedToCell() || note.attachedToStructure()) {
@@ -413,7 +419,7 @@ public class StoriesLayer {
      * so that it can be passed into the note comparator
      */
     private Integer getEffectiveStartTime(Note note) {
-        int time = Integer.MIN_VALUE;
+        int time = MIN_VALUE;
 
         if (note != null) {
             if (note.attachedToCell() || note.attachedToStructure()) {
@@ -470,8 +476,7 @@ public class StoriesLayer {
      *         story to make active
      */
     public void setActiveStory(final Story story) {
-        // disable previous active story
-        // copy current rules changes back to story
+        // disable previous active story, copy current rules changes back to story
         if (activeStory != null) {
             activeStory.setActive(false);
             activeStory.setColorURL(generateInternal(
@@ -486,19 +491,16 @@ public class StoriesLayer {
                     othersOpacityProperty.get()));
         }
 
-        setActiveNote(null);
+        activeNote = null;
         useInternalRulesFlag.set(true);
 
         activeStory = story;
-        int startTime = 1;
-        if (timeProperty != null) {
-            startTime = timeProperty.get();
-        }
+        int newTime = startTime;
+        newTime = timeProperty.get();
 
         if (activeStory != null) {
             activeStory.setActive(true);
             activeStoryProperty.set(activeStory.getName());
-
             // if story does not come with a url, set its url to the program's internal color rules
             if (activeStory.getColorURL().isEmpty()) {
                 activeStory.setColorURL(generateInternal(
@@ -514,6 +516,7 @@ public class StoriesLayer {
             } else { // if story does come with url, use it
                 useInternalRulesFlag.set(false);
             }
+
             process(
                     activeStory.getColorURL(),
                     activeRulesList,
@@ -525,12 +528,13 @@ public class StoriesLayer {
                     translateXProperty,
                     translateYProperty,
                     zoomProperty,
-                    othersOpacityProperty);
+                    othersOpacityProperty,
+                    rebuildSubsceneFlag);
 
             if (activeStory.hasNotes()) {
-                startTime = getEffectiveStartTime(activeStory.getNotes().get(0));
-                if (startTime < 1) {
-                    startTime = 1;
+                newTime = getEffectiveStartTime(activeStory.getNotes().get(0));
+                if (newTime < startTime) {
+                    newTime = startTime;
                 }
             }
         } else {
@@ -540,13 +544,6 @@ public class StoriesLayer {
 
         if (editController != null) {
             editController.setActiveStory(activeStory);
-        }
-
-        if (timeProperty != null && timeProperty.get() != startTime) {
-            timeProperty.set(startTime);
-        } else {
-            rebuildSceneFlag.set(true);
-            rebuildSceneFlag.set(false);
         }
     }
 
@@ -577,8 +574,7 @@ public class StoriesLayer {
      * @param time
      *         the queried time
      *
-     * @return An {@link ArrayList} of all notes that can exist at the at input
-     * time. This includes notes attached to an entity if entity is
+     * @return all notes that can exist at the at input time. This includes notes attached to an entity if entity is
      * present at input time. These notes are later filtered out.
      */
     public ArrayList<Note> getNotesAtTime(int time) {
@@ -596,7 +592,7 @@ public class StoriesLayer {
 
                 int effectiveStart = getEffectiveStartTime(note);
                 int effectiveEnd = getEffectiveEndTime(note);
-                if (effectiveStart != Integer.MIN_VALUE && effectiveEnd != Integer.MIN_VALUE
+                if (effectiveStart != MIN_VALUE && effectiveEnd != MIN_VALUE
                         && (time < effectiveStart || effectiveEnd < time)) {
                     iter.remove();
                 }
@@ -604,36 +600,6 @@ public class StoriesLayer {
         }
 
         return notes;
-    }
-
-    /**
-     * @return string of all stories visible in the 'Stories' tab
-     */
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("Stories:\n");
-        for (int i = 0; i < stories.size(); i++) {
-            Story story = stories.get(i);
-            sb.append(story.getName())
-                    .append(": ")
-                    .append(story.getNumberOfNotes())
-                    .append(" notes\n");
-
-            for (Note note : story.getNotes()) {
-                sb.append("\t")
-                        .append(note.getTagName())
-                        .append(": times ")
-                        .append(note.getStartTime())
-                        .append(" ")
-                        .append(note.getEndTime())
-                        .append("\n");
-            }
-            if (i < stories.size() - 1) {
-                sb.append("\n");
-            }
-        }
-
-        return sb.toString();
     }
 
     /**
@@ -675,7 +641,7 @@ public class StoriesLayer {
                     activeCellNameProperty,
                     cellClickedFlag,
                     timeProperty,
-                    rebuildSceneFlag);
+                    rebuildSubsceneFlag);
 
             editController.setActiveNote(activeNote);
             editController.setActiveStory(activeStory);
@@ -697,8 +663,7 @@ public class StoriesLayer {
                 editStage.setResizable(true);
 
                 editStage.setOnCloseRequest(event -> {
-                    rebuildSceneFlag.set(true);
-                    rebuildSceneFlag.set(false);
+                    rebuildSubsceneFlag.set(true);
                 });
 
                 editController.getNoteCreatedProperty().addListener((observable, oldValue, newValue) -> {
@@ -706,9 +671,8 @@ public class StoriesLayer {
                         Note newNote = editController.getActiveNote();
                         editController.setNoteCreated(false);
                         activeStory.addNote(newNote);
-                        setActiveNote(newNote);
-                        rebuildSceneFlag.set(true);
-                        rebuildSceneFlag.set(false);
+                        setActiveNoteWithSubsceneRebuild(newNote);
+                        rebuildSubsceneFlag.set(true);
                     }
                 });
 
@@ -716,7 +680,7 @@ public class StoriesLayer {
                     if (activeNote != null) {
                         activeStory.removeNote(activeNote);
                     }
-                    setActiveNote(null);
+                    setActiveNoteWithSubsceneRebuild(null);
                 });
 
                 for (Node node : editStage.getScene().getRoot().getChildrenUnmodifiable()) {
@@ -793,6 +757,35 @@ public class StoriesLayer {
         for (Text text : texts) {
             text.setStyle("-fx-fill:" + color.toString().toLowerCase().replace("0x", "#"));
         }
+    }
+
+    /**
+     * @return stories visible in the 'Stories' tab
+     */
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Stories:\n");
+        Story story;
+        for (int i = 0; i < stories.size(); i++) {
+            story = stories.get(i);
+            sb.append(story.getName())
+                    .append(": ")
+                    .append(story.getNumberOfNotes())
+                    .append(" notes\n");
+            for (Note note : story.getNotes()) {
+                sb.append("\t")
+                        .append(note.getTagName())
+                        .append(": times ")
+                        .append(note.getStartTime())
+                        .append(" ")
+                        .append(note.getEndTime())
+                        .append("\n");
+            }
+            if (i < stories.size() - 1) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -945,9 +938,9 @@ public class StoriesLayer {
                 if (event.getPickResult().getIntersectedNode() != expandIcon) {
                     note.setActive(!note.isActive());
                     if (note.isActive()) {
-                        setActiveNote(note);
+                        setActiveNoteWithSubsceneRebuild(note);
                     } else {
-                        setActiveNote(null);
+                        setActiveNoteWithSubsceneRebuild(null);
                     }
                 }
             });

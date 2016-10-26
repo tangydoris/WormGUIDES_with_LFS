@@ -173,7 +173,9 @@ public class ColorHash {
         if (colors != null) {
             colorSet.addAll(colors);
         }
-        materialHash.putIfAbsent(colorSet, makeMaterial(colorSet));
+        if (!materialHash.containsKey(colorSet)) {
+            materialHash.put(colorSet, makeMaterial(colorSet));
+        }
         return materialHash.get(colorSet);
     }
 

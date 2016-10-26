@@ -370,6 +370,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                     contextMenuStage,
                     contextMenuController,
                     selectedNameLabeledProperty,
+                    rebuildSubsceneFlag,
                     defaultEmbryoFlag);
             sulstonTreeStage.setScene(new Scene(sp));
             sulstonTreeStage.setTitle("LineageTree");
@@ -431,7 +432,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                                 translateXProperty,
                                 translateYProperty,
                                 zoomProperty,
-                                othersOpacityProperty);
+                                othersOpacityProperty,
+                                rebuildSubsceneFlag);
                     }
                 } else {
                     urlLoadStage.hide();
@@ -446,7 +448,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                             translateXProperty,
                             translateYProperty,
                             zoomProperty,
-                            othersOpacityProperty);
+                            othersOpacityProperty,
+                            rebuildSubsceneFlag);
                 }
             });
             urlLoadWindow.getCancelButton().setOnAction(event -> urlLoadStage.hide());
@@ -730,7 +733,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
         timeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             final int value = newValue.intValue();
             if (value != oldValue.intValue()) {
-                timeProperty.set(newValue.intValue());
+                timeProperty.set(value);
+                rebuildSubsceneFlag.set(true);
             }
         });
 
@@ -936,8 +940,10 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 ancestorCheckBox,
                 descendantCheckBox,
                 colorPicker,
-                addSearchBtn);
-        searchLayer.addDefaultColorRules();
+                addSearchBtn,
+                updatedGeneResultsFlag,
+                rebuildSubsceneFlag);
+        searchLayer.addDefaultInternalColorRules();
         searchResultsUpdateService = searchLayer.getResultsUpdateService();
         searchResultsList = searchLayer.getSearchResultsList();
         searchResultsListView.setItems(searchResultsList);
@@ -945,8 +951,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
     private void initDisplayLayer() {
         rulesList = observableArrayList();
-        usingInternalRulesFlag = new SimpleBooleanProperty(true);
-        displayLayer = new DisplayLayer(rulesList, usingInternalRulesFlag);
+        displayLayer = new DisplayLayer(rulesList, usingInternalRulesFlag, rebuildSubsceneFlag);
         rulesListView.setItems(rulesList);
         rulesListView.setCellFactory(displayLayer.getRuleCellFactory());
     }
@@ -960,11 +965,9 @@ public class RootLayoutController extends BorderPane implements Initializable {
                     allCellNames.remove(i--);
                 }
             }
-
             //sort the lineage names that remain
             sort(allCellNames);
         }
-
         final LineageTree lineageTree = new LineageTree(
                 allCellNames.toArray(new String[allCellNames.size()]),
                 lineageData.isSulstonMode());
@@ -1011,6 +1014,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 newStoryButton,
                 deleteStoryButton,
                 editNoteButton,
+                startTime,
+                endTime,
                 movieTimeOffset,
                 defaultEmbryoFlag);
 
@@ -1121,6 +1126,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
         // takes about 6ms
         CellDeaths.init();
 
+        initSharedVariables();
+
         // takes about 3ms
         initDisplayLayer();
 
@@ -1137,8 +1144,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
         sceneElementsList = new SceneElementsList();
         connectome = new Connectome();
-
-        initSharedVariables();
 
         initSearchLayer();
         searchLayer.initDatabases(lineageData, sceneElementsList, connectome, casesLists, productionInfo);
@@ -1178,14 +1183,14 @@ public class RootLayoutController extends BorderPane implements Initializable {
         selectedNameLabeledProperty = new SimpleStringProperty("");
         activeStoryProperty = new SimpleStringProperty("");
 
-        cellClickedFlag = new SimpleBooleanProperty();
-        updatedGeneResultsFlag = new SimpleBooleanProperty();
-        rebuildSubsceneFlag = new SimpleBooleanProperty();
-        usingInternalRulesFlag = new SimpleBooleanProperty();
-        bringUpInfoFlag = new SimpleBooleanProperty();
-        playingMovieFlag = new SimpleBooleanProperty();
-        capturingVideoFlag = new SimpleBooleanProperty();
-        bringUpInfoFlag = new SimpleBooleanProperty();
+        cellClickedFlag = new SimpleBooleanProperty(false);
+        updatedGeneResultsFlag = new SimpleBooleanProperty(false);
+
+        rebuildSubsceneFlag = new SimpleBooleanProperty(false);
+        usingInternalRulesFlag = new SimpleBooleanProperty(true);
+        bringUpInfoFlag = new SimpleBooleanProperty(false);
+        playingMovieFlag = new SimpleBooleanProperty(false);
+        capturingVideoFlag = new SimpleBooleanProperty(false);
 
         colorHash = new ColorHash();
         rootEntitiesGroup = new Group();

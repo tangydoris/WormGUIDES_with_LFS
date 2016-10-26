@@ -16,8 +16,8 @@ import javafx.scene.shape.TriangleMesh;
  */
 public class GeometryLoader {
 
-    private static final String VERTEX_LINE = "v ";
-    private static final String FACE_LINE = "f ";
+    private static final String VERTEX_LINE = "v";
+    private static final String FACE_LINE = "f";
 
     /**
      * Builds a 3D mesh from a file
@@ -45,7 +45,7 @@ public class GeometryLoader {
                 String lineType;
                 while ((line = reader.readLine()) != null) {
                     // process each line in the obj file
-                    lineType = line.substring(0, 2);
+                    lineType = line.substring(0, 1);
                     switch (lineType) {
                         case VERTEX_LINE: {
                             // process vertex lines

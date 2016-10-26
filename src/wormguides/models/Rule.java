@@ -35,6 +35,7 @@ import wormguides.loaders.ImageLoader;
 import wormguides.util.AppFont;
 
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 import static javafx.scene.control.ContentDisplay.GRAPHIC_ONLY;
@@ -63,6 +64,22 @@ public class Rule {
     /** Length and width of color rule UI buttons */
     private final int UI_SIDE_LENGTH = 22;
 
+    private final SubmitHandler submitHandler;
+
+    private final SearchType searchType;
+
+    private final HBox hbox;
+    private final Label label;
+    private final Rectangle colorRectangle;
+    private final Button editBtn;
+    private final Button visibleBtn;
+    private final Button deleteBtn;
+    private final Tooltip toolTip;
+    private final ImageView eyeIcon;
+    private final ImageView eyeInvertIcon;
+
+    private BooleanProperty rebuildSubsceneFlag;
+
     private Stage editStage;
 
     private String text;
@@ -78,23 +95,12 @@ public class Rule {
 
     private RuleEditorController editController;
 
-    private SubmitHandler handler;
-
-    private SearchType searchType;
-
-    private HBox hbox;
-    private Label label;
-    private Rectangle colorRectangle;
-    private Button editBtn;
-    private Button visibleBtn;
-    private Button deleteBtn;
-    private Tooltip toolTip;
-    private ImageView eyeIcon;
-    private ImageView eyeInvertIcon;
-
     /**
      * Rule class constructor called by the {@link SearchLayer} class
      *
+     * @param rebuildSubsceneFlag
+     *         true when the subscene should be rebuilt, false otherwise. This is passed to the
+     *         rule editor controller in order to trigger a subscene rebuild when 'Submit' is clicked
      * @param searched
      *         text that user searched
      * @param color
@@ -105,8 +111,13 @@ public class Rule {
      * @param options
      *         options that the rule should be extended to
      */
-    public Rule(String searched, Color color, SearchType type, SearchOption... options) {
-        this(searched, color, type, new ArrayList<>(asList(options)));
+    public Rule(
+            final BooleanProperty rebuildSubsceneFlag,
+            String searched,
+            Color color,
+            SearchType type,
+            SearchOption... options) {
+        this(rebuildSubsceneFlag, searched, color, type, new ArrayList<>(asList(options)));
     }
 
     /**
@@ -122,7 +133,15 @@ public class Rule {
      * @param options
      *         options that the rule should be extended to
      */
-    public Rule(String searched, Color color, SearchType type, List<SearchOption> options) {
+    public Rule(
+            final BooleanProperty rebuildSubsceneFlag,
+            String searched,
+            Color color,
+            SearchType type,
+            List<SearchOption> options) {
+
+        this.rebuildSubsceneFlag = requireNonNull(rebuildSubsceneFlag);
+
         hbox = new HBox();
         label = new Label();
         colorRectangle = new Rectangle(UI_SIDE_LENGTH, UI_SIDE_LENGTH);
@@ -136,7 +155,7 @@ public class Rule {
         setColor(color);
         setSearchedText(searched);
 
-        handler = new SubmitHandler();
+        submitHandler = new SubmitHandler();
 
         cells = new ArrayList<>();
         // if the cells list from SearchLayer is set for this rule, cellsSet is true
@@ -193,7 +212,6 @@ public class Rule {
                 visibleBtn.setGraphic(eyeInvertIcon);
             }
             ruleChanged.set(true);
-            ruleChanged.set(false);
         });
 
         deleteBtn.setPrefSize(UI_SIDE_LENGTH, UI_SIDE_LENGTH);
@@ -213,6 +231,7 @@ public class Rule {
         ruleChanged.addListener((observable, oldValue, newValue) -> {
             if (newValue && editController != null) {
                 setColorButton(editController.getColor());
+                ruleChanged.set(false);
             }
         });
 
@@ -227,7 +246,7 @@ public class Rule {
      */
     public void showEditStage(final Stage stage) {
         if (editStage == null) {
-            initEditStage(stage);
+            initEditStage(stage, rebuildSubsceneFlag);
         }
 
         editController.setHeading(label.getText());
@@ -242,7 +261,7 @@ public class Rule {
      * @param stage
      *         The {@link Stage} to which the rule editor window belongs to
      */
-    private void initEditStage(final Stage stage) {
+    private void initEditStage(final Stage stage, final BooleanProperty rebuildSubsceneFlag) {
         editController = new RuleEditorController();
 
         final FXMLLoader loader = new FXMLLoader();
@@ -266,7 +285,7 @@ public class Rule {
             editStage.initModality(NONE);
 
             editController.setHeading(text);
-            editController.setSubmitHandler(handler);
+            editController.setSubmitHandler(submitHandler);
             editController.setColor(color);
             editController.setCellTicked(isCellSelected());
             editController.setCellBodyTicked(isCellBodySelected());
@@ -553,7 +572,7 @@ public class Rule {
     }
 
     /**
-     * Action event handler for a click on the 'Submit' button in the rule editor popup.
+     * Action event submitHandler for a click on the 'Submit' button in the rule editor popup.
      */
     private class SubmitHandler implements EventHandler<ActionEvent> {
         @Override
@@ -568,8 +587,7 @@ public class Rule {
                 }
                 label.setText(toStringFull());
                 toolTip.setText(toStringFull());
-                ruleChanged.set(true);
-                ruleChanged.set(false);
+                rebuildSubsceneFlag.set(true);
             }
         }
     }

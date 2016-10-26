@@ -32,7 +32,7 @@ import static java.util.Objects.requireNonNull;
  * item that no longer has context (whether it is the internal rules or the story's rules).
  * <p>
  * The internal rules are the rules used when no story is active. On startup, the internal rules are the default
- * rules added by {@link SearchLayer#addDefaultColorRules()}.
+ * rules added by {@link SearchLayer#addDefaultInternalColorRules()}.
  *
  * @see Rule
  */
@@ -43,13 +43,17 @@ public class DisplayLayer {
     private final Map<Rule, Button> buttonMap;
 
     /**
-     * Class constructor
+     * Constructor
      *
-     * @param useInternalRules
+     * @param useInternalRulesFlag
      *         true when the application should use the program's internal color rules (such as in the case where
      *         no story is active), false otherwise
      */
-    public DisplayLayer(final ObservableList<Rule> rulesList, final BooleanProperty useInternalRules) {
+    public DisplayLayer(
+            final ObservableList<Rule> rulesList,
+            final BooleanProperty useInternalRulesFlag,
+            final BooleanProperty rebuildSubsceneFlag) {
+
         internalRulesList = new ArrayList<>();
         buttonMap = new HashMap<>();
 
@@ -72,16 +76,14 @@ public class DisplayLayer {
             }
         });
 
-        requireNonNull(useInternalRules).addListener((observable, oldValue, newValue) -> {
-            // using internal rules now
-            // copy all internal rules to current list
+        requireNonNull(rebuildSubsceneFlag);
+        requireNonNull(useInternalRulesFlag).addListener((observable, oldValue, newValue) -> {
             if (newValue) {
+                // using internal rules, copy all internal rules to current list
                 currentRulesList.clear();
                 currentRulesList.addAll(internalRulesList);
-            }
-            // not using internal rules anymore
-            // copy all current rule changes back to internal list
-            else {
+            } else {
+                // not using internal rules, copy all current rule changes back to internal list
                 internalRulesList.clear();
                 internalRulesList.addAll(currentRulesList);
             }
@@ -95,7 +97,7 @@ public class DisplayLayer {
         return new Callback<ListView<Rule>, ListCell<Rule>>() {
             @Override
             public ListCell<Rule> call(ListView<Rule> param) {
-                ListCell<Rule> cell = new ListCell<Rule>() {
+                final ListCell<Rule> cell = new ListCell<Rule>() {
                     @Override
                     protected void updateItem(Rule item, boolean empty) {
                         super.updateItem(item, empty);
@@ -111,5 +113,4 @@ public class DisplayLayer {
             }
         };
     }
-
 }

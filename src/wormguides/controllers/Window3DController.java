@@ -25,7 +25,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -203,6 +202,7 @@ public class Window3DController {
     private final BooleanProperty playingMovieProperty;
     private final PlayService playService;
     private final RenderService renderService;
+    /** Local version of the serach results that only contains lineage names */
     private final List<String> localSearchResults;
     // color rules stuff
     private final ColorHash colorHash;
@@ -218,7 +218,7 @@ public class Window3DController {
     private final SubScene subscene;
     private final TextField searchField;
     // housekeeping stuff
-    private final BooleanProperty updateSubsceneFlag;
+    private final BooleanProperty rebuildSubsceneFlag;
     private final DoubleProperty rotateXAngleProperty;
     private final DoubleProperty rotateYAngleProperty;
     private final DoubleProperty rotateZAngleProperty;
@@ -241,8 +241,6 @@ public class Window3DController {
     private final BooleanProperty cellClickedProperty;
     private final ObservableList<String> searchResultsList;
     private final ObservableList<Rule> rulesList;
-    // specific boolean listener for gene search results
-    private final BooleanProperty updatedGeneResultsFlag;
     // Scene Elements stuff
     private final boolean defaultEmbryoFlag;
     private final SceneElementsList sceneElementsList;
@@ -379,7 +377,7 @@ public class Window3DController {
             final BooleanProperty cellClickedFlag,
             final BooleanProperty playingMovieFlag,
             final BooleanProperty updatedGeneResultsFlag,
-            final BooleanProperty updateSubsceneFlag,
+            final BooleanProperty rebuildSubsceneFlag,
             final ObservableList<Rule> rulesList,
             final ColorHash colorHash,
             final Stage contextMenuStage,
@@ -410,15 +408,12 @@ public class Window3DController {
         this.timeProperty.addListener((observable, oldValue, newValue) -> {
             final int newTime = newValue.intValue();
             final int oldTime = oldValue.intValue();
-            if (newTime != oldTime) {
-                if (startTime <= newTime && newTime <= endTime) {
-                    hideContextPopups();
-                    buildScene();
-                } else if (newTime < startTime) {
-                    timeProperty.set(startTime);
-                } else if (newTime > endTime) {
-                    timeProperty.set(endTime);
-                }
+            if (startTime <= newTime && newTime <= endTime) {
+                hideContextPopups();
+            } else if (newTime < startTime) {
+                timeProperty.set(startTime);
+            } else if (newTime > endTime) {
+                timeProperty.set(endTime);
             }
         });
 
@@ -470,36 +465,11 @@ public class Window3DController {
                 } else {
                     insertLabelFor(lineageName, entity);
                 }
-
                 highlightActiveCellLabel(entity);
             }
         });
 
         this.rulesList = requireNonNull(rulesList);
-        // TODO
-        this.rulesList.addListener(new ListChangeListener<Rule>() {
-            @Override
-            public void onChanged(Change<? extends Rule> change) {
-                while (change.next()) {
-                    if (change.getAddedSize() > 0) {
-//                        buildScene();
-                        for (Rule rule : change.getAddedSubList()) {
-                            rule.getRuleChangedProperty().addListener((observable, oldValue, newValue) -> {
-                                if (newValue) {
-                                    System.out.println("rule change");
-                                    buildScene();
-                                }
-                            });
-                        }
-                    }
-                    if (!change.getRemoved().isEmpty()) {
-//                        buildScene();
-                    }
-                }
-                System.out.println("list change");
-                buildScene();
-            }
-        });
 
         this.cellClickedProperty = requireNonNull(cellClickedFlag);
         this.totalNucleiProperty = requireNonNull(totalNucleiProperty);
@@ -548,8 +518,11 @@ public class Window3DController {
 
         localSearchResults = new ArrayList<>();
 
-        this.updatedGeneResultsFlag = requireNonNull(updatedGeneResultsFlag);
-        this.updatedGeneResultsFlag.addListener((observable, oldValue, newValue) -> updateLocalSearchResults());
+        requireNonNull(updatedGeneResultsFlag).addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                updateLocalSearchResults();
+            }
+        });
 
         otherCells = new ArrayList<>();
 
@@ -631,17 +604,18 @@ public class Window3DController {
 
         this.bringUpInfoFlag = requireNonNull(bringUpInfoFlag);
 
-        this.updateSubsceneFlag = requireNonNull(updateSubsceneFlag);
-        this.updateSubsceneFlag.addListener((observable, oldValue, newValue) -> {
+        this.rebuildSubsceneFlag = requireNonNull(rebuildSubsceneFlag);
+        // reset rebuild subscene flag to false because it may have been set to true by another layer's initialization
+        this.rebuildSubsceneFlag.set(false);
+        this.rebuildSubsceneFlag.addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 buildScene();
-                updateSubsceneFlag.set(false);
+                rebuildSubsceneFlag.set(false);
             }
         });
 
-        // set up the scaling values
-        //to convert from microns to pixel values, we set x,y = 1 and z = ratio of z to original y
-        // note that xScale and yScale are not the same
+        // set up the scaling value to convert from microns to pixel values, we set x,y = 1 and z = ratio of z to
+        // original y note that xScale and yScale are not the same
         if (xScale != yScale) {
             System.err.println("xScale does not equal yScale - using ratio of Z to X for zScale value in pixels\n"
                     + "X, Y should be the same value");
@@ -770,18 +744,6 @@ public class Window3DController {
         double value = keyValues[i] * alpha + keyValues[i - 1] * (1 - alpha);
         return value;
     }
-
-//    public void addListenerToRebuildSceneFlag(final BooleanProperty rebuildSceneFlag) {
-//        rebuildSceneFlag.addListener((observable, oldValue, newValue) -> {
-//            if (newValue) {
-//                buildScene();
-//            }
-//        });
-//    }
-
-//    public ColorHash getColorHash() {
-//        return colorHash;
-//    }
 
     /**
      * Inserts a transient label into the sprites pane for the specified entity if the entity is an 'other' entity
@@ -1408,9 +1370,7 @@ public class Window3DController {
         if (searchResultsList == null) {
             return;
         }
-
         localSearchResults.clear();
-
         for (String name : searchResultsList) {
             if (name.contains("(")) {
                 localSearchResults.add(name.substring(0, name.indexOf("(")).trim());
@@ -1418,8 +1378,7 @@ public class Window3DController {
                 localSearchResults.add(name);
             }
         }
-
-        buildScene();
+        rebuildSubsceneFlag.set(true);
     }
 
     private void refreshScene() {
@@ -2282,7 +2241,6 @@ public class Window3DController {
     private ChangeListener<Number> getRotateXAngleListener() {
         return (observable, oldValue, newValue) -> {
             double newAngle = newValue.doubleValue();
-            // cameraTransformer.setRotateX(newAngle);
             rotateX.setAngle(newAngle);
         };
     }
@@ -2290,7 +2248,6 @@ public class Window3DController {
     private ChangeListener<Number> getRotateYAngleListener() {
         return (observable, oldValue, newValue) -> {
             double newAngle = newValue.doubleValue();
-            // cameraTransformer.setRotateY(newAngle);
             rotateY.setAngle(newAngle);
         };
     }
@@ -2298,7 +2255,6 @@ public class Window3DController {
     private ChangeListener<Number> getRotateZAngleListener() {
         return (observable, oldValue, newValue) -> {
             double newAngle = newValue.doubleValue();
-            // cameraTransformer.setRotateZ(newAngle);
             rotateZ.setAngle(newAngle);
         };
     }

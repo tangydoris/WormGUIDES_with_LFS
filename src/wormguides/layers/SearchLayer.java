@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Queue;
 
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
@@ -99,8 +98,10 @@ public class SearchLayer {
     private final ColorPicker colorPicker;
     private final Button addRuleButton;
 
-    /** Tells the subscene controller to update according to the fetched gene results */
-    private final BooleanProperty geneResultsUpdated;
+    /** Tells the subscene controller to rebuild the 3D subscene according to the fetched gene results */
+    private final BooleanProperty geneResultsUpdatedFlag;
+    /** Tells the subscene controller to rebuild the 3D subscene */
+    private final BooleanProperty rebuildSubsceneFlag;
     private final Queue<String> geneSearchQueue;
 
     // queried databases
@@ -128,7 +129,9 @@ public class SearchLayer {
             final CheckBox ancestorCheckBox,
             final CheckBox descendantCheckBox,
             final ColorPicker colorPicker,
-            final Button addRuleButton) {
+            final Button addRuleButton,
+            final BooleanProperty geneResultsUpdatedFlag,
+            final BooleanProperty rebuildSubsceneFlag) {
 
         this.rulesList = requireNonNull(rulesList);
 
@@ -193,11 +196,13 @@ public class SearchLayer {
             }
         };
 
+        this.rebuildSubsceneFlag = requireNonNull(rebuildSubsceneFlag);
+
+        this.geneResultsUpdatedFlag = requireNonNull(geneResultsUpdatedFlag);
+
         showLoadingService = new ShowLoadingService();
 
         geneSearchQueue = new LinkedList<>();
-
-        geneResultsUpdated = new SimpleBooleanProperty(false);
 
         geneSearchService = new GeneSearchService();
         geneSearchService.setOnScheduled(event -> showLoadingService.restart());
@@ -220,7 +225,7 @@ public class SearchLayer {
             rulesList.stream()
                     .filter(rule -> rule.getSearchedText().contains(searchedQuoted))
                     .forEach(rule -> rule.setCells(geneSearchService.getValue()));
-            geneResultsUpdated.set(!geneResultsUpdated.get());
+            this.geneResultsUpdatedFlag.set(true);
 
             if (!geneSearchQueue.isEmpty()) {
                 geneSearchService.setSearchedGene(geneSearchQueue.remove());
@@ -350,7 +355,7 @@ public class SearchLayer {
             }
         }
 
-        final Rule rule = new Rule(sb.toString(), color, CONNECTOME, CELL_NUCLEUS);
+        final Rule rule = new Rule(rebuildSubsceneFlag, sb.toString(), color, CONNECTOME, CELL_NUCLEUS);
         rule.setCells(connectome.queryConnectivity(
                 linegeName,
                 isPresynapticTicked,
@@ -376,11 +381,9 @@ public class SearchLayer {
 
     private void updateGeneResults(final String searchedGene) {
         final List<String> results = new ArrayList<>(geneSearchService.getResultsIfPreviouslyFetched(searchedGene));
-
         if (results.isEmpty()) {
             return;
         }
-
         if (descendantCheckBox.isSelected()) {
             getDescendantsList(results, searchedGene)
                     .stream()
@@ -402,10 +405,9 @@ public class SearchLayer {
                 }
             }
         }
-
         sort(results);
         appendFunctionalToLineageNames(results);
-        geneResultsUpdated.set(!geneResultsUpdated.get());
+        geneResultsUpdatedFlag.set(true);
     }
 
     private void appendFunctionalToLineageNames(final List<String> list) {
@@ -423,7 +425,7 @@ public class SearchLayer {
         return searched;
     }
 
-    public void addDefaultColorRules() {
+    public void addDefaultInternalColorRules() {
         addColorRule(FUNCTIONAL, "ash", DARKSEAGREEN, CELL_BODY);
         addColorRule(FUNCTIONAL, "rib", web("0x663366"), CELL_BODY);
         addColorRule(FUNCTIONAL, "avg", web("0xb41919"), CELL_BODY);
@@ -449,22 +451,62 @@ public class SearchLayer {
         addColorRule(FUNCTIONAL, "da5", web("0xe6b34d"), CELL_NUCLEUS);
     }
 
-    public ObservableList<Rule> getRules() {
-        return rulesList;
-    }
-
-    public Rule addMulticellularStructureRule(String searched, Color color) {
+    /**
+     * Adds a color rule for a multicellular structure to the currently active rules list. Adding a rule does not
+     * rebuild the subscene. In order for any changes to be visible, the calling class must set the
+     * 'rebuildSubsceneFlag' to true or set a property that triggers a subscene rebuild.
+     *
+     * @param searched
+     *         the searched structure
+     * @param color
+     *         the color to apply to the structure
+     *
+     * @return the multicellular structure rule added
+     */
+    public Rule addMulticellularStructureRule(final String searched, final Color color) {
         return addColorRule(null, searched, color, MULTICELLULAR_NAME_BASED);
     }
 
+    /**
+     * Adds a color rule to the currently active rules list. Adding a rule does not rebuild the subscene. In order
+     * for any changes to be visible, the calling class must set the 'rebuildSubsceneFlag' to true or set a property
+     * that triggers a subscene rebuild.
+     *
+     * @param searchType
+     *         the search type
+     * @param searched
+     *         the searched term
+     * @param color
+     *         the color to apply to the cells in the search results
+     * @param options
+     *         the search options
+     *
+     * @return the rule added to the active rules list
+     */
     public Rule addColorRule(
-            final SearchType type,
+            final SearchType searchType,
             String searched,
             final Color color,
             final SearchOption... options) {
-        return addColorRule(type, searched, color, new ArrayList<>(asList(options)));
+        return addColorRule(searchType, searched, color, new ArrayList<>(asList(options)));
     }
 
+    /**
+     * Adds a color rule to the currently active rules list. Adding a rule does not rebuild the subscene. In order
+     * for any changes to be visible, the calling class must set the 'rebuildSubsceneFlag' to true or set a property
+     * that triggers a subscene rebuild.
+     *
+     * @param searchType
+     *         the search type
+     * @param searched
+     *         the searched term
+     * @param color
+     *         the color to apply to the cells in the search results
+     * @param options
+     *         the search options
+     *
+     * @return the rule added to the active rules list
+     */
     public Rule addColorRule(
             final SearchType searchType,
             String searched,
@@ -492,12 +534,10 @@ public class SearchLayer {
             label.append(searched);
         }
 
-        final Rule rule = new Rule(label.toString(), color, searchType, options);
+        final Rule rule = new Rule(rebuildSubsceneFlag, label.toString(), color, searchType, options);
         rule.setCells(getCellsList(searchType, searched));
         rulesList.add(rule);
-
         searchResultsList.clear();
-
         return rule;
     }
 
@@ -595,7 +635,7 @@ public class SearchLayer {
     }
 
 //    public BooleanProperty getGeneResultsUpdated() {
-//        return geneResultsUpdated;
+//        return geneResultsUpdatedFlag;
 //    }
 
     public ObservableList<String> getSearchResultsList() {

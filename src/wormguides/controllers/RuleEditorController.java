@@ -62,10 +62,6 @@ public class RuleEditorController extends AnchorPane implements Initializable {
     @FXML
     Button submitButton;
 
-    public RuleEditorController() {
-        super();
-    }
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // no need to do anything here

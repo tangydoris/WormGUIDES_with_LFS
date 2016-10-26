@@ -7,6 +7,7 @@ package wormguides.loaders;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.collections.ObservableList;
@@ -58,7 +59,8 @@ public class URLLoader {
             final DoubleProperty translateXProperty,
             final DoubleProperty translateYProperty,
             final DoubleProperty zoomProperty,
-            final DoubleProperty othersOpacityProperty) {
+            final DoubleProperty othersOpacityProperty,
+            final BooleanProperty rebuildSubsceneFlag) {
 
         if (!url.contains("testurlscript?/")) {
             return;
@@ -99,6 +101,7 @@ public class URLLoader {
         // process rules
         parseRules(ruleArgs, rulesList, searchLayer);
         // process view arguments
+        final int previousTime = timeProperty.get();
         parseViewArgs(
                 viewArgs,
                 timeProperty,
@@ -109,8 +112,19 @@ public class URLLoader {
                 translateYProperty,
                 zoomProperty,
                 othersOpacityProperty);
+        // no need to rebuild subscene again if we are not at a different timepoint than before
+        // setting the time property triggers a subscene rebuild
+        if (timeProperty.get() == previousTime) {
+            rebuildSubsceneFlag.set(true);
+        }
     }
 
+    /**
+     * Parses a list of rules and adds each to the application's active rules list
+     * @param rules the list of rules
+     * @param rulesList the active observable rules list
+     * @param searchLayer the search layer to add color rules
+     */
     private static void parseRules(
             final List<String> rules,
             final ObservableList<Rule> rulesList,
@@ -125,7 +139,8 @@ public class URLLoader {
 
             // determine if rule is a cell/cellbody rule, or a multicelllar structure rule
             try {
-                // multicellular structure rules have a null SearchType parse SearchType args
+                // multicellular structure rules have a null SearchType
+                // parse SearchType args
                 // systematic/functional
                 if (sb.indexOf("-s") > -1) {
                     types.add("-s");
@@ -176,34 +191,35 @@ public class URLLoader {
                     int i = sb.indexOf("-M");
                     sb.replace(i, i + 2, "");
                 } else {
+                    int i;
                     if (sb.indexOf("%3C") > -1) {
                         options.add(ANCESTOR);
-                        int i = sb.indexOf("%3C");
+                        i = sb.indexOf("%3C");
                         sb.replace(i, i + 3, "");
                     }
                     if (sb.indexOf(">") > -1) {
                         options.add(ANCESTOR);
-                        int i = sb.indexOf(">");
+                        i = sb.indexOf(">");
                         sb.replace(i, i + 1, "");
                     }
                     if (sb.indexOf("$") > -1) {
                         options.add(CELL_NUCLEUS);
-                        int i = sb.indexOf("$");
+                        i = sb.indexOf("$");
                         sb.replace(i, i + 1, "");
                     }
                     if (rule.contains("%3E")) {
                         options.add(DESCENDANT);
-                        int i = sb.indexOf("%3E");
+                        i = sb.indexOf("%3E");
                         sb.replace(i, i + 3, "");
                     }
                     if (sb.indexOf("<") > -1) {
                         options.add(DESCENDANT);
-                        int i = sb.indexOf("<");
+                        i = sb.indexOf("<");
                         sb.replace(i, i + 1, "");
                     }
                     if (sb.indexOf("@") > -1) {
                         options.add(CELL_BODY);
-                        int i = sb.indexOf("@");
+                        i = sb.indexOf("@");
                         sb.replace(i, i + 1, "");
                     }
                 }
@@ -237,7 +253,6 @@ public class URLLoader {
                     if (types.contains("-b")) {
                         searchLayer.addColorRule(NEIGHBOR, name, web(colorString), options);
                     }
-
                     // if no type present, default is systematic
                     if (noTypeSpecified) {
                         SearchType type = LINEAGE;
@@ -269,6 +284,10 @@ public class URLLoader {
             final DoubleProperty zoomProperty,
             final DoubleProperty othersOpacityProperty) {
 
+        // time component of the view args is parsed into this variable
+        // time property updated after all other view args are updated since it triggers a subscene rebuild
+        int newTime = timeProperty.get();
+
         // manipulate viewArgs arraylist so that rx ry and rz are grouped together to facilitate loading rotations in
         // x and y
         for (int i = 0; i < viewArgs.size(); i++) {
@@ -281,7 +300,6 @@ public class URLLoader {
         for (String arg : viewArgs) {
             if (arg.startsWith("rX")) {
                 final String[] tokens = arg.split(",");
-
                 try {
                     double rx = parseDouble(tokens[0].split("=")[1]);
                     double ry = parseDouble(tokens[1].split("=")[1]);
@@ -301,13 +319,12 @@ public class URLLoader {
                 switch (tokens[0]) {
                     case "time":
                         try {
-                            requireNonNull(timeProperty).set(parseInt(tokens[1]));
+                            newTime = parseInt(tokens[1]);
                         } catch (NumberFormatException nfe) {
                             System.out.println("error in parsing time variable");
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "tX":
                         try {
                             requireNonNull(translateXProperty).set(parseDouble(tokens[1]));
@@ -316,7 +333,6 @@ public class URLLoader {
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "tY":
                         try {
                             requireNonNull(translateYProperty).set(parseDouble(tokens[1]));
@@ -325,7 +341,6 @@ public class URLLoader {
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "scale":
                         try {
                             requireNonNull(zoomProperty).set(parseDouble(tokens[1]));
@@ -334,7 +349,6 @@ public class URLLoader {
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "dim":
                         try {
                             requireNonNull(othersOpacityProperty).set(parseDouble(tokens[1]));
@@ -346,5 +360,6 @@ public class URLLoader {
                 }
             }
         }
+        timeProperty.set(newTime);
     }
 }
