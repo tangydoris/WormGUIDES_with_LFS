@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.resources;
 
 import java.util.ListResourceBundle;
 

@@ -10,12 +10,12 @@ import java.util.List;
 
 import connectome.NeuronalSynapse;
 import partslist.PartsList;
-import wormguides.models.ProductionInfo;
 import wormguides.models.anatomy.AmphidSensillaTerm;
 import wormguides.models.cellcase.NonTerminalCellCase;
 import wormguides.models.cellcase.TerminalCellCase;
 import wormguides.models.cellcase.TerminalDescendant;
 import wormguides.models.subscenegeometry.SceneElement;
+import wormguides.resources.ProductionInfo;
 
 import static java.util.Collections.sort;
 

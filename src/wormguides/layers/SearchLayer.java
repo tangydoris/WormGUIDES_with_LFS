@@ -30,12 +30,12 @@ import acetree.LineageData;
 import connectome.Connectome;
 import search.SearchType;
 import search.SearchUtil;
-import wormguides.models.ProductionInfo;
 import wormguides.models.anatomy.AnatomyTerm;
 import wormguides.models.cellcase.CasesLists;
 import wormguides.models.colorrule.Rule;
 import wormguides.models.colorrule.SearchOption;
 import wormguides.models.subscenegeometry.SceneElementsList;
+import wormguides.resources.ProductionInfo;
 import wormguides.util.GeneSearchService;
 
 import static java.lang.Thread.sleep;

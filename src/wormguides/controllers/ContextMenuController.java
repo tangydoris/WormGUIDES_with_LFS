@@ -31,10 +31,10 @@ import javafx.stage.Stage;
 
 import connectome.Connectome;
 import wormguides.layers.SearchLayer;
-import wormguides.models.ProductionInfo;
 import wormguides.models.cellcase.CasesLists;
 import wormguides.models.cellcase.TerminalCellCase;
 import wormguides.models.colorrule.Rule;
+import wormguides.resources.ProductionInfo;
 
 import static java.util.Objects.requireNonNull;
 
