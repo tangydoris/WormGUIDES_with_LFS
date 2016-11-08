@@ -528,13 +528,16 @@ public class Rule {
             return false;
         }
         final boolean containsDescendantOption = options.contains(DESCENDANT);
+        final boolean containsAncestorOptions = options.contains(ANCESTOR);
         if (options.contains(CELL_BODY)) {
             for (String cell : cells) {
                 if (cell.equalsIgnoreCase(name)) {
                     return true;
                 }
-                // no need to check the ancestor option since cell bodies only apply to terminal cells
                 if (containsDescendantOption && isDescendant(name, cell)) {
+                    return true;
+                }
+                if (containsAncestorOptions && isAncestor(name, cell)) {
                     return true;
                 }
             }
