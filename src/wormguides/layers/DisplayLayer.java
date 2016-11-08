@@ -57,6 +57,7 @@ public class DisplayLayer {
         internalRulesList = new ArrayList<>();
         buttonMap = new HashMap<>();
 
+        requireNonNull(rebuildSubsceneFlag);
         this.currentRulesList = requireNonNull(rulesList);
         this.currentRulesList.addListener(new ListChangeListener<Rule>() {
             @Override
@@ -69,6 +70,7 @@ public class DisplayLayer {
                             rule.getDeleteButton().setOnAction(event -> {
                                 currentRulesList.remove(rule);
                                 buttonMap.remove(rule);
+                                rebuildSubsceneFlag.set(true);
                             });
                         }
                     }
@@ -76,7 +78,6 @@ public class DisplayLayer {
             }
         });
 
-        requireNonNull(rebuildSubsceneFlag);
         requireNonNull(useInternalRulesFlag).addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 // using internal rules, copy all internal rules to current list

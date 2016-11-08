@@ -2,19 +2,28 @@ package wormguides.loaders;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 
+import wormguides.MainApp;
+
+import static java.util.Objects.requireNonNull;
+
 /**
- * Utility that builds 3D geometry for scene element meshes to be placed in 3D subscene
+ * Builder for scene element mesh geometries to be placed in the 3D subscene
  */
 public class GeometryLoader {
+
+    private static final String ARCHIVE_PATH = "/wormguides/models/obj_files.zip";
 
     private static final String VERTEX_LINE = "v";
     private static final String FACE_LINE = "f";
@@ -28,63 +37,73 @@ public class GeometryLoader {
      * @return the 3D mesh
      */
     public static MeshView loadOBJ(final String fileName) {
-        MeshView meshView = null;
-        final URL url = ProductionInfoLoader.class.getResource("/" + fileName);
+        // extract name of actual obj file from input file name
+        final String objFileName = requireNonNull(fileName).substring(fileName.lastIndexOf("/") + 1);
+        final URL url = MainApp.class.getResource(ARCHIVE_PATH);
 
-        final List<double[]> coords = new ArrayList<>();
-        final List<int[]> faces = new ArrayList<>();
+        MeshView meshView = null;
 
         if (url != null) {
-            try (final InputStreamReader streamReader = new InputStreamReader(url.openStream());
-                 final BufferedReader reader = new BufferedReader(streamReader)) {
+            final List<double[]> coords = new ArrayList<>();
+            final List<int[]> faces = new ArrayList<>();
 
-                String line;
-                StringTokenizer tokenizer;
-                String v;
-                String f;
-                String lineType;
-                while ((line = reader.readLine()) != null) {
-                    // process each line in the obj file
-                    lineType = line.substring(0, 1);
-                    switch (lineType) {
-                        case VERTEX_LINE: {
-                            // process vertex lines
-                            v = line.substring(2);
-                            double[] vertices = new double[3];
-                            int counter = 0;
-                            tokenizer = new StringTokenizer(v);
-                            while (tokenizer.hasMoreTokens()) {
-                                vertices[counter++] = Double.parseDouble(tokenizer.nextToken());
-                            }
-                            // make sure good line
-                            if (counter == 3) {
-                                coords.add(vertices);
-                            }
-                            break;
-                        }
-                        case FACE_LINE: {
-                            // process face lines
-                            f = line.substring(2);
-                            int[] faceCoords = new int[3];
-                            int counter = 0;
+            try {
+                final ZipFile zipFile = new ZipFile(url.getFile());
+                final ZipEntry entry = zipFile.getEntry(objFileName);
+                if (entry != null) {
+                    final InputStream inputStream = zipFile.getInputStream(entry);
+                    final InputStreamReader streamReader = new InputStreamReader(inputStream);
+                    final BufferedReader reader = new BufferedReader(streamReader);
 
-                            tokenizer = new StringTokenizer(f);
-                            while (tokenizer.hasMoreTokens()) {
-                                faceCoords[counter++] = Integer.parseInt(tokenizer.nextToken());
+                    String line;
+                    StringTokenizer tokenizer;
+                    String v;
+                    String f;
+                    String lineType;
+                    while ((line = reader.readLine()) != null) {
+                        // process each line in the obj file
+                        lineType = line.substring(0, 1);
+                        switch (lineType) {
+                            case VERTEX_LINE: {
+                                // process vertex lines
+                                v = line.substring(2);
+                                double[] vertices = new double[3];
+                                int counter = 0;
+                                tokenizer = new StringTokenizer(v);
+                                while (tokenizer.hasMoreTokens()) {
+                                    vertices[counter++] = Double.parseDouble(tokenizer.nextToken());
+                                }
+                                // make sure good line
+                                if (counter == 3) {
+                                    coords.add(vertices);
+                                }
+                                break;
                             }
-                            if (counter == 3) {
-                                faces.add(faceCoords);
+                            case FACE_LINE: {
+                                // process face lines
+                                f = line.substring(2);
+                                int[] faceCoords = new int[3];
+                                int counter = 0;
+
+                                tokenizer = new StringTokenizer(f);
+                                while (tokenizer.hasMoreTokens()) {
+                                    faceCoords[counter++] = Integer.parseInt(tokenizer.nextToken());
+                                }
+                                if (counter == 3) {
+                                    faces.add(faceCoords);
+                                }
+                                break;
                             }
-                            break;
+                            default:
+                                break;
                         }
-                        default:
-                            break;
                     }
+                    meshView = new MeshView(createMesh(coords, faces));
                 }
-                meshView = new MeshView(createMesh(coords, faces));
-                reader.close();
-            } catch (IOException e) {
-                System.out.println("The file " + fileName + " wasn't found on the system.");
+
+            } catch (IOException ioe) {
+                System.out.println("Could not open " + ARCHIVE_PATH + " for reading");
+                ioe.printStackTrace();
             }
         }
         return meshView;

@@ -78,7 +78,8 @@ public class Rule {
     private final ImageView eyeIcon;
     private final ImageView eyeInvertIcon;
 
-    private BooleanProperty rebuildSubsceneFlag;
+    private final BooleanProperty rebuildSubsceneFlag;
+    private final BooleanProperty ruleChanged;
 
     private Stage editStage;
 
@@ -86,7 +87,6 @@ public class Rule {
     private String textLowerCase;
 
     private List<SearchOption> options;
-    private BooleanProperty ruleChanged;
     private boolean visible;
     private Color color;
 
@@ -162,6 +162,17 @@ public class Rule {
         // is false before the list is set
         cellsSet = false;
 
+        ruleChanged = new SimpleBooleanProperty(false);
+        ruleChanged.addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                if (editController != null) {
+                    setColorButton(editController.getColor());
+                }
+                this.rebuildSubsceneFlag.set(true);
+                ruleChanged.set(false);
+            }
+        });
+
         hbox.setSpacing(3);
         hbox.setPadding(new Insets(3));
         hbox.setPrefWidth(275);
@@ -226,14 +237,6 @@ public class Rule {
         label.setTooltip(toolTip);
 
         hbox.getChildren().addAll(label, r, colorRectangle, editBtn, visibleBtn, deleteBtn);
-
-        ruleChanged = new SimpleBooleanProperty(false);
-        ruleChanged.addListener((observable, oldValue, newValue) -> {
-            if (newValue && editController != null) {
-                setColorButton(editController.getColor());
-                ruleChanged.set(false);
-            }
-        });
 
         visible = true;
     }
@@ -440,10 +443,6 @@ public class Rule {
         this.options.addAll(options.stream().filter(option -> option != null).collect(toList()));
     }
 
-    public BooleanProperty getRuleChangedProperty() {
-        return ruleChanged;
-    }
-
     /**
      * @param other
      *         rule to compare to
@@ -559,16 +558,6 @@ public class Rule {
      */
     public boolean isVisible() {
         return visible;
-    }
-
-    /**
-     * Sets 'ruleChanged' to the input value
-     *
-     * @param changed
-     *         true if rule was modified, false otherwise.
-     */
-    public void setChanged(final boolean changed) {
-        ruleChanged.set(changed);
     }
 
     /**
