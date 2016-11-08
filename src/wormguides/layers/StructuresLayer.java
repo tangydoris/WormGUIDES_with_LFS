@@ -49,7 +49,6 @@ public class StructuresLayer {
     private final Map<String, StructureListCellGraphic> nameListCellMap;
 
     private final StringProperty selectedNameProperty;
-    private final BooleanProperty rebuildSceneFlag;
 
     private final TextField searchField;
 
@@ -75,8 +74,6 @@ public class StructuresLayer {
         selectedNameProperty = new SimpleStringProperty("");
 
         this.searchLayer = requireNonNull(searchLayer);
-
-        this.rebuildSceneFlag = requireNonNull(rebuildSceneFlag);
 
         allStructuresList.addListener(new ListChangeListener<String>() {
             @Override
@@ -112,6 +109,7 @@ public class StructuresLayer {
         requireNonNull(structureSearchListView).setItems(searchStructuresResultsList);
         requireNonNull(allStructuresListView).setItems(allStructuresList);
 
+        requireNonNull(rebuildSceneFlag);
         requireNonNull(addStructureRuleButton).setOnAction(event -> {
             final String name = selectedNameProperty.get();
             if (!name.isEmpty()) {
@@ -125,8 +123,8 @@ public class StructuresLayer {
                 }
                 searchField.clear();
             }
+            rebuildSceneFlag.set(true);
         });
-
         requireNonNull(colorPicker).setOnAction(event -> selectedColor = ((ColorPicker) event.getSource()).getValue());
     }
 
