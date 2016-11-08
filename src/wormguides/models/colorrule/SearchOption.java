@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.colorrule;
 
 /**
  * Options queried by the subscene entities to see if a color rule applies to it.

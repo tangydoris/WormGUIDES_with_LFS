@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.cellcase;
 
 import java.net.URL;
 import java.net.URLConnection;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import static java.lang.Character.isDigit;
+
 import static partslist.PartsList.getFunctionalNameByLineageName;
 
 /**

@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.cellcase;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -12,7 +12,7 @@ import java.util.List;
 import static partslist.PartsList.getDescriptionByLineageName;
 import static partslist.celldeaths.CellDeaths.isInCellDeaths;
 import static search.SearchUtil.getDescendantsList;
-import static wormguides.models.EmbryonicAnalogousCells.findEmbryonicHomology;
+import static wormguides.models.cellcase.EmbryonicAnalogousCells.findEmbryonicHomology;
 
 /**
  * A non-terminal cell object which contains the information for the info window

@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.cellcase;
 
 /**
  * Defines a single homology between two cells

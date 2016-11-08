@@ -54,7 +54,7 @@ import javafx.util.Duration;
 import acetree.LineageData;
 import wormguides.controllers.ContextMenuController;
 import wormguides.layers.SearchLayer;
-import wormguides.models.Rule;
+import wormguides.models.colorrule.Rule;
 import wormguides.util.ColorHash;
 
 import static java.util.Objects.requireNonNull;
@@ -78,7 +78,7 @@ import static search.SearchType.LINEAGE;
 import static search.SearchType.NEIGHBOR;
 import static wormguides.loaders.ImageLoader.getMinusIcon;
 import static wormguides.loaders.ImageLoader.getPlusIcon;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
 
 public class SulstonTreePane extends ScrollPane {
 

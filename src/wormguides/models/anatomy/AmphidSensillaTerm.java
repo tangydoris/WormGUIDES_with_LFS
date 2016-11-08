@@ -2,30 +2,32 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.anatomy;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import partslist.PartsList;
 
 public class AmphidSensillaTerm extends AnatomyTermCase {
 
     private final static String AMPHID = "amphid";
-    private final static String amphidWormatlasLink1 = "http://www.wormatlas.org/ver1/handbook/hypodermis/"
+    private final static String AMPHID_WORMATLAS_LINK_1 = "http://www.wormatlas.org/ver1/handbook/hypodermis/"
             + "Amphidimagegallery.htm";
-    private final static String amphidWormatlasLink2 = "http://wormatlas.org/hermaphrodite/neuronalsupport/jump"
+    private final static String AMPHID_WORMATLAS_LINK_2 = "http://wormatlas.org/hermaphrodite/neuronalsupport/jump"
             + ".html?newLink=mainframe.htm&newAnchor=Amphidsensilla31";
-    private ArrayList<String> links;
-    private ArrayList<String> amphidCells;
-    private String wormatlasLink1;
-    private String wormatlasLink2;
 
-    public AmphidSensillaTerm(AnatomyTerm term) {
+    private final List<String> links;
+    private final List<String> amphidCells;
+    private final String wormatlasLink1;
+    private final String wormatlasLink2;
+
+    public AmphidSensillaTerm(final AnatomyTerm term) {
         super(term);
+        links = buildSearchBasedLinks();
         amphidCells = findAmphidCells();
-        this.wormatlasLink1 = amphidWormatlasLink1;
-        this.wormatlasLink2 = amphidWormatlasLink2;
-        this.links = buildSearchBasedLinks();
+        wormatlasLink1 = AMPHID_WORMATLAS_LINK_1;
+        wormatlasLink2 = AMPHID_WORMATLAS_LINK_2;
     }
 
     /**
@@ -33,30 +35,24 @@ public class AmphidSensillaTerm extends AnatomyTermCase {
      *
      * @return the cells with 'Amphid' hits
      */
-    public ArrayList<String> findAmphidCells() {
-        ArrayList<String> cells = new ArrayList<>();
-
-        ArrayList<String> functionalNames = PartsList.getFunctionalNames();
-        ArrayList<String> lineageNames = PartsList.getLineageNames();
-        ArrayList<String> descriptions = PartsList.getDescriptions();
+    public List<String> findAmphidCells() {
+        final List<String> cells = new ArrayList<>();
+        final List<String> functionalNames = PartsList.getFunctionalNames();
+        final List<String> lineageNames = PartsList.getLineageNames();
+        final List<String> descriptions = PartsList.getDescriptions();
         for (int i = 0; i < descriptions.size(); i++) {
             if (descriptions.get(i).toLowerCase().contains(AMPHID)) {
                 String cell = "";
-
                 if (functionalNames.get(i) != null) {
                     cell += (functionalNames.get(i) + "*");
                 }
-
                 if (lineageNames.get(i) != null) {
                     cell += (lineageNames.get(i) + "*");
                 }
-
                 cell += descriptions.get(i);
-
                 cells.add(cell);
             }
         }
-
         return cells;
     }
 
@@ -65,16 +61,13 @@ public class AmphidSensillaTerm extends AnatomyTermCase {
      *
      * @return list of search links
      */
-    public ArrayList<String> buildSearchBasedLinks() {
-        ArrayList<String> searchBasedLinks = new ArrayList<>();
-
+    public List<String> buildSearchBasedLinks() {
+        final List<String> searchBasedLinks = new ArrayList<>();
         //add wormbase link
         searchBasedLinks.add("http://www.wormbase.org/species/all/anatomy_term/WBbt:0005391#01--10");
-
         //add google links
         searchBasedLinks.add("https://www.google.com/#q=amphid+sensillia");
         searchBasedLinks.add("https://www.google.com/#q=site:wormatlas.org+amphid+sensillia");
-
         //add textpresso link
         searchBasedLinks.add("http://textpresso-www.cacr.caltech.edu/cgi-bin/celegans/search?searchstring=amphid"
                 + "+sensillia;cat1=Select%20category"
@@ -86,38 +79,23 @@ public class AmphidSensillaTerm extends AnatomyTermCase {
                 + "target=discussion;target=conclusion;"
                 + "target=acknowledgments;target=references;sentencerange=sentence;sort=score%20(hits);"
                 + "mode=boolean;authorfilter=;journalfilter=;yearfilter=;docidfilter=;");
-
         return searchBasedLinks;
     }
 
-    public ArrayList<String> getAmphidCells() {
-        if (amphidCells != null) {
-            return amphidCells;
-        }
-
-        return null;
+    public List<String> getAmphidCells() {
+        return amphidCells;
     }
 
     public String getWormatlasLink1() {
-        if (wormatlasLink1 != null) {
-            return this.wormatlasLink1;
-        }
-        return null;
+        return wormatlasLink1;
     }
 
     public String getWormatlasLink2() {
-        if (wormatlasLink2 != null) {
-            return this.wormatlasLink2;
-        }
-        return null;
+        return wormatlasLink2;
     }
 
-    public ArrayList<String> getLinks() {
-        if (this.links != null) {
-            return this.links;
-        }
-
-        return null;
+    public List<String> getLinks() {
+        return links;
     }
 
 }

@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.cellcase;
 
 import java.net.URL;
 import java.net.URLConnection;
@@ -12,11 +12,12 @@ import java.util.Scanner;
 
 import static java.lang.Character.isDigit;
 import static java.lang.Character.toLowerCase;
+
 import static partslist.PartsList.getDescriptionByLineageName;
 import static partslist.PartsList.getFunctionalNameByLineageName;
 import static partslist.PartsList.getLineageNames;
-import static wormguides.models.Anatomy.getAnatomy;
-import static wormguides.models.Anatomy.hasAnatomy;
+import static wormguides.models.anatomy.Anatomy.getAnatomy;
+import static wormguides.models.anatomy.Anatomy.hasAnatomy;
 
 /**
  * Cell case for a terminal cell. The case contains information for the info window

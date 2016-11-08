@@ -25,12 +25,12 @@ import netscape.javascript.JSObject;
 import partslist.PartsList;
 import wormguides.controllers.InfoWindowLinkController;
 import wormguides.layers.SearchLayer;
-import wormguides.models.AmphidSensillaTerm;
-import wormguides.models.CasesLists;
-import wormguides.models.NonTerminalCellCase;
 import wormguides.models.ProductionInfo;
-import wormguides.models.SceneElement;
-import wormguides.models.TerminalCellCase;
+import wormguides.models.anatomy.AmphidSensillaTerm;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.cellcase.NonTerminalCellCase;
+import wormguides.models.cellcase.TerminalCellCase;
+import wormguides.models.subscenegeometry.SceneElement;
 import wormguides.view.DraggableTab;
 
 import static java.util.Objects.requireNonNull;

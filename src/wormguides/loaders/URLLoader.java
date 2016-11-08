@@ -14,8 +14,8 @@ import javafx.collections.ObservableList;
 
 import search.SearchType;
 import wormguides.layers.SearchLayer;
-import wormguides.models.Rule;
-import wormguides.models.SearchOption;
+import wormguides.models.colorrule.Rule;
+import wormguides.models.colorrule.SearchOption;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.parseInt;
@@ -31,11 +31,11 @@ import static search.SearchType.LINEAGE;
 import static search.SearchType.MULTICELLULAR_CELL_BASED;
 import static search.SearchType.NEIGHBOR;
 import static search.SearchUtil.isGeneFormat;
-import static wormguides.models.SearchOption.ANCESTOR;
-import static wormguides.models.SearchOption.CELL_BODY;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
-import static wormguides.models.SearchOption.DESCENDANT;
-import static wormguides.models.SearchOption.MULTICELLULAR_NAME_BASED;
+import static wormguides.models.colorrule.SearchOption.ANCESTOR;
+import static wormguides.models.colorrule.SearchOption.CELL_BODY;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.DESCENDANT;
+import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 
 public class URLLoader {
 

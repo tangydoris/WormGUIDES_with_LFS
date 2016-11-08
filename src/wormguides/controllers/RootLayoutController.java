@@ -69,11 +69,11 @@ import wormguides.layers.SearchLayer;
 import wormguides.layers.StoriesLayer;
 import wormguides.layers.StructuresLayer;
 import wormguides.loaders.ImageLoader;
-import wormguides.models.CasesLists;
 import wormguides.models.LineageTree;
 import wormguides.models.ProductionInfo;
-import wormguides.models.Rule;
-import wormguides.models.SceneElementsList;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.colorrule.Rule;
+import wormguides.models.subscenegeometry.SceneElementsList;
 import wormguides.stories.Story;
 import wormguides.util.ColorHash;
 import wormguides.util.StringListCellFactory;
@@ -739,7 +739,9 @@ public class RootLayoutController extends BorderPane implements Initializable {
         });
 
         // initial start at movie end (builds subscene automatically)
-        timeProperty.set(endTime);
+        // TODO change back to end time
+//        timeProperty.set(endTime);
+        timeProperty.set(3);
     }
 
     public void setStage(final Stage stage) {

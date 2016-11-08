@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.camerageometry;
 
 import java.util.ArrayList;
 

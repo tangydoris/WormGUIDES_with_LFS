@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.subscenegeometry;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,6 +11,7 @@ import java.util.List;
 import javafx.scene.shape.MeshView;
 
 import static java.lang.Character.isLetter;
+
 import static wormguides.loaders.GeometryLoader.loadOBJ;
 
 /*
@@ -114,15 +115,10 @@ public class SceneElement {
     }
 
     public MeshView buildGeometry(int time) {
-        // time++;
-        // TODO OPTIMIZE THIS LATER
-        // GeometryLoader loader = new GeometryLoader();
-
         // check if complete resource
         if (completeResourceFlag) {
             return loadOBJ(resourceLocation);
         }
-
         // append time and ext to resource location
         return loadOBJ(resourceLocation + "_t" + time + OBJ_EXT);
     }
@@ -184,7 +180,7 @@ public class SceneElement {
         }
     }
 
-    public List<String> getAllCellNames() {
+    public List<String> getAllCells() {
         return cellNames;
     }
 

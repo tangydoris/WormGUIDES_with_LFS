@@ -2,17 +2,20 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.cellcase;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import wormguides.models.anatomy.AmphidSensillaTerm;
+import wormguides.models.anatomy.AnatomyTerm;
+import wormguides.models.anatomy.AnatomyTermCase;
 import wormguides.view.infowindow.InfoWindow;
 
 import static java.util.Objects.requireNonNull;
 
-import static partslist.PartsList.getLineageNameByFunctionalName;
-import static wormguides.models.AnatomyTerm.AMPHID_SENSILLA;
+import static partslist.PartsList.getLineageNamesByFunctionalName;
+import static wormguides.models.anatomy.AnatomyTerm.AMPHID_SENSILLA;
 
 /**
  * List of terminal cell cases (neurons) or non-terminal cell cases. These cases generated for view in the info
@@ -139,39 +142,47 @@ public class CasesLists {
         }
     }
 
-    public CellCase getCellCase(String cellName) {
-        String cell = cellName;
-
-        //translate name to lineage if passed as function
-        String lineage = getLineageNameByFunctionalName(cellName);
-        if (lineage != null) {
-            cell = lineage;
+    /**
+     * Retrieves the FIRST cell case (as seen in the parts list) with a name. The name can be a lineage or functional
+     * name.
+     * <p>
+     * TODO fix algorithm to return multiple cell cases since the input 'cellName' could be a functional name with
+     * multiple lineage names
+     *
+     * @param cellName
+     *         the cell to check
+     *
+     * @return cell case for that cell
+     */
+    public CellCase getCellCase(final String cellName) {
+        // attempt to translate name into lineage name(s) in case the name is a functional name
+        final List<String> cells = new ArrayList<>(getLineageNamesByFunctionalName(cellName));
+        if (cells.isEmpty()) {
+            cells.add(cellName);
         }
-
-        for (CellCase cellCase : cellCases) {
-            if (cellCase.getLineageName().toLowerCase().equals(cell.toLowerCase())) {
-                return cellCase;
+        for (String cell : cells) {
+            for (CellCase cellCase : cellCases) {
+                if (cellCase.getLineageName().equalsIgnoreCase(cell)) {
+                    return cellCase;
+                }
             }
         }
-
         return null;
     }
 
-    public boolean containsCellCase(String cellName) {
-        String cell = cellName;
-
-        //translate name to lineage if passed as function
-        String lineage = getLineageNameByFunctionalName(cellName);
-        if (lineage != null) {
-            cell = lineage;
+    public boolean containsCellCase(final String cellName) {
+        // attempt to translate name into lineage name(s) in case the name is a functional name
+        final List<String> cells = getLineageNamesByFunctionalName(cellName);
+        if (cells.isEmpty()) {
+            cells.add(cellName);
         }
-
-        for (CellCase cellCase : cellCases) {
-            if (cellCase.getLineageName().toLowerCase().equals(cell.toLowerCase())) {
-                return true;
+        for (String cell : cells) {
+            for (CellCase cellCase : cellCases) {
+                if (cellCase.getLineageName().equalsIgnoreCase(cell)) {
+                    return true;
+                }
             }
         }
-
         return false;
     }
 
@@ -195,7 +206,8 @@ public class CasesLists {
      *
      * @return true if a cell case was found for the cell, false otherwise
      */
-    public boolean hasCellCase(String cellName) { //TODO refactor this to just be name
+    public boolean hasCellCase(String cellName) {
+        //TODO refactor this to just be name
         return containsCellCase(cellName) || containsAnatomyTermCase(cellName);
     }
 
@@ -206,27 +218,22 @@ public class CasesLists {
      *         the cell to remove
      */
     public void removeCellCase(String cellName) {
-        String cell = cellName;
-
-        //translate name to lineage if passed as function
-        String lineage = getLineageNameByFunctionalName(cellName);
-        if (lineage != null) {
-            cell = lineage;
+        final List<String> cells = new ArrayList<>(getLineageNamesByFunctionalName(cellName));
+        if (cells.isEmpty()) {
+            cells.add(cellName);
         }
-
-        if (containsCellCase(cell)) {
-            for (CellCase cellCase : cellCases) {
-                if (cellCase.getLineageName().toLowerCase().equals(cell.toLowerCase())) {
-                    cellCases.remove(cellCase);
-                }
+        for (String cell : cells) {
+            if (containsCellCase(cell)) {
+                cellCases.stream()
+                        .filter(cellCase -> cellCase.getLineageName().toLowerCase().equals(cell.toLowerCase()))
+                        .forEach(cellCases::remove);
             }
-        }
-
-        if (containsAnatomyTermCase(cellName)) {
-            for (int i = 0; i < anatomyTermCases.size(); i++) {
-                if (anatomyTermCases.get(i).getName().toLowerCase().equals(cellName.toLowerCase())) {
-                    anatomyTermCases.remove(i);
-                    return;
+            if (containsAnatomyTermCase(cellName)) {
+                for (int i = 0; i < anatomyTermCases.size(); i++) {
+                    if (anatomyTermCases.get(i).getName().toLowerCase().equals(cellName.toLowerCase())) {
+                        anatomyTermCases.remove(i);
+                        return;
+                    }
                 }
             }
         }

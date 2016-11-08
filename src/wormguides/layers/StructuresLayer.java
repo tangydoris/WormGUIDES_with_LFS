@@ -4,6 +4,7 @@
 
 package wormguides.layers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
-import wormguides.models.SceneElementsList;
+import wormguides.models.subscenegeometry.SceneElementsList;
 import wormguides.util.AppFont;
 
 import static java.util.Objects.requireNonNull;
@@ -34,20 +35,21 @@ import static java.util.Objects.requireNonNull;
 import static javafx.collections.FXCollections.observableArrayList;
 import static javafx.scene.paint.Color.WHITE;
 
-import static partslist.PartsList.getLineageNameByFunctionalName;
+import static partslist.PartsList.getLineageNamesByFunctionalName;
 
 public class StructuresLayer {
 
     private final SearchLayer searchLayer;
 
     private final ObservableList<String> allStructuresList;
-    private final ObservableList<String> searchResultsList;
+    private final ObservableList<String> searchStructuresResultsList;
 
     private final Map<String, List<String>> nameToCellsMap;
     private final Map<String, String> nameToCommentsMap;
     private final Map<String, StructureListCellGraphic> nameListCellMap;
 
     private final StringProperty selectedNameProperty;
+    private final BooleanProperty rebuildSceneFlag;
 
     private final TextField searchField;
 
@@ -67,12 +69,14 @@ public class StructuresLayer {
         selectedColor = WHITE;
 
         allStructuresList = observableArrayList();
-        searchResultsList = observableArrayList();
+        searchStructuresResultsList = observableArrayList();
 
         nameListCellMap = new HashMap<>();
         selectedNameProperty = new SimpleStringProperty("");
 
         this.searchLayer = requireNonNull(searchLayer);
+
+        this.rebuildSceneFlag = requireNonNull(rebuildSceneFlag);
 
         allStructuresList.addListener(new ListChangeListener<String>() {
             @Override
@@ -97,7 +101,7 @@ public class StructuresLayer {
         this.searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             searchText = newValue.toLowerCase();
             if (searchText.isEmpty()) {
-                searchResultsList.clear();
+                searchStructuresResultsList.clear();
             } else {
                 setSelectedStructure("");
                 deselectAllStructures();
@@ -105,10 +109,9 @@ public class StructuresLayer {
             }
         });
 
-        requireNonNull(structureSearchListView).setItems(searchResultsList);
+        requireNonNull(structureSearchListView).setItems(searchStructuresResultsList);
         requireNonNull(allStructuresListView).setItems(allStructuresList);
 
-        requireNonNull(rebuildSceneFlag);
         requireNonNull(addStructureRuleButton).setOnAction(event -> {
             final String name = selectedNameProperty.get();
             if (!name.isEmpty()) {
@@ -117,12 +120,11 @@ public class StructuresLayer {
             }
             // if no name is selected, add all results from search
             else {
-                for (String string : searchResultsList) {
+                for (String string : searchStructuresResultsList) {
                     addStructureRule(string, selectedColor);
                 }
                 searchField.clear();
             }
-            rebuildSceneFlag.set(true);
         });
 
         requireNonNull(colorPicker).setOnAction(event -> selectedColor = ((ColorPicker) event.getSource()).getValue());
@@ -171,11 +173,11 @@ public class StructuresLayer {
         }
 
         String[] terms = searched.toLowerCase().split(" ");
-        searchResultsList.clear();
+        searchStructuresResultsList.clear();
 
         for (String name : allStructuresList) {
 
-            if (!searchResultsList.contains(name)) {
+            if (!searchStructuresResultsList.contains(name)) {
                 // search in structure scene names
                 String nameLower = name.toLowerCase();
 
@@ -197,16 +199,19 @@ public class StructuresLayer {
                         // we'll use the first term
                         if (terms.length > 0) {
                             // check if search term is a functional name
-                            final String lineageName = getLineageNameByFunctionalName(terms[0]);
-                            if (lineageName != null) {
-                                if (cell.toLowerCase().startsWith(lineageName.toLowerCase())) {
-                                    appliesToCell = true;
-                                    break;
-                                }
-                            } else {
-                                if (cell.toLowerCase().startsWith(terms[0].toLowerCase())) {
-                                    appliesToCell = true;
-                                    break;
+                            final List<String> lineageNames = new ArrayList<>(
+                                    getLineageNamesByFunctionalName(terms[0]));
+                            for (String lineageName : lineageNames) {
+                                if (lineageName != null) {
+                                    if (cell.toLowerCase().startsWith(lineageName.toLowerCase())) {
+                                        appliesToCell = true;
+                                        break;
+                                    }
+                                } else {
+                                    if (cell.toLowerCase().startsWith(terms[0].toLowerCase())) {
+                                        appliesToCell = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -224,7 +229,7 @@ public class StructuresLayer {
                 }
 
                 if (appliesToName || appliesToCell || appliesToComment) {
-                    searchResultsList.add(name);
+                    searchStructuresResultsList.add(name);
                 }
             }
         }

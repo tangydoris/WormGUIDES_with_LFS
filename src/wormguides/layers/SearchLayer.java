@@ -30,12 +30,12 @@ import acetree.LineageData;
 import connectome.Connectome;
 import search.SearchType;
 import search.SearchUtil;
-import wormguides.models.AnatomyTerm;
-import wormguides.models.CasesLists;
 import wormguides.models.ProductionInfo;
-import wormguides.models.Rule;
-import wormguides.models.SceneElementsList;
-import wormguides.models.SearchOption;
+import wormguides.models.anatomy.AnatomyTerm;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.colorrule.Rule;
+import wormguides.models.colorrule.SearchOption;
+import wormguides.models.subscenegeometry.SceneElementsList;
 import wormguides.util.GeneSearchService;
 
 import static java.lang.Thread.sleep;
@@ -49,7 +49,7 @@ import static javafx.scene.paint.Color.DARKSEAGREEN;
 import static javafx.scene.paint.Color.web;
 
 import static partslist.PartsList.getFunctionalNameByLineageName;
-import static partslist.PartsList.getLineageNameByFunctionalName;
+import static partslist.PartsList.getLineageNamesByFunctionalName;
 import static partslist.PartsList.isLineageName;
 import static search.SearchType.CONNECTOME;
 import static search.SearchType.DESCRIPTION;
@@ -66,13 +66,13 @@ import static search.SearchUtil.getCellsWithLineageName;
 import static search.SearchUtil.getDescendantsList;
 import static search.SearchUtil.getNeighboringCells;
 import static search.SearchUtil.isGeneFormat;
-import static wormguides.models.AnatomyTerm.AMPHID_SENSILLA;
 import static wormguides.models.LineageTree.getCaseSensitiveName;
-import static wormguides.models.SearchOption.ANCESTOR;
-import static wormguides.models.SearchOption.CELL_BODY;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
-import static wormguides.models.SearchOption.DESCENDANT;
-import static wormguides.models.SearchOption.MULTICELLULAR_NAME_BASED;
+import static wormguides.models.anatomy.AnatomyTerm.AMPHID_SENSILLA;
+import static wormguides.models.colorrule.SearchOption.ANCESTOR;
+import static wormguides.models.colorrule.SearchOption.CELL_BODY;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.DESCENDANT;
+import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 
 public class SearchLayer {
 
@@ -141,30 +141,22 @@ public class SearchLayer {
 
         // search options
         final ChangeListener<Boolean> optionsCheckBoxListener = getOptionsCheckBoxListener();
-
         this.cellNucleusCheckBox = requireNonNull(cellNucleusCheckBox);
         this.cellNucleusCheckBox.selectedProperty().addListener(optionsCheckBoxListener);
-
         this.cellBodyCheckBox = requireNonNull(cellBodyCheckBox);
         this.cellBodyCheckBox.selectedProperty().addListener(optionsCheckBoxListener);
-
         this.ancestorCheckBox = requireNonNull(ancestorCheckBox);
         this.ancestorCheckBox.selectedProperty().addListener(optionsCheckBoxListener);
-
         this.descendantCheckBox = requireNonNull(descendantCheckBox);
         this.descendantCheckBox.selectedProperty().addListener(optionsCheckBoxListener);
 
         final ChangeListener<Boolean> connectomeCheckBoxListener = getConnectomeCheckBoxListener();
-
         this.presynapticCheckBox = requireNonNull(presynapticCheckBox);
         this.presynapticCheckBox.selectedProperty().addListener(connectomeCheckBoxListener);
-
         this.postsynapticCheckBox = requireNonNull(postsynapticCheckBox);
         this.postsynapticCheckBox.selectedProperty().addListener(connectomeCheckBoxListener);
-
         this.neuromuscularCheckBox = requireNonNull(neuromuscularCheckBox);
         this.neuromuscularCheckBox.selectedProperty().addListener(connectomeCheckBoxListener);
-
         this.electricalCheckBox = requireNonNull(electricalCheckBox);
         this.electricalCheckBox.selectedProperty().addListener(connectomeCheckBoxListener);
 
@@ -276,9 +268,7 @@ public class SearchLayer {
             if (oldValue != null && oldValue.getUserData() == GENE) {
                 geneSearchService.cancel();
             }
-
             final SearchType type = (SearchType) newValue.getUserData();
-
             // disable descendant options for terminal cell searches
             if (type == FUNCTIONAL || type == DESCRIPTION) {
                 descendantCheckBox.setSelected(false);
@@ -288,14 +278,8 @@ public class SearchLayer {
                 descendantCheckBox.disableProperty().set(false);
                 descendantLabel.disableProperty().set(false);
             }
-
             // re-search whatever is in the search field with this new search type
-            refreshSearchResultsList(
-                    type,
-                    getSearchedText(),
-                    cellNucleusCheckBox.isSelected(),
-                    descendantCheckBox.isSelected(),
-                    ancestorCheckBox.isSelected());
+            resultsUpdateService.restart();
         });
 
         // select lineage search on start
@@ -634,10 +618,6 @@ public class SearchLayer {
         };
     }
 
-//    public BooleanProperty getGeneResultsUpdated() {
-//        return geneResultsUpdatedFlag;
-//    }
-
     public ObservableList<String> getSearchResultsList() {
         return searchResultsList;
     }
@@ -665,7 +645,7 @@ public class SearchLayer {
             final List<String> cells = getCellsList(searchType, searchedTerm);
 
             final String searchedText = getSearchedText();
-            final List<String> cellsForListView = new ArrayList<>(cells);
+            final List<String> cellsForListView = new ArrayList<>();
             if (areDescendantsFetched) {
                 getDescendantsList(cells, searchedText)
                         .stream()
@@ -678,16 +658,9 @@ public class SearchLayer {
                         .filter(name -> !cellsForListView.contains(name))
                         .forEachOrdered(cellsForListView::add);
             }
-            if (!isCellNucleusFetched) {
-                final Iterator<String> iterator = cellsForListView.iterator();
-                while (iterator.hasNext()) {
-                    if (iterator.next().equalsIgnoreCase(searchedTerm)) {
-                        iterator.remove();
-                        break;
-                    }
-                }
+            if (isCellNucleusFetched) {
+                cellsForListView.addAll(cells);
             }
-
             sort(cellsForListView);
             appendFunctionalToLineageNames(cellsForListView);
         }
@@ -762,7 +735,7 @@ public class SearchLayer {
         }
 
         public void setSearchString(final String searchString) {
-            this.searchString = searchString;
+            this.searchString = requireNonNull(searchString);
         }
 
         @Override
@@ -770,46 +743,50 @@ public class SearchLayer {
             return new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
+                    List<String> searchedCells = new ArrayList<>();
                     String searched = getSearchString();
-                    // update to lineage name if function
-                    final String lineage = getLineageNameByFunctionalName(searched);
-                    if (lineage != null) {
-                        searched = lineage;
+                    // update to lineage name if functional
+                    final List<String> lineageNames = getLineageNamesByFunctionalName(searched);
+                    if (!lineageNames.isEmpty()) {
+                        searchedCells.addAll(lineageNames);
+                    } else {
+                        searchedCells.add(searched);
                     }
 
-                    // GENERATE CELL TAB ON CLICK
-                    if (searched != null && !searched.isEmpty()) {
-                        if (casesLists == null || productionInfo == null) {
-                            return null; // error check
-                        }
-
-                        if (isLineageName(searched)) {
-                            if (casesLists.containsCellCase(searched)) {
-                                // show the tab
-                            } else {
-                                // translate the name if necessary
-                                String funcName = connectome.checkQueryCell(searched).toUpperCase();
-                                // add a terminal case --> pass the wiring partners
-                                casesLists.makeTerminalCase(
-                                        searched,
-                                        funcName,
-                                        connectome.queryConnectivity(funcName, true, false, false, false, false),
-                                        connectome.queryConnectivity(funcName, false, true, false, false, false),
-                                        connectome.queryConnectivity(funcName, false, false, true, false, false),
-                                        connectome.queryConnectivity(funcName, false, false, false, true, false),
-                                        productionInfo.getNuclearInfo(),
-                                        productionInfo.getCellShapeData(searched));
+                    for (String searchedCell : searchedCells) {
+                        // GENERATE CELL TAB ON CLICK
+                        if (searchedCell != null && !searchedCell.isEmpty()) {
+                            if (casesLists == null || productionInfo == null) {
+                                return null; // error check
                             }
-                        } else { // not in connectome --> non terminal case
-                            if (casesLists.containsCellCase(searched)) {
-
-                                // show tab
+                            if (isLineageName(searchedCell)) {
+                                if (casesLists.containsCellCase(searchedCell)) {
+                                    // show the tab
+                                } else {
+                                    // translate the name if necessary
+                                    String funcName = connectome.checkQueryCell(searchedCell).toUpperCase();
+                                    // add a terminal case --> pass the wiring partners
+                                    casesLists.makeTerminalCase(
+                                            searchedCell,
+                                            funcName,
+                                            connectome.queryConnectivity(funcName, true, false, false, false, false),
+                                            connectome.queryConnectivity(funcName, false, true, false, false, false),
+                                            connectome.queryConnectivity(funcName, false, false, true, false, false),
+                                            connectome.queryConnectivity(funcName, false, false, false, true, false),
+                                            productionInfo.getNuclearInfo(),
+                                            productionInfo.getCellShapeData(searchedCell));
+                                }
                             } else {
-                                // add a non terminal case
-                                casesLists.makeNonTerminalCase(
-                                        searched,
-                                        productionInfo.getNuclearInfo(),
-                                        productionInfo.getCellShapeData(searched));
+                                // not in connectome --> non terminal case
+                                if (casesLists.containsCellCase(searchedCell)) {
+                                    // show tab
+                                } else {
+                                    // add a non terminal case
+                                    casesLists.makeNonTerminalCase(
+                                            searchedCell,
+                                            productionInfo.getNuclearInfo(),
+                                            productionInfo.getCellShapeData(searchedCell));
+                                }
                             }
                         }
                     }

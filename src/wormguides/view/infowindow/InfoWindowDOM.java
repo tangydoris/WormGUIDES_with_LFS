@@ -10,12 +10,12 @@ import java.util.List;
 
 import connectome.NeuronalSynapse;
 import partslist.PartsList;
-import wormguides.models.AmphidSensillaTerm;
-import wormguides.models.NonTerminalCellCase;
 import wormguides.models.ProductionInfo;
-import wormguides.models.SceneElement;
-import wormguides.models.TerminalCellCase;
-import wormguides.models.TerminalDescendant;
+import wormguides.models.anatomy.AmphidSensillaTerm;
+import wormguides.models.cellcase.NonTerminalCellCase;
+import wormguides.models.cellcase.TerminalCellCase;
+import wormguides.models.cellcase.TerminalDescendant;
+import wormguides.models.subscenegeometry.SceneElement;
 
 import static java.util.Collections.sort;
 
@@ -25,6 +25,24 @@ import static java.util.Collections.sort;
  */
 public class InfoWindowDOM {
 
+    private final static String AMPHID = "amphid";
+    private final static String AMPHID_ANCHOR = "<a href=\"#\" onclick=\"handleAmphidClick()\">Amphid</a>";
+    private final static String DOCTYPE_TAG = "<!DOCTYPE html>";
+    private final static String NL = "\n";
+    private static final String cellShapesIndexName = "Cell Shapes Index";
+    private static final String partsListName = "Parts List";
+    private static final String connectomeName = "Connectome";
+    private static final String cellDeathsName = "Cell Deaths";
+    private static final String productionInfoName = "Experimental Data";
+    // strings for building the connectome DOM --> synapse types as strings for search logic
+    private final static String s_presynapticDescription = "S presynaptic";
+    private final static String r_postsynapticDescription = "R postsynaptic";
+    private final static String ej_electricalDescription = "EJ electrical";
+    private final static String nmj_neuromuscularDescrpition = "Nmj neuromuscular";
+    private final String presynapticPartnersTitle = "Presynaptic: ";
+    private final String postsynapticPartnersTitle = "Postsynaptic: ";
+    private final String electricalPartnersTitle = "Electrical: ";
+    private final String neuromusclarPartnersTitle = "Neuromusclar: ";
     private HTMLNode html;
     private String name;
 
@@ -85,7 +103,7 @@ public class InfoWindowDOM {
         for (SceneElement se : sceneElementsList) {
             HTMLNode tr = new HTMLNode("tr");
             tr.addChild(new HTMLNode("td", "", "", se.getSceneName()));
-            tr.addChild(new HTMLNode("td", "", "", se.getAllCellNames().toString()));
+            tr.addChild(new HTMLNode("td", "", "", se.getAllCells().toString()));
             tr.addChild(new HTMLNode("td", "", "", se.getMarkerName()));
             tr.addChild(new HTMLNode("td", "", "", Integer.toString(se.getStartTime())));
             tr.addChild(new HTMLNode("td", "", "", Integer.toString(se.getEndTime())));
@@ -194,7 +212,6 @@ public class InfoWindowDOM {
 
         buildStyleNode();
     }
-
     /**
      * Class constructor to create a DOM for the cell deaths window
      *
@@ -232,7 +249,6 @@ public class InfoWindowDOM {
 
         buildStyleNode();
     }
-
     public InfoWindowDOM(ProductionInfo productionInfo) {
         this.html = new HTMLNode("html");
         this.name = productionInfoName;
@@ -297,7 +313,6 @@ public class InfoWindowDOM {
 
         buildStyleNode();
     }
-
     /**
      * Class constructor to create a DOM for a terminal cell case.
      *
@@ -910,7 +925,6 @@ public class InfoWindowDOM {
         // add style node
         buildStyleNode();
     }
-
     /**
      * Class constructor to create a DOM for a non-terminal cell case.
      *
@@ -1262,7 +1276,6 @@ public class InfoWindowDOM {
         // add style node
         buildStyleNode();
     }
-
     public InfoWindowDOM(AmphidSensillaTerm termCase) {
         this.html = new HTMLNode("html");
         this.name = termCase.getName();
@@ -1751,26 +1764,5 @@ public class InfoWindowDOM {
     public String getName() {
         return name;
     }
-
-    private final static String AMPHID = "amphid";
-    private final static String AMPHID_ANCHOR = "<a href=\"#\" onclick=\"handleAmphidClick()\">Amphid</a>";
-    private final static String DOCTYPE_TAG = "<!DOCTYPE html>";
-    private final static String NL = "\n";
-    private static final String cellShapesIndexName = "Cell Shapes Index";
-    private static final String partsListName = "Parts List";
-    private static final String connectomeName = "Connectome";
-    private static final String cellDeathsName = "Cell Deaths";
-    private static final String productionInfoName = "Experimental Data";
-
-    // strings for building the connectome DOM --> synapse types as strings for search logic
-    private final static String s_presynapticDescription = "S presynaptic";
-    private final static String r_postsynapticDescription = "R postsynaptic";
-    private final static String ej_electricalDescription = "EJ electrical";
-    private final static String nmj_neuromuscularDescrpition = "Nmj neuromuscular";
-
-    private final String presynapticPartnersTitle = "Presynaptic: ";
-    private final String postsynapticPartnersTitle = "Postsynaptic: ";
-    private final String electricalPartnersTitle = "Electrical: ";
-    private final String neuromusclarPartnersTitle = "Neuromusclar: ";
 
 }

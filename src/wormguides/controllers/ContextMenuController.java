@@ -31,10 +31,10 @@ import javafx.stage.Stage;
 
 import connectome.Connectome;
 import wormguides.layers.SearchLayer;
-import wormguides.models.CasesLists;
 import wormguides.models.ProductionInfo;
-import wormguides.models.Rule;
-import wormguides.models.TerminalCellCase;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.cellcase.TerminalCellCase;
+import wormguides.models.colorrule.Rule;
 
 import static java.util.Objects.requireNonNull;
 
@@ -43,7 +43,7 @@ import static javafx.scene.paint.Color.WHITE;
 
 import static partslist.PartsList.getFunctionalNameByLineageName;
 import static search.SearchType.GENE;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
 
 /**
  * This class is the controller for the context menu that shows up on right click on a 3D entity. The menu can be

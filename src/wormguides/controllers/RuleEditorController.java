@@ -20,12 +20,12 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
-import wormguides.models.SearchOption;
+import wormguides.models.colorrule.SearchOption;
 
-import static wormguides.models.SearchOption.ANCESTOR;
-import static wormguides.models.SearchOption.CELL_BODY;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
-import static wormguides.models.SearchOption.DESCENDANT;
+import static wormguides.models.colorrule.SearchOption.ANCESTOR;
+import static wormguides.models.colorrule.SearchOption.CELL_BODY;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.DESCENDANT;
 
 public class RuleEditorController extends AnchorPane implements Initializable {
 

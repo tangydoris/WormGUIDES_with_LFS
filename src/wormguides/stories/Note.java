@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
-import wormguides.models.SceneElement;
-import wormguides.models.SceneElementsList;
+import wormguides.models.subscenegeometry.SceneElement;
+import wormguides.models.subscenegeometry.SceneElementsList;
 
 /**
  * This class represents a note that belongs to a story (its parent). A note contains a tag name, tag contents, an

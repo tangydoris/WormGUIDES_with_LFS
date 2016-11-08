@@ -54,7 +54,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Shape3D;
@@ -72,14 +71,14 @@ import com.sun.javafx.scene.CameraHelper;
 import connectome.Connectome;
 import wormguides.layers.SearchLayer;
 import wormguides.layers.StoriesLayer;
-import wormguides.models.CasesLists;
 import wormguides.models.ProductionInfo;
-import wormguides.models.Quaternion;
-import wormguides.models.Rule;
-import wormguides.models.SceneElement;
-import wormguides.models.SceneElementsList;
-import wormguides.models.SearchOption;
-import wormguides.models.Xform;
+import wormguides.models.camerageometry.Quaternion;
+import wormguides.models.camerageometry.Xform;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.colorrule.Rule;
+import wormguides.models.colorrule.SearchOption;
+import wormguides.models.subscenegeometry.SceneElement;
+import wormguides.models.subscenegeometry.SceneElementsList;
 import wormguides.stories.Note;
 import wormguides.stories.Note.Display;
 import wormguides.util.ColorComparator;
@@ -111,6 +110,7 @@ import static javafx.scene.input.MouseEvent.MOUSE_RELEASED;
 import static javafx.scene.paint.Color.RED;
 import static javafx.scene.paint.Color.WHITE;
 import static javafx.scene.paint.Color.web;
+import static javafx.scene.shape.CullFace.NONE;
 import static javafx.scene.text.FontSmoothingType.LCD;
 import static javafx.scene.transform.Rotate.X_AXIS;
 import static javafx.scene.transform.Rotate.Y_AXIS;
@@ -122,9 +122,9 @@ import static search.SearchType.LINEAGE;
 import static search.SearchType.NEIGHBOR;
 import static search.SearchUtil.getFirstOccurenceOf;
 import static search.SearchUtil.getLastOccurenceOf;
-import static wormguides.models.SearchOption.CELL_BODY;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
-import static wormguides.models.SearchOption.MULTICELLULAR_NAME_BASED;
+import static wormguides.models.colorrule.SearchOption.CELL_BODY;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 import static wormguides.stories.Note.Display.OVERLAY;
 import static wormguides.util.AppFont.getBillboardFont;
 import static wormguides.util.AppFont.getSpriteAndOverlayFont;
@@ -272,11 +272,11 @@ public class Window3DController {
     private MeshView[] meshes;
     private String[] cellNames;
     private String[] meshNames;
-    private boolean[] searchedCells;
-    private boolean[] searchedMeshes;
+    private boolean[] isCellSearchedFlags;
+    private boolean[] isMeshSearchedFlags;
     private double[][] positions;
     private double[] diameters;
-    private List<SceneElement> sceneElementsAtTime;
+    private List<SceneElement> sceneElementsAtCurrentTime;
     private List<MeshView> currentSceneElementMeshes;
     private List<SceneElement> currentSceneElements;
     private PerspectiveCamera camera;
@@ -290,7 +290,7 @@ public class Window3DController {
     private int offsetX, offsetY, offsetZ;
     private double angleOfRotation;
     // searched highlighting stuff
-    private boolean inSearchMode;
+    private boolean isInSearchMode;
     // Uniform nuclei sizef
     private boolean uniformSize;
     // Cell body and cell nucleus highlighting in search mode
@@ -423,8 +423,8 @@ public class Window3DController {
         meshNames = new String[1];
         positions = new double[1][3];
         diameters = new double[1];
-        searchedCells = new boolean[1];
-        searchedMeshes = new boolean[1];
+        isCellSearchedFlags = new boolean[1];
+        isMeshSearchedFlags = new boolean[1];
 
         selectedIndex = new SimpleIntegerProperty(-1);
 
@@ -478,7 +478,7 @@ public class Window3DController {
         buildCamera();
         parentPane.getChildren().add(this.subscene);
 
-        inSearchMode = false;
+        isInSearchMode = false;
 
         subsceneSizeListener = new SubsceneSizeListener();
         parentPane.widthProperty().addListener(subsceneSizeListener);
@@ -627,10 +627,10 @@ public class Window3DController {
         this.searchField = requireNonNull(searchField);
         this.searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.isEmpty()) {
-                inSearchMode = false;
+                isInSearchMode = false;
                 buildScene();
             } else {
-                inSearchMode = true;
+                isInSearchMode = true;
             }
         });
 
@@ -754,23 +754,22 @@ public class Window3DController {
      * @param entity
      *         The entity that the label should appear on
      */
-    private void transientLabel(String name, Node entity) {
-        if (currentRulesApplyTo(name) || othersOpacityProperty.get() > 0.25) {
-
+    private void insertTransientLabel(String name, Shape3D entity) {
+        // TODO remove current rules apply to
+        final double opacity = othersOpacityProperty.get();
+        if (entity.getMaterial() != colorHash.getOthersMaterial(opacity) || opacity > 0.25) {
             if (!currentLabels.contains(name) && entity != null) {
                 final Bounds b = entity.getBoundsInParent();
                 if (b != null) {
-                    String funcName = getFunctionalNameByLineageName(name);
+                    final String funcName = getFunctionalNameByLineageName(name);
                     if (funcName != null) {
                         name = funcName;
                     }
-
                     transientLabelText = makeNoteSpriteText(name);
                     transientLabelText.setWrappingWidth(-1);
                     transientLabelText.setFill(web(TRANSIENT_LABEL_COLOR_HEX));
                     transientLabelText.setOnMouseEntered(Event::consume);
                     transientLabelText.setOnMouseClicked(Event::consume);
-
                     final Point2D p = CameraHelper.project(
                             camera,
                             new Point3D(
@@ -783,7 +782,6 @@ public class Window3DController {
                     double hOffset = b.getWidth() / 2;
                     x += hOffset;
                     y -= (vOffset + LABEL_SPRITE_Y_OFFSET);
-
                     transientLabelText.getTransforms().add(new Translate(x, y));
                     spritesPane.getChildren().add(transientLabelText);
                 }
@@ -801,20 +799,16 @@ public class Window3DController {
     @SuppressWarnings("unchecked")
     public void handleMouseEvent(MouseEvent me) {
         final EventType<MouseEvent> type = (EventType<MouseEvent>) me.getEventType();
-
         if (type == MOUSE_ENTERED_TARGET
                 || type == MOUSE_ENTERED
                 || type == MOUSE_RELEASED
                 || type == MOUSE_MOVED) {
             handleMouseReleasedOrEntered();
-
         } else if (type == MOUSE_CLICKED
                 && me.isStillSincePress()) {
             handleMouseClicked(me);
-
         } else if (type == MOUSE_DRAGGED) {
             handleMouseDragged(me);
-
         } else if (type == MOUSE_PRESSED) {
             handleMousePressed(me);
         }
@@ -1019,17 +1013,13 @@ public class Window3DController {
 
     private double[] vectorBWPoints(double px, double py, double pz, double qx, double qy, double qz) {
         double[] vector = new double[3];
-
         double vx, vy, vz;
-
         vx = qx - px;
         vy = qy - py;
         vz = qz - pz;
-
         vector[0] = vx;
         vector[1] = vy;
         vector[2] = vz;
-
         return vector;
     }
 
@@ -1046,7 +1036,6 @@ public class Window3DController {
                 ((mouseOldX * mousePosX) + (mouseOldY * mousePosY) + (mouseOldZ * mousePosZ))
                         / sqrt((pow(mouseOldX, 2) + pow(mouseOldY, 2) + pow(mouseOldZ, 2))
                         * (pow(mousePosX, 2) + pow(mousePosY, 2) + pow(mousePosZ, 2))));
-
         return rotationAngleRadians;
     }
 
@@ -1119,13 +1108,11 @@ public class Window3DController {
             final Node entity = billboardFrontEntityMap.get(billboard);
             if (entity != null) {
                 final Bounds b = entity.getBoundsInParent();
-
                 if (b != null) {
                     billboard.getTransforms().clear();
                     double x = b.getMaxX();
                     double y = b.getMaxY() + b.getHeight() / 2;
                     double z = b.getMaxZ();
-
                     billboard.getTransforms().addAll(
                             new Translate(x, y, z),
                             new Scale(BILLBOARD_SCALE, BILLBOARD_SCALE));
@@ -1256,10 +1243,9 @@ public class Window3DController {
         }
 
         if (defaultEmbryoFlag) {
-            // Start scene element list, find scene elements present at timeProperty, build
-            // and meshes
-            // empty meshes and scene element references from last rendering. Same
-            // for story elements
+            // start scene element list, find scene elements present at current time, build meshes
+            // empty meshes and scene element references from last rendering
+            // same for story elements
             if (sceneElementsList != null) {
                 meshNames = sceneElementsList.getSceneElementNamesAtTime(requestedTime);
             }
@@ -1269,23 +1255,21 @@ public class Window3DController {
                 currentSceneElements.clear();
             }
 
-            if (sceneElementsList != null) {
-                sceneElementsAtTime = sceneElementsList.getSceneElementsAtTime(requestedTime);
-                for (SceneElement se : sceneElementsAtTime) {
-                    // add meshes from each scene element
-                    MeshView mesh = se.buildGeometry(requestedTime - 1);
+            sceneElementsAtCurrentTime = sceneElementsList.getSceneElementsAtTime(requestedTime);
+            for (SceneElement se : sceneElementsAtCurrentTime) {
+                // add meshes from each scene element
+                MeshView mesh = se.buildGeometry(requestedTime - 1);
 
-                    if (mesh != null) {
-                        mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
-                        mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
+                if (mesh != null) {
+                    mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
+                    mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
 
-                        // add rendered mesh to meshes list
-                        currentSceneElementMeshes.add(mesh);
+                    // add rendered mesh to meshes list
+                    currentSceneElementMeshes.add(mesh);
 
-                        // add scene element to rendered scene element reference for
-                        // on click responsiveness
-                        currentSceneElements.add(se);
-                    }
+                    // add scene element to rendered scene element reference for
+                    // on click responsiveness
+                    currentSceneElements.add(se);
                 }
             }
             // End scene element mesh loading/building
@@ -1358,8 +1342,8 @@ public class Window3DController {
 
         // SearchLayer stuff
         if (localSearchResults.isEmpty()) {
-            searchedCells = new boolean[cellNames.length];
-            searchedMeshes = new boolean[meshNames.length];
+            isCellSearchedFlags = new boolean[cellNames.length];
+            isMeshSearchedFlags = new boolean[meshNames.length];
         } else {
             consultSearchResultsList();
         }
@@ -1372,8 +1356,8 @@ public class Window3DController {
         }
         localSearchResults.clear();
         for (String name : searchResultsList) {
-            if (name.contains("(")) {
-                localSearchResults.add(name.substring(0, name.indexOf("(")).trim());
+            if (name.contains(" (")) {
+                localSearchResults.add(name.substring(0, name.indexOf(" (")).trim());
             } else {
                 localSearchResults.add(name);
             }
@@ -1474,39 +1458,41 @@ public class Window3DController {
                     .map(currentNoteMeshMap::get)
                     .collect(toList()));
 
-            // Consult rules
+            // Consult rules/search results
             if (!currentSceneElements.isEmpty()) {
+                SceneElement sceneElement;
+                MeshView meshView;
                 for (int i = 0; i < currentSceneElements.size(); i++) {
-                    final SceneElement se = currentSceneElements.get(i);
-                    final MeshView mesh = currentSceneElementMeshes.get(i);
+                    sceneElement = currentSceneElements.get(i);
+                    meshView = currentSceneElementMeshes.get(i);
 
-                    if (inSearchMode) {
-                        if (cellBodyTicked && searchedMeshes[i]) {
-                            mesh.setMaterial(colorHash.getHighlightMaterial());
+                    // in search mode
+                    if (isInSearchMode) {
+                        // TODO fix incorrect cell body highlighting in search
+                        if (cellBodyTicked && isMeshSearchedFlags[i]) {
+                            System.out.println("highlighting " + meshNames[i]);
+                            meshView.setMaterial(colorHash.getHighlightMaterial());
                         } else {
-                            mesh.setMaterial(colorHash.getTranslucentMaterial());
+                            meshView.setMaterial(colorHash.getTranslucentMaterial());
                         }
+
                     } else {
                         // in regular view mode
-                        List<String> allNames = se.getAllCellNames();
-                        String sceneName = se.getSceneName();
-
-                        // default white meshes
+                        final List<String> allNames = sceneElement.getAllCells();
+                        // note meshes default to white
                         if (allNames.isEmpty()) {
-                            mesh.setMaterial(new PhongMaterial(WHITE));
-                            mesh.setCullFace(CullFace.NONE);
-                        }
-
-                        // If mesh has with name(s), then process rules (cell or
-                        // shape) that apply to it
-                        else {
+                            meshView.setMaterial(new PhongMaterial(WHITE));
+                            meshView.setCullFace(NONE);
+                        } else {
+                            // if mesh has cells name(s), then process rules (cell or shape) that apply to it
                             final List<Color> colors = new ArrayList<>();
                             for (Rule rule : rulesList) {
                                 if (rule.isMulticellularStructureRule()
-                                        && rule.appliesToMulticellularStructure(sceneName)) {
+                                        && rule.appliesToMulticellularStructure(sceneElement.getSceneName())) {
                                     colors.add(rule.getColor());
                                 } else {
-                                    colors.addAll(allNames.stream()
+                                    colors.addAll(allNames
+                                            .stream()
                                             .filter(rule::appliesToCellBody)
                                             .map(name -> rule.getColor())
                                             .collect(toList()));
@@ -1516,28 +1502,29 @@ public class Window3DController {
 
                             // if any rules applied
                             if (!colors.isEmpty()) {
-                                mesh.setMaterial(colorHash.getMaterial(colors));
+                                meshView.setMaterial(colorHash.getMaterial(colors));
                             } else {
-                                mesh.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
+                                meshView.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
                             }
                         }
                     }
 
-                    mesh.setOnMouseEntered(event -> {
+                    final String sceneName = sceneElement.getSceneName();
+                    meshView.setOnMouseEntered(event -> {
                         spritesPane.setCursor(HAND);
                         // make label appear
-                        final String name = normalizeName(se.getSceneName());
+                        final String name = normalizeName(sceneName);
                         if (!currentLabels.contains(name.toLowerCase())) {
-                            transientLabel(name, getEntityWithName(name));
+                            insertTransientLabel(name, getEntityWithName(name));
                         }
                     });
-                    mesh.setOnMouseExited(event -> {
+                    meshView.setOnMouseExited(event -> {
                         spritesPane.setCursor(DEFAULT);
                         // make label disappear
                         removeTransientLabel();
                     });
 
-                    list.add(mesh);
+                    list.add(meshView);
                 }
             }
         }
@@ -1555,8 +1542,8 @@ public class Window3DController {
             final Sphere sphere = new Sphere(radius);
             Material material;
             // if in search, do highlighting
-            if (inSearchMode) {
-                if (searchedCells[i]) {
+            if (isInSearchMode) {
+                if (isCellSearchedFlags[i]) {
                     material = colorHash.getHighlightMaterial();
                 } else {
                     material = colorHash.getTranslucentMaterial();
@@ -1591,7 +1578,7 @@ public class Window3DController {
                 String name = cellNames[index];
                 if (!currentLabels.contains(name.toLowerCase())) {
                     // get cell body version of sphere, if there is one
-                    transientLabel(name, getEntityWithName(name));
+                    insertTransientLabel(name, getEntityWithName(name));
                 }
             });
             sphere.setOnMouseExited(event -> {
@@ -1837,17 +1824,12 @@ public class Window3DController {
                 switch (display) {
                     case SPRITE:
                         break;
-
                     case BILLBOARD_FRONT: // fall to billboard case
-
                     case BILLBOARD:
                         list.add(text);
                         break;
-
                     case OVERLAY: // fall to default case
-
                     case BLANK: // fall to default case
-
                     default:
                         overlayVBox.getChildren().add(text);
                         break;
@@ -1959,41 +1941,51 @@ public class Window3DController {
         subscene.setCamera(camera);
     }
 
+    /**
+     * Consults the local search results list (containing only lineage names, no functional names) and sets the flags
+     * for cell and mesh highlighting. If the sphere or mesh view should be highlighted in the current active search,
+     * then the flag at its index it set to true.
+     */
     private void consultSearchResultsList() {
-        searchedCells = new boolean[cellNames.length];
+        isCellSearchedFlags = new boolean[cellNames.length];
         if (defaultEmbryoFlag) {
-            searchedMeshes = new boolean[meshNames.length];
+            isMeshSearchedFlags = new boolean[meshNames.length];
         }
-
-        // look for searched cells
+        // cells
         for (int i = 0; i < cellNames.length; i++) {
-            searchedCells[i] = localSearchResults.contains(cellNames[i]);
+            isCellSearchedFlags[i] = localSearchResults.contains(cellNames[i]);
         }
-
+        // meshes
         if (defaultEmbryoFlag) {
-            // look for single celled meshes
+            SceneElement sceneElement;
             for (int i = 0; i < meshNames.length; i++) {
-                if (sceneElementsAtTime.get(i).isMulticellular()) {
-                    searchedMeshes[i] = true;
-                    for (String name : sceneElementsAtTime.get(i).getAllCellNames()) {
-                        searchedMeshes[i] &= localSearchResults.contains(name);
+                sceneElement = sceneElementsAtCurrentTime.get(i);
+                if (sceneElement.isMulticellular()) {
+                    isMeshSearchedFlags[i] = true;
+                    for (String cell : sceneElement.getAllCells()) {
+                        if (!localSearchResults.contains(cell)) {
+                            isMeshSearchedFlags[i] = false;
+                            break;
+                        }
                     }
                 } else {
-                    searchedMeshes[i] = localSearchResults.contains(meshNames[i]);
+                    // TODO remove debug
+//                    if (localSearchResults.contains(meshNames[i])) {
+//                        System.out.println("local search results contains " + meshNames[i]);
+//                    }
+                    isMeshSearchedFlags[i] = localSearchResults.contains(meshNames[i]);
                 }
             }
         }
     }
 
-    public boolean currentRulesApplyTo(String name) {
+    private boolean currentRulesApplyTo(final String name) {
         String sceneName = "";
         List<String> cells = new ArrayList<>();
-
         if (defaultEmbryoFlag) {
             // get the scene name associated with the cell
             for (int i = 0; i < sceneElementsList.getElementsList().size(); i++) {
                 SceneElement currSE = sceneElementsList.getElementsList().get(i);
-
                 // check if multicellular structure --> find match with name in
                 // cells
                 if (currSE.isMulticellular()) {
@@ -2001,13 +1993,12 @@ public class Window3DController {
                         sceneName = name;
                         // save the cells in case there isn't an explicit structure rule but the structure is still
                         // colored
-                        cells = currSE.getAllCellNames();
+                        cells = currSE.getAllCells();
                     }
                 } else {
                     String ithSceneName = sceneElementsList.getElementsList()
                             .get(i)
                             .getSceneName();
-
                     StringTokenizer st = new StringTokenizer(ithSceneName);
                     if (st.countTokens() == 2) {
                         String sceneNameLineage = st.nextToken();
@@ -2018,12 +2009,10 @@ public class Window3DController {
                     }
                 }
             }
-
             if (sceneName.equals("")) {
                 sceneName = name;
             }
         }
-
         for (Rule rule : rulesList) {
             if (rule.isMulticellularStructureRule() && rule.appliesToMulticellularStructure(sceneName)) {
                 return true;
@@ -2391,9 +2380,9 @@ public class Window3DController {
                 @Override
                 protected Void call() throws Exception {
                     runLater(() -> {
-//                        System.out.println("Run render service");
-                        getSceneData();
+                        // TODO cell bodies not updating correctly
                         refreshScene();
+                        getSceneData();
                         addEntitiesToScene();
                     });
                     return null;

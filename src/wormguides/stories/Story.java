@@ -16,9 +16,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
+import wormguides.models.colorrule.Rule;
+
 /**
  * Collection of {@link Note}s. In the application, each story is associated with a list of
- * {@link wormguides.models.Rule}s. A story is either created during runtime by the user or loaded from one CSV line
+ * {@link Rule}s. A story is either created during runtime by the user or loaded from one CSV line
  * of a story config file.
  */
 public class Story {

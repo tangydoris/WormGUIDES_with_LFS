@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.anatomy;
 
 /**
  * Anatomy terms which constitute special cases in the info window

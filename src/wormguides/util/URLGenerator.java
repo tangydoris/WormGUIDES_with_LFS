@@ -6,7 +6,7 @@ package wormguides.util;
 
 import java.util.List;
 
-import wormguides.models.Rule;
+import wormguides.models.colorrule.Rule;
 
 /**
  * Generator for a color scheme and scene parameters URL.

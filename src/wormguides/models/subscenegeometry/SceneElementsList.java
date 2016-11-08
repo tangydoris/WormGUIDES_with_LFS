@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.subscenegeometry;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -110,7 +110,7 @@ public class SceneElementsList {
         }
 
         for (SceneElement se : elementsList) {
-            List<String> cells = se.getAllCellNames();
+            List<String> cells = se.getAllCells();
             for (int i = 0; i < cells.size(); i++) {
                 if (cells.get(i).startsWith(ASTERISK)) {
                     se.setNewCellNames(unpackCells(cells));
@@ -129,7 +129,7 @@ public class SceneElementsList {
                         .filter(se -> se.getResourceLocation().endsWith(cell.substring(1)))
                         .forEachOrdered(se -> {
                             // recursively unpack matching location's cell list
-                            unpackedCells.addAll(unpackCells(se.getAllCellNames()));
+                            unpackedCells.addAll(unpackCells(se.getAllCells()));
                         });
             } else {
                 // only add cell name entry if not already added
@@ -187,7 +187,7 @@ public class SceneElementsList {
             if (se.isMulticellular()) {
                 list.add(se.getSceneName());
             } else {
-                list.add(se.getAllCellNames().get(0));
+                list.add(se.getAllCells().get(0));
             }
         });
         return list.toArray(new String[list.size()]);

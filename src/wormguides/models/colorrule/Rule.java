@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.colorrule;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,6 +38,7 @@ import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
+import static javafx.application.Platform.runLater;
 import static javafx.scene.control.ContentDisplay.GRAPHIC_ONLY;
 import static javafx.scene.layout.HBox.setHgrow;
 import static javafx.scene.layout.Priority.ALWAYS;
@@ -45,18 +46,17 @@ import static javafx.stage.Modality.NONE;
 
 import static wormguides.models.LineageTree.isAncestor;
 import static wormguides.models.LineageTree.isDescendant;
-import static wormguides.models.SearchOption.ANCESTOR;
-import static wormguides.models.SearchOption.CELL_BODY;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
-import static wormguides.models.SearchOption.DESCENDANT;
-import static wormguides.models.SearchOption.MULTICELLULAR_NAME_BASED;
+import static wormguides.models.colorrule.SearchOption.ANCESTOR;
+import static wormguides.models.colorrule.SearchOption.CELL_BODY;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.DESCENDANT;
+import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 
 /**
  * This class is the color rule that determines the coloring/striping of cell, cell bodies, and multicellular
- * structures. It is instantiated by the {@link SearchLayer} class and added to an {@link
- * javafx.collections.ObservableList} of Rules that are displayed in the 'Display Options' tab. This class also
- * contains the JavaFX nodes that make up its graphical representation, which are used to display the rule in the
- * {@link javafx.scene.control.ListView} in the tab.
+ * structures. It is instantiated by the {@link SearchLayer} class and added to the list of rules in 'Display
+ * Options' tab. This class also contains the graphical representation of the rule, which is used to display the rule
+ * in the list view in the tab.
  */
 
 public class Rule {
@@ -78,8 +78,7 @@ public class Rule {
     private final ImageView eyeIcon;
     private final ImageView eyeInvertIcon;
 
-    private final BooleanProperty rebuildSubsceneFlag;
-    private final BooleanProperty ruleChanged;
+    private BooleanProperty rebuildSubsceneFlag;
 
     private Stage editStage;
 
@@ -87,6 +86,7 @@ public class Rule {
     private String textLowerCase;
 
     private List<SearchOption> options;
+    private BooleanProperty ruleChanged;
     private boolean visible;
     private Color color;
 
@@ -142,6 +142,17 @@ public class Rule {
 
         this.rebuildSubsceneFlag = requireNonNull(rebuildSubsceneFlag);
 
+        ruleChanged = new SimpleBooleanProperty(false);
+        ruleChanged.addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                if (editController != null) {
+                    setColorButton(editController.getColor());
+                }
+                rebuildSubsceneFlag.set(true);
+                ruleChanged.set(false);
+            }
+        });
+
         hbox = new HBox();
         label = new Label();
         colorRectangle = new Rectangle(UI_SIDE_LENGTH, UI_SIDE_LENGTH);
@@ -161,17 +172,6 @@ public class Rule {
         // if the cells list from SearchLayer is set for this rule, cellsSet is true
         // is false before the list is set
         cellsSet = false;
-
-        ruleChanged = new SimpleBooleanProperty(false);
-        ruleChanged.addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                if (editController != null) {
-                    setColorButton(editController.getColor());
-                }
-                this.rebuildSubsceneFlag.set(true);
-                ruleChanged.set(false);
-            }
-        });
 
         hbox.setSpacing(3);
         hbox.setPadding(new Insets(3));
@@ -217,11 +217,7 @@ public class Rule {
         visibleBtn.setGraphicTextGap(0);
         visibleBtn.setOnAction(event -> {
             visible = !visible;
-            if (visible) {
-                visibleBtn.setGraphic(eyeIcon);
-            } else {
-                visibleBtn.setGraphic(eyeInvertIcon);
-            }
+            blackOutVisibleButton(!visible);
             ruleChanged.set(true);
         });
 
@@ -242,6 +238,22 @@ public class Rule {
     }
 
     /**
+     * Changes the visibility button graphic according to whether or now the rule should be applied to the subscene
+     * entities
+     *
+     * @param isBlackedOut
+     *         true if the visibility button should be blacked out, false otherwise. The visibility
+     *         button is blacked out when the rule is not applied to the subscene entities
+     */
+    private void blackOutVisibleButton(final boolean isBlackedOut) {
+        if (isBlackedOut) {
+            runLater(() -> visibleBtn.setGraphic(eyeInvertIcon));
+        } else {
+            runLater(() -> visibleBtn.setGraphic(eyeIcon));
+        }
+    }
+
+    /**
      * Shows the editor for the rule
      *
      * @param stage
@@ -251,10 +263,8 @@ public class Rule {
         if (editStage == null) {
             initEditStage(stage, rebuildSubsceneFlag);
         }
-
         editController.setHeading(label.getText());
         editStage.show();
-
         ((Stage) editStage.getScene().getWindow()).toFront();
     }
 
@@ -527,19 +537,15 @@ public class Rule {
         if (!visible || !options.contains(CELL_BODY)) {
             return false;
         }
-        final boolean containsDescendantOption = options.contains(DESCENDANT);
-        final boolean containsAncestorOptions = options.contains(ANCESTOR);
-        if (options.contains(CELL_BODY)) {
-            for (String cell : cells) {
-                if (cell.equalsIgnoreCase(name)) {
-                    return true;
-                }
-                if (containsDescendantOption && isDescendant(name, cell)) {
-                    return true;
-                }
-                if (containsAncestorOptions && isAncestor(name, cell)) {
-                    return true;
-                }
+        for (String cell : cells) {
+            if (cell.equalsIgnoreCase(name)) {
+                return true;
+            }
+            if (options.contains(DESCENDANT) && isDescendant(name, cell)) {
+                return true;
+            }
+            if (options.contains(ANCESTOR) && isAncestor(name, cell)) {
+                return true;
             }
         }
         return false;
@@ -579,7 +585,7 @@ public class Rule {
                 }
                 label.setText(toStringFull());
                 toolTip.setText(toStringFull());
-                rebuildSubsceneFlag.set(true);
+                ruleChanged.set(true);
             }
         }
     }

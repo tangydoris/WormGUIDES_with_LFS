@@ -2,7 +2,7 @@
  * Bao Lab 2016
  */
 
-package wormguides.models;
+package wormguides.models.anatomy;
 
 /**
  * Defines a case i.e. an info window page type corresponding to an AnatomyTerm enum

@@ -9,7 +9,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static java.util.Collections.sort;
 
 /**
  * Contains static methods that query the parts list for functional names, lineage names, and descriptions. Content
@@ -17,7 +21,7 @@ import java.util.List;
  */
 public class PartsList {
 
-    private static final String RESOURCE = "/partslist/partslist.txt";
+    private static final String RESOURCE_PATH = "/partslist/partslist.txt";
 
     private static final List<String> functionalNames = new ArrayList<>();
     private static final List<String> lineageNames = new ArrayList<>();
@@ -27,21 +31,21 @@ public class PartsList {
      * Initializes the lists of names according to the parts list file
      */
     public static void init() {
-        final URL url = PartsList.class.getResource(RESOURCE);
-
-        try (final InputStreamReader isr = new InputStreamReader(url.openStream());
-             final BufferedReader br = new BufferedReader(isr)) {
-
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] lineArray = line.split("\t");
-                functionalNames.add(lineArray[0].trim());
-                lineageNames.add(lineArray[1].trim());
-                descriptions.add(lineArray[2].trim());
+        final URL url = PartsList.class.getResource(RESOURCE_PATH);
+        if (url != null) {
+            try (final InputStreamReader isr = new InputStreamReader(url.openStream());
+                 final BufferedReader br = new BufferedReader(isr)) {
+                String line;
+                String[] tokens;
+                while ((line = br.readLine()) != null) {
+                    tokens = line.split("\t");
+                    functionalNames.add(tokens[0].trim());
+                    lineageNames.add(tokens[1].trim());
+                    descriptions.add(tokens[2].trim());
+                }
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
             }
-
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
         }
     }
 
@@ -167,15 +171,24 @@ public class PartsList {
     }
 
     /**
-     * Retrieves the lineage name for the functional name
+     * Retrieves the lineage names of cells with a functional name. No duplicates are returned and results are sorted.
      *
      * @param functionalName
      *         the lineage name
      *
      * @return lineage name for that functional name
      */
-    public static String getLineageNameByFunctionalName(final String functionalName) {
-        return getLineageNameByIndex(functionalNames.indexOf(getFunctionalNameCorrectCase(functionalName)));
+    public static List<String> getLineageNamesByFunctionalName(String functionalName) {
+        functionalName = getFunctionalNameCorrectCase(functionalName);
+        final Set<String> lineageNamesSet = new HashSet<>();
+        for (int i = 0; i < functionalNames.size(); i++) {
+            if (functionalNames.get(i).equals(functionalName)) {
+                lineageNamesSet.add(getLineageNameByIndex(i));
+            }
+        }
+        final List<String> lineageNamesList = new ArrayList<>(lineageNamesSet);
+        sort(lineageNamesList);
+        return lineageNamesList;
     }
 
     /**
@@ -217,21 +230,21 @@ public class PartsList {
     /**
      * @return copy of the list of lineage names
      */
-    public static ArrayList<String> getLineageNames() {
+    public static List<String> getLineageNames() {
         return new ArrayList<>(lineageNames);
     }
 
     /**
      * @return copy of the list of functional names
      */
-    public static ArrayList<String> getFunctionalNames() {
+    public static List<String> getFunctionalNames() {
         return new ArrayList<>(functionalNames);
     }
 
     /**
      * @return copy of the list of descriptions
      */
-    public static ArrayList<String> getDescriptions() {
+    public static List<String> getDescriptions() {
         return new ArrayList<>(descriptions);
     }
 
