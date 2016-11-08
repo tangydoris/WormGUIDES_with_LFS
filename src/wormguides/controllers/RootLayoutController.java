@@ -739,9 +739,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         });
 
         // initial start at movie end (builds subscene automatically)
-        // TODO change back to end time
-//        timeProperty.set(endTime);
-        timeProperty.set(3);
+        timeProperty.set(endTime);
     }
 
     public void setStage(final Stage stage) {
