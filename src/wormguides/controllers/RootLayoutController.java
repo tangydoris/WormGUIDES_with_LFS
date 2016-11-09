@@ -307,6 +307,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
     // Other shared variables
     private ObservableList<Rule> rulesList;
+    private ObservableList<String> searchResultsList;
     private int startTime;
     private int endTime;
     private int movieTimeOffset;
@@ -316,7 +317,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private ColorHash colorHash;
     private SubScene subscene;
     private Group rootEntitiesGroup;
-    private ObservableList<String> searchResultsList;
 
     @FXML
     public void menuLoadStory() {
@@ -923,6 +923,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         cellNucleusCheckBox.setSelected(true);
         searchLayer = new SearchLayer(
                 rulesList,
+                searchResultsList,
                 searchField,
                 sysRadioBtn,
                 funRadioBtn,
@@ -943,14 +944,12 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 addSearchBtn,
                 geneResultsUpdatedFlag,
                 rebuildSubsceneFlag);
+        searchResultsListView.setItems(searchResultsList);
         searchLayer.addDefaultInternalColorRules();
         searchResultsUpdateService = searchLayer.getResultsUpdateService();
-        searchResultsList = searchLayer.getSearchResultsList();
-        searchResultsListView.setItems(searchResultsList);
     }
 
     private void initDisplayLayer() {
-        rulesList = observableArrayList();
         displayLayer = new DisplayLayer(rulesList, usingInternalRulesFlag, rebuildSubsceneFlag);
         rulesListView.setItems(rulesList);
         rulesListView.setCellFactory(displayLayer.getRuleCellFactory());
@@ -1168,6 +1167,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     }
 
     private void initSharedVariables() {
+        // TODO
         timeProperty = new SimpleIntegerProperty(startTime);
         totalNucleiProperty = new SimpleIntegerProperty(0);
 
@@ -1201,6 +1201,9 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 true,
                 BALANCED);
         subscene.setFill(web(FILL_COLOR_HEX));
+
+        rulesList = observableArrayList();
+        searchResultsList = observableArrayList();
     }
 
     private void initContextMenuStage() {

@@ -42,7 +42,6 @@ import static java.util.Collections.sort;
 import static java.util.Objects.requireNonNull;
 
 import static javafx.application.Platform.runLater;
-import static javafx.collections.FXCollections.observableArrayList;
 import static javafx.scene.paint.Color.DARKSEAGREEN;
 import static javafx.scene.paint.Color.web;
 
@@ -110,6 +109,7 @@ public class SearchLayer {
 
     public SearchLayer(
             final ObservableList<Rule> rulesList,
+            final ObservableList<String> searchResultsList,
             final TextField searchTextField,
             final RadioButton systematicRadioButton,
             final RadioButton functionalRadioButton,
@@ -132,6 +132,7 @@ public class SearchLayer {
             final BooleanProperty rebuildSubsceneFlag) {
 
         this.rulesList = requireNonNull(rulesList);
+        this.searchResultsList = requireNonNull(searchResultsList);
 
         // text field
         this.searchTextField = requireNonNull(searchTextField);
@@ -164,8 +165,6 @@ public class SearchLayer {
         // add rule button
         this.addRuleButton = requireNonNull(addRuleButton);
         this.addRuleButton.setOnAction(getAddButtonClickHandler());
-
-        this.searchResultsList = observableArrayList();
 
         this.resultsUpdateService = new Service<Void>() {
             @Override
