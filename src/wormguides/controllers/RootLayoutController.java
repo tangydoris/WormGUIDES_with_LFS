@@ -288,7 +288,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private StringProperty selectedNameProperty;
     private StringProperty selectedNameLabeledProperty;
     private StringProperty activeStoryProperty;
-    private BooleanProperty updatedGeneResultsFlag;
+    private BooleanProperty geneResultsUpdatedFlag;
     private BooleanProperty usingInternalRulesFlag;
     private BooleanProperty bringUpInfoFlag;
     private BooleanProperty playingMovieFlag;
@@ -714,7 +714,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 selectedNameLabeledProperty,
                 cellClickedFlag,
                 playingMovieFlag,
-                updatedGeneResultsFlag,
+                geneResultsUpdatedFlag,
                 rebuildSubsceneFlag,
                 rulesList,
                 colorHash,
@@ -941,7 +941,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 descendantCheckBox,
                 colorPicker,
                 addSearchBtn,
-                updatedGeneResultsFlag,
+                geneResultsUpdatedFlag,
                 rebuildSubsceneFlag);
         searchLayer.addDefaultInternalColorRules();
         searchResultsUpdateService = searchLayer.getResultsUpdateService();
@@ -1184,7 +1184,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         activeStoryProperty = new SimpleStringProperty("");
 
         cellClickedFlag = new SimpleBooleanProperty(false);
-        updatedGeneResultsFlag = new SimpleBooleanProperty(false);
+        geneResultsUpdatedFlag = new SimpleBooleanProperty(false);
 
         rebuildSubsceneFlag = new SimpleBooleanProperty(false);
         usingInternalRulesFlag = new SimpleBooleanProperty(true);

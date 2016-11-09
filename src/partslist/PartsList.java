@@ -173,16 +173,16 @@ public class PartsList {
     /**
      * Retrieves the lineage names of cells with a functional name. No duplicates are returned and results are sorted.
      *
-     * @param functionalName
+     * @param queriedFunctionalName
      *         the lineage name
      *
      * @return lineage name for that functional name
      */
-    public static List<String> getLineageNamesByFunctionalName(String functionalName) {
-        functionalName = getFunctionalNameCorrectCase(functionalName);
+    public static List<String> getLineageNamesByFunctionalName(String queriedFunctionalName) {
+        queriedFunctionalName = queriedFunctionalName.toLowerCase();
         final Set<String> lineageNamesSet = new HashSet<>();
         for (int i = 0; i < functionalNames.size(); i++) {
-            if (functionalNames.get(i).equals(functionalName)) {
+            if (functionalNames.get(i).toLowerCase().startsWith(queriedFunctionalName)) {
                 lineageNamesSet.add(getLineageNameByIndex(i));
             }
         }

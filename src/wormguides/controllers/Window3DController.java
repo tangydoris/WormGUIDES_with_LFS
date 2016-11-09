@@ -376,7 +376,7 @@ public class Window3DController {
             final StringProperty selectedNameLabeledProperty,
             final BooleanProperty cellClickedFlag,
             final BooleanProperty playingMovieFlag,
-            final BooleanProperty updatedGeneResultsFlag,
+            final BooleanProperty geneResultsUpdatedFlag,
             final BooleanProperty rebuildSubsceneFlag,
             final ObservableList<Rule> rulesList,
             final ColorHash colorHash,
@@ -518,9 +518,10 @@ public class Window3DController {
 
         localSearchResults = new ArrayList<>();
 
-        requireNonNull(updatedGeneResultsFlag).addListener((observable, oldValue, newValue) -> {
+        requireNonNull(geneResultsUpdatedFlag).addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 updateLocalSearchResults();
+                geneResultsUpdatedFlag.set(false);
             }
         });
 
@@ -755,9 +756,9 @@ public class Window3DController {
      *         The entity that the label should appear on
      */
     private void insertTransientLabel(String name, Shape3D entity) {
-        // TODO remove current rules apply to
         final double opacity = othersOpacityProperty.get();
-        if (entity.getMaterial() != colorHash.getOthersMaterial(opacity) || opacity > 0.25) {
+        if ((entity != null && entity.getMaterial() != colorHash.getOthersMaterial(opacity))
+                || opacity > 0.25) {
             if (!currentLabels.contains(name) && entity != null) {
                 final Bounds b = entity.getBoundsInParent();
                 if (b != null) {
@@ -1470,7 +1471,7 @@ public class Window3DController {
                     if (isInSearchMode) {
                         // TODO fix incorrect cell body highlighting in search
                         if (cellBodyTicked && isMeshSearchedFlags[i]) {
-                            System.out.println("highlighting " + meshNames[i]);
+//                            System.out.println("highlighting " + meshNames[i]);
                             meshView.setMaterial(colorHash.getHighlightMaterial());
                         } else {
                             meshView.setMaterial(colorHash.getTranslucentMaterial());
@@ -1969,10 +1970,6 @@ public class Window3DController {
                         }
                     }
                 } else {
-                    // TODO remove debug
-//                    if (localSearchResults.contains(meshNames[i])) {
-//                        System.out.println("local search results contains " + meshNames[i]);
-//                    }
                     isMeshSearchedFlags[i] = localSearchResults.contains(meshNames[i]);
                 }
             }

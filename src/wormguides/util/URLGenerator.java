@@ -51,15 +51,15 @@ public class URLGenerator {
 
         return "http://scene.wormguides.org/wormguides/testurlscript?"
                 + generateParameterString(
-                rules,
-                time,
-                rX,
-                rY,
-                rZ,
-                tX,
-                tY,
-                scale,
-                dim)
+                        rules,
+                        time,
+                        rX,
+                        rY,
+                        rZ,
+                        tX,
+                        tY,
+                        scale,
+                        dim)
                 + "/Android/";
     }
 
@@ -76,15 +76,15 @@ public class URLGenerator {
 
         return "http://scene.wormguides.org/wormguides/testurlscript?"
                 + generateParameterString(
-                rules,
-                time,
-                rX,
-                rY,
-                rZ,
-                tX,
-                tY,
-                scale,
-                dim)
+                        rules,
+                        time,
+                        rX,
+                        rY,
+                        rZ,
+                        tX,
+                        tY,
+                        scale,
+                        dim)
                 + "/browser/";
     }
 
@@ -101,15 +101,15 @@ public class URLGenerator {
 
         return "http://scene.wormguides.org/wormguides/testurlscript?"
                 + generateInternalParameterString(
-                rules,
-                time,
-                rX,
-                rY,
-                rZ,
-                tX,
-                tY,
-                scale,
-                dim)
+                        rules,
+                        time,
+                        rX,
+                        rY,
+                        rZ,
+                        tX,
+                        tY,
+                        scale,
+                        dim)
                 + "/browser/";
     }
 
@@ -215,15 +215,26 @@ public class URLGenerator {
 
     private static String generateSetParameters(final List<Rule> rules) {
         final StringBuilder builder = new StringBuilder("/set");
+
+        String ruleText;
+        String color;
+        boolean isMulticellularStructureRule;
         for (Rule rule : rules) {
-            if (!rule.isMulticellularStructureRule()) {
-                String ruleText = rule.getSearchedText();
+            isMulticellularStructureRule = rule.isMulticellularStructureRule();
+
+            // get the rule's searched text
+            ruleText = rule.getSearchedText();
+            if (!isMulticellularStructureRule) {
                 if (ruleText.contains("'")) {
                     ruleText = ruleText.substring(0, ruleText.lastIndexOf("'"));
                     ruleText = ruleText.substring(ruleText.indexOf("'") + 1, ruleText.length());
                 }
-                builder.append("/").append(ruleText);
+            } else {
+                ruleText = ruleText.replace(" ", "=");
+            }
+            builder.append("/").append(ruleText);
 
+            if (!isMulticellularStructureRule) {
                 // search types
                 if (rule.getSearchType() == null) {
                     System.out.println(rule.toStringFull());
@@ -241,10 +252,18 @@ public class URLGenerator {
                     case GENE:
                         builder.append("-g");
                         break;
+                    case CONNECTOME:
+                        builder.append("-c");
+                        break;
+                    case NEIGHBOR:
+                        builder.append("-b");
+                        break;
+                    case MULTICELLULAR_CELL_BASED:
+                        builder.append("-m");
+                        break;
                     default:
                         break;
                 }
-
                 // ancestry modifiers
                 // descendant (<)
                 if (rule.isDescendantSelected()) {
@@ -258,12 +277,17 @@ public class URLGenerator {
                 if (rule.isAncestorSelected()) {
                     builder.append(">");
                 }
-
-                // color
-                String color = rule.getColor().toString();
-                color = color.substring(color.indexOf("x") + 1, color.length() - 2);
-                builder.append("+#ff").append(color);
+                // cell body
+                if (rule.isCellBodySelected()) {
+                    builder.append("@");
+                }
+            } else {
+                builder.append("-M");
             }
+            // color
+            color = rule.getColor().toString();
+            color = color.substring(color.indexOf("x") + 1, color.length() - 2);
+            builder.append("+#ff").append(color);
         }
 
         return builder.toString();

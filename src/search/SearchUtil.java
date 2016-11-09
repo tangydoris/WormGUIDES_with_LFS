@@ -5,7 +5,9 @@
 package search;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import acetree.LineageData;
 import connectome.Connectome;
@@ -123,11 +125,15 @@ public class SearchUtil {
      * @return lineage names whose function description contains all parts of the search string, in alphabetical order
      */
     public static List<String> getCellsWithFunctionalDescription(final String searched) {
-        final List<String> cells = new ArrayList<>();
+        final Set<String> cellsSet = new HashSet<>();
         final String[] keywords = searched.split(" ");
+
+        String description;
+        boolean isValidDescription;
+        String cell;
         for (int i = 0; i < functionalDescriptions.size(); i++) {
-            final String description = functionalDescriptions.get(i).toLowerCase();
-            boolean isValidDescription = true;
+            description = functionalDescriptions.get(i).toLowerCase();
+            isValidDescription = true;
             for (String keyword : keywords) {
                 if (!description.contains(keyword)) {
                     isValidDescription = false;
@@ -135,12 +141,10 @@ public class SearchUtil {
                 }
             }
             if (isValidDescription) {
-                final String cell = getLineageNameByIndex(i);
-                if (!cells.contains(cell)) {
-                    cells.add(cell);
-                }
+                cellsSet.add(getLineageNameByIndex(i));
             }
         }
+        final List<String> cells = new ArrayList<>(cellsSet);
         sort(cells);
         return cells;
     }
@@ -152,18 +156,16 @@ public class SearchUtil {
      * @return lineage names of cells that belong to the searched structure, in alphabetical order
      */
     public static List<String> getCellsInMulticellularStructure(final String searched) {
-        final List<String> cells = new ArrayList<>();
+        final Set<String> cellsSet = new HashSet<>();
         if (sceneElementsList != null) {
             sceneElementsList.getElementsList()
                     .stream()
                     .filter(SceneElement::isMulticellular)
                     .filter(se -> isMulticellularStructureSearched(se.getSceneName(), searched))
-                    .forEach(se -> se.getAllCells()
-                            .stream()
-                            .filter(cellName -> !cells.contains(cellName))
-                            .forEach(cells::add)
+                    .forEach(se -> se.getAllCells().forEach(cellsSet::add)
                     );
         }
+        final List<String> cells = new ArrayList<>(cellsSet);
         sort(cells);
         return cells;
     }
@@ -291,10 +293,10 @@ public class SearchUtil {
      * @return lineage names of all neighboring cells
      */
     public static List<String> getNeighboringCells(final String cellName) {
-        final List<String> cells = new ArrayList<>();
+        final Set<String> cellsSet = new HashSet<>();
 
         if (cellName == null || !lineageData.isCellName(cellName)) {
-            return cells;
+            return new ArrayList<>();
         }
 
         // get time range for cell
@@ -347,14 +349,14 @@ public class SearchUtil {
                     // compute distance from each cell to query cell
                     if (distance(x, positions[n][0], y, positions[n][1], z, positions[n][2]) <= maxSphericalRadius) {
                         // only add new entries
-                        if (!cells.contains(names[n]) && !names[n].equalsIgnoreCase(cellName)) {
-                            cells.add(names[n]);
+                        if (!names[n].equalsIgnoreCase(cellName)) {
+                            cellsSet.add(names[n]);
                         }
                     }
                 }
             }
         }
-
+        final List<String> cells = new ArrayList<>(cellsSet);
         sort(cells);
         return cells;
     }
@@ -389,14 +391,14 @@ public class SearchUtil {
      * @return list of terminal descendants for the query cell
      */
     public static List<String> getDescendantsList(final String queryCell) {
-        final List<String> descendants = new ArrayList<>();
+        final Set<String> descendantsSet = new HashSet<>();
         if (queryCell != null) {
             getLineageNames()
                     .stream()
-                    .filter(name -> !descendants.contains(name) && isDescendant(name, queryCell))
-                    .forEachOrdered(descendants::add);
+                    .filter(name -> isDescendant(name, queryCell))
+                    .forEachOrdered(descendantsSet::add);
         }
-        return descendants;
+        return new ArrayList<>(descendantsSet);
     }
 
     /**
@@ -408,10 +410,10 @@ public class SearchUtil {
      * @return list of descendants of all the cells, with no repeats
      */
     public static List<String> getDescendantsList(final List<String> cells, final String searchedText) {
-        final List<String> descendants = new ArrayList<>();
+        final Set<String> descendantsSet = new HashSet<>();
 
         if (cells == null) {
-            return descendants;
+            return new ArrayList<>();
         }
 
         // special cases for 'ab' and 'p0' because the input list of cells would be empty
@@ -426,10 +428,10 @@ public class SearchUtil {
 
         for (String cell : cells) {
             activeLineageNames.stream()
-                    .filter(name -> !descendants.contains(name) && isDescendant(name, cell))
-                    .forEach(descendants::add);
+                    .filter(name -> isDescendant(name, cell))
+                    .forEach(descendantsSet::add);
         }
-        return descendants;
+        return new ArrayList<>(descendantsSet);
     }
 
     /**
@@ -441,10 +443,9 @@ public class SearchUtil {
      * @return list of ancestors of all the cells, with no repeats
      */
     public static List<String> getAncestorsList(final List<String> cells, final String searchedText) {
-        System.out.println("getting ancestors list for " + searchedText);
-        final List<String> ancestors = new ArrayList<>();
+        final Set<String> ancestorsSet = new HashSet<>();
         if (cells == null) {
-            return ancestors;
+            return new ArrayList<>();
         }
         // special cases for 'ab' and 'p0' because the input list of cells would be empty
         final String searched = searchedText.trim().toLowerCase();
@@ -457,10 +458,10 @@ public class SearchUtil {
         }
         for (String cell : cells) {
             activeLineageNames.stream()
-                    .filter(name -> !ancestors.contains(name) && isAncestor(name, cell))
-                    .forEach(ancestors::add);
+                    .filter(name -> isAncestor(name, cell))
+                    .forEach(ancestorsSet::add);
         }
-        return ancestors;
+        return new ArrayList<>(ancestorsSet);
     }
 
     /**

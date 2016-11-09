@@ -53,11 +53,15 @@ public class DisplayLayer {
             final ObservableList<Rule> rulesList,
             final BooleanProperty useInternalRulesFlag,
             final BooleanProperty rebuildSubsceneFlag) {
+        requireNonNull(rulesList);
+        requireNonNull(useInternalRulesFlag);
+        requireNonNull(rebuildSubsceneFlag);
 
         internalRulesList = new ArrayList<>();
         buttonMap = new HashMap<>();
 
-        this.currentRulesList = requireNonNull(rulesList);
+
+        this.currentRulesList = rulesList;
         this.currentRulesList.addListener(new ListChangeListener<Rule>() {
             @Override
             public void onChanged(Change<? extends Rule> change) {
@@ -69,6 +73,7 @@ public class DisplayLayer {
                             rule.getDeleteButton().setOnAction(event -> {
                                 currentRulesList.remove(rule);
                                 buttonMap.remove(rule);
+                                rebuildSubsceneFlag.set(true);
                             });
                         }
                     }
@@ -76,8 +81,7 @@ public class DisplayLayer {
             }
         });
 
-        requireNonNull(rebuildSubsceneFlag);
-        requireNonNull(useInternalRulesFlag).addListener((observable, oldValue, newValue) -> {
+        useInternalRulesFlag.addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 // using internal rules, copy all internal rules to current list
                 currentRulesList.clear();

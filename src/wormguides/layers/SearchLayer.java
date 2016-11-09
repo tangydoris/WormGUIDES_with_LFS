@@ -189,7 +189,6 @@ public class SearchLayer {
         };
 
         this.rebuildSubsceneFlag = requireNonNull(rebuildSubsceneFlag);
-
         this.geneResultsUpdatedFlag = requireNonNull(geneResultsUpdatedFlag);
 
         showLoadingService = new ShowLoadingService();
@@ -207,7 +206,6 @@ public class SearchLayer {
             searchResultsList.clear();
 
             final String searchedGene = geneSearchService.getSearchedGene();
-
             updateGeneResults(searchedGene);
 
             // set cells for any old gene rules
@@ -217,7 +215,6 @@ public class SearchLayer {
             rulesList.stream()
                     .filter(rule -> rule.getSearchedText().contains(searchedQuoted))
                     .forEach(rule -> rule.setCells(geneSearchService.getValue()));
-            this.geneResultsUpdatedFlag.set(true);
 
             if (!geneSearchQueue.isEmpty()) {
                 geneSearchService.setSearchedGene(geneSearchQueue.remove());

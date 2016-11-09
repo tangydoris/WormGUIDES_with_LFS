@@ -121,21 +121,28 @@ public class URLLoader {
 
     /**
      * Parses a list of rules and adds each to the application's active rules list
-     * @param rules the list of rules
-     * @param rulesList the active observable rules list
+     * @param ruleStrings the string representations of rules
+     * @param rulesList the observable rules list
      * @param searchLayer the search layer to add color rules
      */
     private static void parseRules(
-            final List<String> rules,
+            final List<String> ruleStrings,
             final ObservableList<Rule> rulesList,
             final SearchLayer searchLayer) {
-
         rulesList.clear();
-        for (String rule : rules) {
-            final List<String> types = new ArrayList<>();
-            final StringBuilder sb = new StringBuilder(rule);
-            boolean noTypeSpecified = true;
-            boolean isMulticellStructureRule = false;
+
+        List<String> types;
+        StringBuilder sb;
+        boolean noTypeSpecified;
+        boolean isMulticellStructureRule;
+        List<SearchOption> options;
+        String colorString;
+        String name;
+        for (String ruleString : ruleStrings) {
+            types = new ArrayList<>();
+            sb = new StringBuilder(ruleString);
+            noTypeSpecified = true;
+            isMulticellStructureRule = false;
 
             // determine if rule is a cell/cellbody rule, or a multicelllar structure rule
             try {
@@ -178,15 +185,16 @@ public class URLLoader {
                     }
                 }
 
-                String colorString = "";
+                colorString = "";
                 if (sb.indexOf("+#ff") > -1) {
                     colorString = sb.substring(sb.indexOf("+#ff") + 4);
                 } else if (sb.indexOf("+%23ff") > -1) {
                     colorString = sb.substring(sb.indexOf("+%23ff") + 6);
                 }
 
-                final List<SearchOption> options = new ArrayList<>();
+                options = new ArrayList<>();
                 if (noTypeSpecified && sb.indexOf("-M") > -1) {
+                    isMulticellStructureRule = true;
                     options.add(MULTICELLULAR_NAME_BASED);
                     int i = sb.indexOf("-M");
                     sb.replace(i, i + 2, "");
@@ -196,8 +204,7 @@ public class URLLoader {
                         options.add(ANCESTOR);
                         i = sb.indexOf("%3C");
                         sb.replace(i, i + 3, "");
-                    }
-                    if (sb.indexOf(">") > -1) {
+                    } else if (sb.indexOf(">") > -1) {
                         options.add(ANCESTOR);
                         i = sb.indexOf(">");
                         sb.replace(i, i + 1, "");
@@ -207,7 +214,7 @@ public class URLLoader {
                         i = sb.indexOf("$");
                         sb.replace(i, i + 1, "");
                     }
-                    if (rule.contains("%3E")) {
+                    if (ruleString.contains("%3E")) {
                         options.add(DESCENDANT);
                         i = sb.indexOf("%3E");
                         sb.replace(i, i + 3, "");
@@ -225,7 +232,7 @@ public class URLLoader {
                 }
 
                 // extract name from what's left of rule
-                final String name = sb.substring(0, sb.indexOf("+"));
+                name = sb.substring(0, sb.indexOf("+"));
                 // add regular ColorRule
                 if (!isMulticellStructureRule) {
                     if (types.contains("-s")) {
@@ -262,7 +269,9 @@ public class URLLoader {
                         searchLayer.addColorRule(type, name, web(colorString), options);
                     }
 
-                } else { // add multicellular structure rule
+                } else {
+                    // add multicellular structure rule
+                    name = name.replace("=", " ");
                     searchLayer.addMulticellularStructureRule(name, web(colorString));
                 }
 
