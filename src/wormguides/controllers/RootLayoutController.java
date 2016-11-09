@@ -285,7 +285,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private LineageData lineageData;
 
     // Shared properties
-    private StringProperty selectedNameProperty;
+    /** Name that appears in the info panel */
+    private StringProperty selectedEntityNameProperty;
     private StringProperty selectedNameLabeledProperty;
     private StringProperty activeStoryProperty;
     private BooleanProperty geneResultsUpdatedFlag;
@@ -710,7 +711,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 rotateZAngleProperty,
                 translateXProperty,
                 translateYProperty,
-                selectedNameProperty,
+                selectedEntityNameProperty,
                 selectedNameLabeledProperty,
                 cellClickedFlag,
                 playingMovieFlag,
@@ -750,7 +751,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         // searchLayer stuff
         searchResultsListView.getSelectionModel()
                 .selectedItemProperty()
-                .addListener((observable, oldValue, newValue) -> selectedNameProperty.set(newValue));
+                .addListener((observable, oldValue, newValue) -> selectedEntityNameProperty.set(newValue));
 
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.isEmpty()) {
@@ -760,10 +761,10 @@ public class RootLayoutController extends BorderPane implements Initializable {
         });
 
         // selectedName string property that has the name of the clicked sphere
-        selectedNameProperty.addListener((observable, oldValue, newValue) -> {
+        selectedEntityNameProperty.addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 if (!newValue.isEmpty()) {
-                    setSelectedEntityInfo(selectedNameProperty.get());
+                    setSelectedEntityInfo(selectedEntityNameProperty.get());
                 }
             }
         });
@@ -779,7 +780,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         // More info clickable text
         moreInfoClickableText.setOnMouseClicked(event -> {
             openInfoWindow();
-            infoWindow.addName(selectedNameProperty.get());
+            infoWindow.addName(selectedEntityNameProperty.get());
         });
         moreInfoClickableText.setOnMouseEntered(event -> moreInfoClickableText.setCursor(Cursor.HAND));
         moreInfoClickableText.setOnMouseExited(event -> moreInfoClickableText.setCursor(Cursor.DEFAULT));
@@ -788,7 +789,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         bringUpInfoFlag.addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 openInfoWindow();
-                infoWindow.addName(selectedNameProperty.get());
+                infoWindow.addName(selectedEntityNameProperty.get());
                 infoWindow.showWindow();
             }
         });
@@ -977,17 +978,13 @@ public class RootLayoutController extends BorderPane implements Initializable {
         structuresLayer = new StructuresLayer(
                 searchLayer,
                 sceneElementsList,
+                selectedEntityNameProperty,
                 structuresSearchField,
                 structuresSearchListView,
                 allStructuresListView,
                 addStructureRuleBtn,
                 structureRuleColorPicker,
                 rebuildSubsceneFlag);
-        structuresLayer.addSelectedNameListener((observable, oldValue, newValue) -> {
-            if (!newValue.isEmpty()) {
-                selectedNameProperty.set(newValue);
-            }
-        });
     }
 
     private void initStoriesLayer() {
@@ -996,7 +993,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 searchLayer,
                 sceneElementsList,
                 rulesList,
-                selectedNameProperty,
+                selectedEntityNameProperty,
                 activeStoryProperty,
                 cellClickedFlag,
                 timeProperty,
@@ -1179,7 +1176,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         translateYProperty = new SimpleDoubleProperty();
         zoomProperty = new SimpleDoubleProperty();
 
-        selectedNameProperty = new SimpleStringProperty("");
+        selectedEntityNameProperty = new SimpleStringProperty("");
         selectedNameLabeledProperty = new SimpleStringProperty("");
         activeStoryProperty = new SimpleStringProperty("");
 

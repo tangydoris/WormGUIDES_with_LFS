@@ -13,7 +13,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -48,7 +47,7 @@ public class StructuresLayer {
     private final Map<String, String> nameToCommentsMap;
     private final Map<String, StructureListCellGraphic> nameListCellMap;
 
-    private final StringProperty selectedNameProperty;
+    private final StringProperty selectedStructureNameProperty;
 
     private final TextField searchField;
 
@@ -58,6 +57,7 @@ public class StructuresLayer {
     public StructuresLayer(
             final SearchLayer searchLayer,
             final SceneElementsList sceneElementsList,
+            final StringProperty selectedEntityNameProperty,
             final TextField searchField,
             final ListView<String> structureSearchListView,
             final ListView<String> allStructuresListView,
@@ -71,7 +71,13 @@ public class StructuresLayer {
         searchStructuresResultsList = observableArrayList();
 
         nameListCellMap = new HashMap<>();
-        selectedNameProperty = new SimpleStringProperty("");
+
+        selectedStructureNameProperty = new SimpleStringProperty("");
+        selectedStructureNameProperty.addListener((observable, oldVlaue, newValue) -> {
+            if (!newValue.isEmpty()) {
+                requireNonNull(selectedEntityNameProperty).set(newValue);
+            }
+        });
 
         this.searchLayer = requireNonNull(searchLayer);
 
@@ -111,7 +117,7 @@ public class StructuresLayer {
 
         requireNonNull(rebuildSceneFlag);
         requireNonNull(addStructureRuleButton).setOnAction(event -> {
-            final String name = selectedNameProperty.get();
+            final String name = selectedStructureNameProperty.get();
             if (!name.isEmpty()) {
                 addStructureRule(name, selectedColor);
                 deselectAllStructures();
@@ -130,15 +136,15 @@ public class StructuresLayer {
 
     public void setSelectedStructure(String structure) {
         // unhighlight previous selected structure
-        if (!selectedNameProperty.get().isEmpty()) {
-            nameListCellMap.get(selectedNameProperty.get()).setSelected(false);
+        if (!selectedStructureNameProperty.get().isEmpty()) {
+            nameListCellMap.get(selectedStructureNameProperty.get()).setSelected(false);
         }
 
-        selectedNameProperty.set(structure);
+        selectedStructureNameProperty.set(structure);
 
         // highlight new selected structure
-        if (!selectedNameProperty.get().isEmpty()) {
-            nameListCellMap.get(selectedNameProperty.get()).setSelected(true);
+        if (!selectedStructureNameProperty.get().isEmpty()) {
+            nameListCellMap.get(selectedStructureNameProperty.get()).setSelected(true);
         }
     }
 
@@ -233,18 +239,12 @@ public class StructuresLayer {
         }
     }
 
-    public StringProperty getSelectedNameProperty() {
-        return selectedNameProperty;
+    public StringProperty getSelectedStructureNameProperty() {
+        return selectedStructureNameProperty;
     }
 
     public String getSearchText() {
         return searchText;
-    }
-
-    public void addSelectedNameListener(ChangeListener<String> listener) {
-        if (listener != null) {
-            selectedNameProperty.addListener(listener);
-        }
     }
 
     public Callback<ListView<String>, ListCell<String>> getCellFactory() {
