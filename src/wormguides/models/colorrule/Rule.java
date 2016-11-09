@@ -330,8 +330,8 @@ public class Rule {
     }
 
     /**
-     * @return TRUE if the list of baseline cells are set by the {@link SearchLayer}
-     * class, FALSE otherwise
+     * @return true if the list of baseline cells are set by the {@link SearchLayer}
+     * class, false otherwise
      */
     public boolean areCellsSet() {
         return cellsSet;
@@ -346,17 +346,18 @@ public class Rule {
     }
 
     /**
-     * Called by the {@link SearchLayer} class to set the baseline list of cells that the rule affects.
-     * Multicellular structure rule cells are never set since they are queried by name only.
+     * Called by the {@link SearchLayer} class to set the baseline list of cells that the rule affects. Multicellular
+     * structure rule cells are never set since they are queried by name only.
      *
      * @param list
-     *         ArrayList of baseline cell names that should be affected by
-     *         this rule. The list only contains immediate cells, not the
-     *         ancestor or descendant cells.
+     *         baseline cell names that should be affected by this rule. The list only contains immediate cells, not
+     *         the ancestor or descendant cells.
      */
-    public void setCells(List<String> list) {
-        cells = list;
-        cellsSet = true;
+    public void setCells(final List<String> list) {
+        if (list != null) {
+            cells = list;
+            cellsSet = true;
+        }
     }
 
     /**

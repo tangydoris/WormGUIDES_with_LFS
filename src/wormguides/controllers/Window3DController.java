@@ -2389,9 +2389,8 @@ public class Window3DController {
     }
 
     /**
-     * This JavaFX {@link Service} of type Void spools a thread to play the
-     * subscene movie. It waits the timeProperty in milliseconds defined in the variable
-     * WAIT_TIME_MILLI (defined in the parent class) before rendering the next
+     * This JavaFX {@link Service} of type Void spools a thread to play the subscene movie. It waits the timeProperty
+     * in milliseconds defined in the variable WAIT_TIME_MILLI (defined in the parent class) before rendering the next
      * timeProperty frame.
      */
     private final class PlayService extends Service<Void> {

@@ -12,7 +12,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.collections.ObservableList;
 
-import search.SearchType;
 import wormguides.layers.SearchLayer;
 import wormguides.models.colorrule.Rule;
 import wormguides.models.colorrule.SearchOption;
@@ -26,7 +25,6 @@ import static javafx.scene.paint.Color.web;
 import static search.SearchType.CONNECTOME;
 import static search.SearchType.DESCRIPTION;
 import static search.SearchType.FUNCTIONAL;
-import static search.SearchType.GENE;
 import static search.SearchType.LINEAGE;
 import static search.SearchType.MULTICELLULAR_CELL_BASED;
 import static search.SearchType.NEIGHBOR;
@@ -245,7 +243,7 @@ public class URLLoader {
                         searchLayer.addColorRule(DESCRIPTION, name, web(colorString), options);
                     }
                     if (types.contains("-g")) {
-                        searchLayer.addColorRule(GENE, name, web(colorString), options);
+                        searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
                     }
                     if (types.contains("-m")) {
                         searchLayer.addColorRule(
@@ -262,11 +260,11 @@ public class URLLoader {
                     }
                     // if no type present, default is systematic
                     if (noTypeSpecified) {
-                        SearchType type = LINEAGE;
                         if (isGeneFormat(name)) {
-                            type = GENE;
+                            searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
+                        } else {
+                            searchLayer.addColorRule(LINEAGE, name, web(colorString), options);
                         }
-                        searchLayer.addColorRule(type, name, web(colorString), options);
                     }
 
                 } else {
@@ -280,6 +278,8 @@ public class URLLoader {
                 e.printStackTrace();
             }
         }
+
+        // after all rules have been added, see if any gene rules need to have their
     }
 
     private static void parseViewArgs(
