@@ -13,8 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import wormguides.models.SynapseType;
-
 /**
  * Loader to read NeuronConnect.csv and create a connectome object.
  * @see Connectome

@@ -123,18 +123,6 @@ public class LineageTree {
     }
 
     /**
-     * @param ancestor
-     *         the cell name to check
-     * @param descendant
-     *         the potential descendant
-     *
-     * @return true if 'ancestor' is the ancestor of 'descendant', false otherwise
-     */
-    public static boolean isAncestor(String ancestor, String descendant) {
-        return isDescendant(descendant, ancestor);
-    }
-
-    /**
      * @param name
      *         the name to check
      *
@@ -146,6 +134,18 @@ public class LineageTree {
             return "'" + name + "' Systematic";
         }
         return nameNodeHash.get(name).getValue();
+    }
+
+    /**
+     * @param ancestor
+     *         the cell name to check
+     * @param descendant
+     *         the potential descendant
+     *
+     * @return true if 'ancestor' is the ancestor of 'descendant', false otherwise
+     */
+    public static boolean isAncestor(String ancestor, String descendant) {
+        return isDescendant(descendant, ancestor);
     }
 
     /**
@@ -197,6 +197,11 @@ public class LineageTree {
             }
             // for the p cells, test number after the 'p'
             if (descendant.startsWith(p) && ancestor.startsWith(p)) {
+                System.out.println(descendant
+                        + " is descendant of "
+                        + ancestor
+                        + ": "
+                        + (descendant.compareTo(ancestor) > 0));
                 return descendant.compareTo(ancestor) > 0;
             }
             // try to decipher lineage from names

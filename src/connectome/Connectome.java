@@ -9,8 +9,7 @@ import java.util.List;
 
 import static connectome.ConnectomeLoader.loadConnectome;
 import static partslist.PartsList.getFunctionalNameByLineageName;
-import static partslist.PartsList.getLineageNameByFunctionalName;
-import static partslist.PartsList.isFunctionalName;
+import static partslist.PartsList.getLineageNamesByFunctionalName;
 import static partslist.PartsList.isLineageName;
 
 /**
@@ -20,10 +19,10 @@ import static partslist.PartsList.isLineageName;
 public class Connectome {
 
     // synapse types as strings for search logic
-    private final static String s_presynapticDescription = "S presynaptic";
-    private final static String r_postsynapticDescription = "R postsynaptic";
-    private final static String ej_electricalDescription = "EJ electrical";
-    private final static String nmj_neuromuscularDescrpition = "Nmj neuromuscular";
+    private final String S_PRESYNAPTIC_DESCRIPTION = "S presynaptic";
+    private final String R_POSTSYNAPTIC_DESCRIPTION = "R postsynaptic";
+    private final String EJ_ELECTRICAL_DESCRIPTION = "EJ electrical";
+    private final String NMJ_NEUROMUSCULAR_DESCRPITION = "Nmj neuromuscular";
 
     private List<NeuronalSynapse> synapses;
 
@@ -39,8 +38,8 @@ public class Connectome {
         // iterate through synapses arraylist and add all cell names
         List<String> allConnectomeCellNames = new ArrayList<>();
         for (NeuronalSynapse ns : synapses) {
-            allConnectomeCellNames.add(getLineageNameByFunctionalName(ns.getCell1()));
-            allConnectomeCellNames.add(getLineageNameByFunctionalName(ns.getCell2()));
+            allConnectomeCellNames.addAll(getLineageNamesByFunctionalName(ns.getCell1()));
+            allConnectomeCellNames.addAll(getLineageNamesByFunctionalName(ns.getCell2()));
         }
         return allConnectomeCellNames;
     }
@@ -63,16 +62,16 @@ public class Connectome {
     }
 
     /**
-     * Provides name translation from systematic to functional
+     * Retrieves the functional name of an input cell name, whether it is a lineage or functional name.
      *
      * @param queryCell
-     *         the cell to be checked
+     *         the cell to check
      *
-     * @return the resultant translated or untranslated cell name
+     * @return the functional name of that cell
      */
     public String checkQueryCell(String queryCell) {
         if (isLineageName(queryCell)) {
-            queryCell = getFunctionalNameByLineageName(queryCell).toLowerCase();
+            queryCell = getFunctionalNameByLineageName(queryCell);
         }
         return queryCell;
     }
@@ -81,8 +80,7 @@ public class Connectome {
      * @param queryCell
      *         the cell to query in the synapses
      *
-     * @return boolean corresponding to whether the query is in the synapses
-     * or not
+     * @return true if the query is in the synpases, false otherwise
      */
     public boolean containsCell(String queryCell) {
         queryCell = checkQueryCell(queryCell);
@@ -96,7 +94,7 @@ public class Connectome {
     }
     
     public List<NeuronalSynapse> getSynapseList() {
-    	return this.synapses;
+    	return synapses;
     }
 
     /**
@@ -125,20 +123,13 @@ public class Connectome {
             boolean isNeuromuscularTicked,
             boolean areLineageNamesReturned) {
 
-        // query only works for lineage names
-        if (isFunctionalName(queryCell)) {
-            queryCell = getLineageNameByFunctionalName(queryCell);
-        }
-
-        queryCell = checkQueryCell(queryCell);
-
-        List<String> searchResults = new ArrayList<>();
-
+        final List<String> searchResults = new ArrayList<>();
         // error check
         if (queryCell == null) {
             return searchResults;
         }
 
+        queryCell = checkQueryCell(queryCell);
         // //iterate over synapses
         for (NeuronalSynapse ns : synapses) {
             // check if synapse contains query cell
@@ -151,52 +142,47 @@ public class Connectome {
                 // process type code
                 String synapseTypeDescription = ns.getSynapseType().getDescription();
 
-                // find synapse type code for connection, compare to toggle
-                // ticks
+                // find synapse type code for connection, compare to toggle ticks
                 switch (synapseTypeDescription) {
-                    case s_presynapticDescription:
+                    case S_PRESYNAPTIC_DESCRIPTION:
                         if (isPresynapticTicked) {
                             // don't add duplicates
                             if (!searchResults.contains(cell1)) {
                                 searchResults.add(cell1);
                             }
-
                             if (!searchResults.contains(cell2)) {
                                 searchResults.add(cell2);
                             }
                         }
                         break;
-                    case r_postsynapticDescription:
+                    case R_POSTSYNAPTIC_DESCRIPTION:
                         if (isPostsynapticTicked) {
                             // don't add duplicates
                             if (!searchResults.contains(cell1)) {
                                 searchResults.add(cell1);
                             }
-
                             if (!searchResults.contains(cell2)) {
                                 searchResults.add(cell2);
                             }
                         }
                         break;
-                    case ej_electricalDescription:
+                    case EJ_ELECTRICAL_DESCRIPTION:
                         if (isElectricalTicked) {
                             // don't add duplicates
                             if (!searchResults.contains(cell1)) {
                                 searchResults.add(cell1);
                             }
-
                             if (!searchResults.contains(cell2)) {
                                 searchResults.add(cell2);
                             }
                         }
                         break;
-                    case nmj_neuromuscularDescrpition:
+                    case NMJ_NEUROMUSCULAR_DESCRPITION:
                         if (isNeuromuscularTicked) {
                             // don't add duplicates
                             if (!searchResults.contains(cell1)) {
                                 searchResults.add(cell1);
                             }
-
                             if (!searchResults.contains(cell2)) {
                                 searchResults.add(cell2);
                             }
@@ -206,15 +192,11 @@ public class Connectome {
             }
         }
 
-        // Return lineage names instead of functional names if flag is true
+        // return lineage names instead of functional names if flag is true
         if (areLineageNamesReturned) {
-            List<String> lineageNameResults = new ArrayList<>();
+            final List<String> lineageNameResults = new ArrayList<>();
             for (String result : searchResults) {
-                String lineageName = getLineageNameByFunctionalName(result);
-
-                if (lineageName != null) {
-                    lineageNameResults.add(lineageName);
-                }
+                lineageNameResults.addAll(getLineageNamesByFunctionalName(result));
             }
             return lineageNameResults;
         }

@@ -7,14 +7,14 @@ package wormguides.loaders;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.collections.ObservableList;
 
-import search.SearchType;
 import wormguides.layers.SearchLayer;
-import wormguides.models.Rule;
-import wormguides.models.SearchOption;
+import wormguides.models.colorrule.Rule;
+import wormguides.models.colorrule.SearchOption;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.parseInt;
@@ -25,16 +25,15 @@ import static javafx.scene.paint.Color.web;
 import static search.SearchType.CONNECTOME;
 import static search.SearchType.DESCRIPTION;
 import static search.SearchType.FUNCTIONAL;
-import static search.SearchType.GENE;
 import static search.SearchType.LINEAGE;
 import static search.SearchType.MULTICELLULAR_CELL_BASED;
 import static search.SearchType.NEIGHBOR;
 import static search.SearchUtil.isGeneFormat;
-import static wormguides.models.SearchOption.ANCESTOR;
-import static wormguides.models.SearchOption.CELL_BODY;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
-import static wormguides.models.SearchOption.DESCENDANT;
-import static wormguides.models.SearchOption.MULTICELLULAR_NAME_BASED;
+import static wormguides.models.colorrule.SearchOption.ANCESTOR;
+import static wormguides.models.colorrule.SearchOption.CELL_BODY;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.DESCENDANT;
+import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 
 public class URLLoader {
 
@@ -58,7 +57,8 @@ public class URLLoader {
             final DoubleProperty translateXProperty,
             final DoubleProperty translateYProperty,
             final DoubleProperty zoomProperty,
-            final DoubleProperty othersOpacityProperty) {
+            final DoubleProperty othersOpacityProperty,
+            final BooleanProperty rebuildSubsceneFlag) {
 
         if (!url.contains("testurlscript?/")) {
             return;
@@ -99,6 +99,7 @@ public class URLLoader {
         // process rules
         parseRules(ruleArgs, rulesList, searchLayer);
         // process view arguments
+        final int previousTime = timeProperty.get();
         parseViewArgs(
                 viewArgs,
                 timeProperty,
@@ -109,23 +110,42 @@ public class URLLoader {
                 translateYProperty,
                 zoomProperty,
                 othersOpacityProperty);
+        // no need to rebuild subscene again if we are not at a different timepoint than before
+        // setting the time property triggers a subscene rebuild
+        if (timeProperty.get() == previousTime) {
+            rebuildSubsceneFlag.set(true);
+        }
     }
 
+    /**
+     * Parses a list of rules and adds each to the application's active rules list
+     * @param ruleStrings the string representations of rules
+     * @param rulesList the observable rules list
+     * @param searchLayer the search layer to add color rules
+     */
     private static void parseRules(
-            final List<String> rules,
+            final List<String> ruleStrings,
             final ObservableList<Rule> rulesList,
             final SearchLayer searchLayer) {
-
         rulesList.clear();
-        for (String rule : rules) {
-            final List<String> types = new ArrayList<>();
-            final StringBuilder sb = new StringBuilder(rule);
-            boolean noTypeSpecified = true;
-            boolean isMulticellStructureRule = false;
+
+        List<String> types;
+        StringBuilder sb;
+        boolean noTypeSpecified;
+        boolean isMulticellStructureRule;
+        List<SearchOption> options;
+        String colorString;
+        String name;
+        for (String ruleString : ruleStrings) {
+            types = new ArrayList<>();
+            sb = new StringBuilder(ruleString);
+            noTypeSpecified = true;
+            isMulticellStructureRule = false;
 
             // determine if rule is a cell/cellbody rule, or a multicelllar structure rule
             try {
-                // multicellular structure rules have a null SearchType parse SearchType args
+                // multicellular structure rules have a null SearchType
+                // parse SearchType args
                 // systematic/functional
                 if (sb.indexOf("-s") > -1) {
                     types.add("-s");
@@ -163,53 +183,54 @@ public class URLLoader {
                     }
                 }
 
-                String colorString = "";
+                colorString = "";
                 if (sb.indexOf("+#ff") > -1) {
                     colorString = sb.substring(sb.indexOf("+#ff") + 4);
                 } else if (sb.indexOf("+%23ff") > -1) {
                     colorString = sb.substring(sb.indexOf("+%23ff") + 6);
                 }
 
-                final List<SearchOption> options = new ArrayList<>();
+                options = new ArrayList<>();
                 if (noTypeSpecified && sb.indexOf("-M") > -1) {
+                    isMulticellStructureRule = true;
                     options.add(MULTICELLULAR_NAME_BASED);
                     int i = sb.indexOf("-M");
                     sb.replace(i, i + 2, "");
                 } else {
+                    int i;
                     if (sb.indexOf("%3C") > -1) {
                         options.add(ANCESTOR);
-                        int i = sb.indexOf("%3C");
+                        i = sb.indexOf("%3C");
                         sb.replace(i, i + 3, "");
-                    }
-                    if (sb.indexOf(">") > -1) {
+                    } else if (sb.indexOf(">") > -1) {
                         options.add(ANCESTOR);
-                        int i = sb.indexOf(">");
+                        i = sb.indexOf(">");
                         sb.replace(i, i + 1, "");
                     }
                     if (sb.indexOf("$") > -1) {
                         options.add(CELL_NUCLEUS);
-                        int i = sb.indexOf("$");
+                        i = sb.indexOf("$");
                         sb.replace(i, i + 1, "");
                     }
-                    if (rule.contains("%3E")) {
+                    if (ruleString.contains("%3E")) {
                         options.add(DESCENDANT);
-                        int i = sb.indexOf("%3E");
+                        i = sb.indexOf("%3E");
                         sb.replace(i, i + 3, "");
                     }
                     if (sb.indexOf("<") > -1) {
                         options.add(DESCENDANT);
-                        int i = sb.indexOf("<");
+                        i = sb.indexOf("<");
                         sb.replace(i, i + 1, "");
                     }
                     if (sb.indexOf("@") > -1) {
                         options.add(CELL_BODY);
-                        int i = sb.indexOf("@");
+                        i = sb.indexOf("@");
                         sb.replace(i, i + 1, "");
                     }
                 }
 
                 // extract name from what's left of rule
-                final String name = sb.substring(0, sb.indexOf("+"));
+                name = sb.substring(0, sb.indexOf("+"));
                 // add regular ColorRule
                 if (!isMulticellStructureRule) {
                     if (types.contains("-s")) {
@@ -222,7 +243,7 @@ public class URLLoader {
                         searchLayer.addColorRule(DESCRIPTION, name, web(colorString), options);
                     }
                     if (types.contains("-g")) {
-                        searchLayer.addColorRule(GENE, name, web(colorString), options);
+                        searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
                     }
                     if (types.contains("-m")) {
                         searchLayer.addColorRule(
@@ -237,17 +258,18 @@ public class URLLoader {
                     if (types.contains("-b")) {
                         searchLayer.addColorRule(NEIGHBOR, name, web(colorString), options);
                     }
-
                     // if no type present, default is systematic
                     if (noTypeSpecified) {
-                        SearchType type = LINEAGE;
                         if (isGeneFormat(name)) {
-                            type = GENE;
+                            searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
+                        } else {
+                            searchLayer.addColorRule(LINEAGE, name, web(colorString), options);
                         }
-                        searchLayer.addColorRule(type, name, web(colorString), options);
                     }
 
-                } else { // add multicellular structure rule
+                } else {
+                    // add multicellular structure rule
+                    name = name.replace("=", " ");
                     searchLayer.addMulticellularStructureRule(name, web(colorString));
                 }
 
@@ -256,6 +278,8 @@ public class URLLoader {
                 e.printStackTrace();
             }
         }
+
+        // after all rules have been added, see if any gene rules need to have their
     }
 
     private static void parseViewArgs(
@@ -269,6 +293,10 @@ public class URLLoader {
             final DoubleProperty zoomProperty,
             final DoubleProperty othersOpacityProperty) {
 
+        // time component of the view args is parsed into this variable
+        // time property updated after all other view args are updated since it triggers a subscene rebuild
+        int newTime = timeProperty.get();
+
         // manipulate viewArgs arraylist so that rx ry and rz are grouped together to facilitate loading rotations in
         // x and y
         for (int i = 0; i < viewArgs.size(); i++) {
@@ -281,7 +309,6 @@ public class URLLoader {
         for (String arg : viewArgs) {
             if (arg.startsWith("rX")) {
                 final String[] tokens = arg.split(",");
-
                 try {
                     double rx = parseDouble(tokens[0].split("=")[1]);
                     double ry = parseDouble(tokens[1].split("=")[1]);
@@ -301,13 +328,12 @@ public class URLLoader {
                 switch (tokens[0]) {
                     case "time":
                         try {
-                            requireNonNull(timeProperty).set(parseInt(tokens[1]));
+                            newTime = parseInt(tokens[1]);
                         } catch (NumberFormatException nfe) {
                             System.out.println("error in parsing time variable");
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "tX":
                         try {
                             requireNonNull(translateXProperty).set(parseDouble(tokens[1]));
@@ -316,7 +342,6 @@ public class URLLoader {
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "tY":
                         try {
                             requireNonNull(translateYProperty).set(parseDouble(tokens[1]));
@@ -325,7 +350,6 @@ public class URLLoader {
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "scale":
                         try {
                             requireNonNull(zoomProperty).set(parseDouble(tokens[1]));
@@ -334,7 +358,6 @@ public class URLLoader {
                             nfe.printStackTrace();
                         }
                         break;
-
                     case "dim":
                         try {
                             requireNonNull(othersOpacityProperty).set(parseDouble(tokens[1]));
@@ -346,5 +369,6 @@ public class URLLoader {
                 }
             }
         }
+        timeProperty.set(newTime);
     }
 }

@@ -6,121 +6,120 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 
+import wormguides.MainApp;
+
+import static java.util.Objects.requireNonNull;
+
 /**
- * Utility Class
- * Builds 3D Geometry for Scene Elements to be placed in 3D scene graph
- * 
- * @author bradenkatzman
- * Created: Nov. 2nd, 2015
+ * Builder for scene element mesh geometries to be placed in the 3D subscene
  */
 public class GeometryLoader {
 
-	private static final String vertexLine = "v ";
-	private static final String faceLine = "f ";
-	private static ArrayList<double[]> coords;
-	private static ArrayList<int[]> faces;
-	private static TriangleMesh mesh;
+    private static final String ARCHIVE_PATH = "/wormguides/models/obj_files.zip";
 
-	/**
-	 * Builds a 3D shape from a file
-	 * 
-	 * @param fileName the name of the obj fle for the mesh
-	 * @return the 3D meshview
-	 */
-	public static MeshView loadOBJ(String fileName) {
-		/*
-		 * can't use '..' in getResouce --> instead use complete relative path
-		 * from root directory. has to start with '/'
-		 */
-		// take path up until model
-		// fileName = fileName.substring(fileName.indexOf("/model"));
-		// fileName = ".." + fileName;
+    private static final String VERTEX_LINE = "v";
+    private static final String FACE_LINE = "f";
 
-		// append /
-		URL url = ProductionInfoLoader.class.getResource("/" + fileName);
+    /**
+     * Builds a 3D mesh from a file
+     *
+     * @param fileName
+     *         the name of the obj fle for the mesh
+     *
+     * @return the 3D mesh
+     */
+    public static MeshView loadOBJ(final String fileName) {
+        // extract name of actual obj file from input file name
+        final String objFileName = requireNonNull(fileName).substring(fileName.lastIndexOf("/") + 1);
+        final URL url = MainApp.class.getResource(ARCHIVE_PATH);
 
-        coords = new ArrayList<>();
-        faces = new ArrayList<>();
-        mesh = new TriangleMesh();
+        MeshView meshView = null;
 
-		try {
-			if (url != null) {
-				InputStream stream = url.openStream();
-				InputStreamReader streamReader = new InputStreamReader(stream);
-				BufferedReader reader = new BufferedReader(streamReader);
+        if (url != null) {
+            final List<double[]> coords = new ArrayList<>();
+            final List<int[]> faces = new ArrayList<>();
 
-				String line;
+            try {
+                final ZipFile zipFile = new ZipFile(url.getFile());
+                final ZipEntry entry = zipFile.getEntry(objFileName);
+                if (entry != null) {
+                    final InputStream inputStream = zipFile.getInputStream(entry);
+                    final InputStreamReader streamReader = new InputStreamReader(inputStream);
+                    final BufferedReader reader = new BufferedReader(streamReader);
 
-				while ((line = reader.readLine()) != null) {
-					// make sure valid line
-					if (line.length() <= 1)
-						break;
-
-					// process each line in the obj file
-					String lineType = line.substring(0, 2);
-                    switch (lineType) {
-                        case vertexLine: {
-                            // process vertex lines
-                            String v = line.substring(2);
-                            double[] vertices = new double[3];
-                            int counter = 0;
-
-                            StringTokenizer tokenizer = new StringTokenizer(v);
-                            while (tokenizer.hasMoreTokens()) {
-                                vertices[counter++] = Double.parseDouble(tokenizer.nextToken());
+                    String line;
+                    StringTokenizer tokenizer;
+                    String v;
+                    String f;
+                    String lineType;
+                    while ((line = reader.readLine()) != null) {
+                        // process each line in the obj file
+                        lineType = line.substring(0, 1);
+                        switch (lineType) {
+                            case VERTEX_LINE: {
+                                // process vertex lines
+                                v = line.substring(2);
+                                double[] vertices = new double[3];
+                                int counter = 0;
+                                tokenizer = new StringTokenizer(v);
+                                while (tokenizer.hasMoreTokens()) {
+                                    vertices[counter++] = Double.parseDouble(tokenizer.nextToken());
+                                }
+                                // make sure good line
+                                if (counter == 3) {
+                                    coords.add(vertices);
+                                }
+                                break;
                             }
-                            // make sure good line
-                            if (counter == 3) {
-                                coords.add(vertices);
+                            case FACE_LINE: {
+                                // process face lines
+                                f = line.substring(2);
+                                int[] faceCoords = new int[3];
+                                int counter = 0;
+
+                                tokenizer = new StringTokenizer(f);
+                                while (tokenizer.hasMoreTokens()) {
+                                    faceCoords[counter++] = Integer.parseInt(tokenizer.nextToken());
+                                }
+                                if (counter == 3) {
+                                    faces.add(faceCoords);
+                                }
+                                break;
                             }
-                            break;
+                            default:
+                                break;
                         }
-                        case faceLine: {
-                            // process face lines
-                            String f = line.substring(2);
-                            int[] faceCoords = new int[3];
-                            int counter = 0;
-
-                            StringTokenizer tokenizer = new StringTokenizer(f);
-                            while (tokenizer.hasMoreTokens()) {
-                                faceCoords[counter++] = Integer.parseInt(tokenizer.nextToken());
-                            }
-
-                            if (counter == 3) {
-                                faces.add(faceCoords);
-                            }
-                            break;
-                        }
-                        default:
-                            break;
                     }
+                    meshView = new MeshView(createMesh(coords, faces));
                 }
-                createMesh();
-				reader.close();
-			}
-		} catch (IOException e1) {
-			System.out.println("The file " + fileName + " wasn't found on the system.");
-			return null;
-		}
 
-		return new MeshView(mesh);
-	}
+            } catch (IOException ioe) {
+                System.out.println("Could not open " + ARCHIVE_PATH + " for reading");
+                ioe.printStackTrace();
+            }
+        }
+        return meshView;
+    }
 
-	/**
-	 * Builds the mesh from the loaded vertex coordinates and faces in the file
-	 */
-	private static void createMesh() {
-		int counter = 0;
-		int texCounter = 0;
-		float stripeSeparation = 1500;
+    /**
+     * Builds the mesh from the loaded vertex coordinates and faces in the file
+     */
+    private static TriangleMesh createMesh(final List<double[]> coords, final List<int[]> faces) {
+        final TriangleMesh mesh = new TriangleMesh();
+        int counter = 0;
+        int texCounter = 0;
+        final float stripeSeparation = 1500;
 
-		float[] coordinates = new float[(coords.size() * 3)];
-		float[] texCoords = new float[(coords.size() * 2)];
+        float[] coordinates = new float[(coords.size() * 3)];
+        float[] texCoords = new float[(coords.size() * 2)];
         for (double[] coord : coords) {
             for (int j = 0; j < 3; j++) {
                 coordinates[counter++] = (float) coord[j];
@@ -129,46 +128,24 @@ public class GeometryLoader {
             texCoords[texCounter++] = ((float) coord[0] / stripeSeparation) * 200;
         }
 
-		mesh.getPoints().addAll(coordinates);
-		mesh.getTexCoords().addAll(texCoords);
+        mesh.getPoints().addAll(coordinates);
+        mesh.getTexCoords().addAll(texCoords);
 
-		counter = 0;
+        counter = 0;
 
-		int[] faceCoords = new int[(faces.size() * 3) * 2];
+        int[] faceCoords = new int[(faces.size() * 3) * 2];
         for (int[] face : faces) {
             for (int j = 0; j < 3; j++) {
                 faceCoords[counter++] = face[j] - 1;
-                faceCoords[counter++] = face[j] - 1; // for our texture
-                // coordinate -
+                faceCoords[counter++] = face[j] - 1;
+                // for our texture coordinate -
                 // face syntax:
                 // p0, t0, p1,
                 // t1, p2, t2
             }
         }
 
-		mesh.getFaces().addAll(faceCoords);
-	}
-
-	/*--------------------DEBUGGING------------------------*/
-	public static void printCoords() {
-		System.out.println("-----------VERTICES------------- " + coords.size());
-        for (double[] coord : coords) {
-            System.out.print("v ");
-            for (int j = 0; j < 3; j++) {
-                System.out.print(coord[j] + ", ");
-            }
-            System.out.println("");
-        }
-    }
-
-	public static void printFaces() {
-		System.out.println("-----------FACES-------------");
-        for (int[] face : faces) {
-            System.out.print("f ");
-            for (int j = 0; j < 3; j++) {
-                System.out.print(face[j] + ", ");
-            }
-            System.out.println("");
-        }
+        mesh.getFaces().addAll(faceCoords);
+        return mesh;
     }
 }

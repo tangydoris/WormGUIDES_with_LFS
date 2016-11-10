@@ -5,14 +5,17 @@
 package search;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import acetree.LineageData;
 import connectome.Connectome;
 import partslist.PartsList;
-import wormguides.models.CasesLists;
-import wormguides.models.SceneElement;
-import wormguides.models.SceneElementsList;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.cellcase.NonTerminalCellCase;
+import wormguides.models.subscenegeometry.SceneElement;
+import wormguides.models.subscenegeometry.SceneElementsList;
 
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
@@ -21,9 +24,9 @@ import static java.util.Objects.requireNonNull;
 
 import static partslist.PartsList.getDescriptions;
 import static partslist.PartsList.getFunctionalNames;
-import static partslist.PartsList.getLineageNameByFunctionalName;
 import static partslist.PartsList.getLineageNameByIndex;
 import static partslist.PartsList.getLineageNames;
+import static partslist.PartsList.getLineageNamesByFunctionalName;
 import static search.WormBaseQuery.issueWormBaseQuery;
 import static wormguides.models.LineageTree.isAncestor;
 import static wormguides.models.LineageTree.isDescendant;
@@ -49,7 +52,7 @@ public class SearchUtil {
 
     private static Connectome connectome;
 
-	private static CasesLists casesList;
+    private static CasesLists casesList;
 
     private static LineageData lineageData;
 
@@ -75,15 +78,11 @@ public class SearchUtil {
             final SceneElementsList sceneElementsList,
             final Connectome connectome,
             final CasesLists casesList) {
-
         SearchUtil.lineageData = requireNonNull(lineageData);
         SearchUtil.activeLineageNames = lineageData.getAllCellNames();
-
         SearchUtil.sceneElementsList = requireNonNull(sceneElementsList);
         SearchUtil.connectome = requireNonNull(connectome);
         SearchUtil.casesList = requireNonNull(casesList);
-
-        //WormBaseQuery.initTestDB();
     }
 
     /**
@@ -108,21 +107,15 @@ public class SearchUtil {
     /**
      * @param searched
      *         searched term, the prefix functional names
-     *         
-     * ***Note: this method must use 'startsWith()' so as to find similar cells in different geospatial location e.g. 'siav' -> 'siavl', 'siavr'        
+     *         <p>
+     *         ***Note: this method must use 'startsWith()' so as to find similar cells in different geospatial
+     *         location
+     *         e.g. 'siav' -> 'siavl', 'siavr'
      *
      * @return lineage names whose functional name has the searched prefix, in alphabetical order
      */
-    public static List<String> getCellsWithFunctionalName(String searched) {
-        final List<String> cells = new ArrayList<>();
-        searched = searched.toLowerCase();
-        for (String name : functionalNames) {
-            if (name.toLowerCase().startsWith(searched)) {
-                cells.add(getLineageNameByFunctionalName(name));
-            }
-        }
-        sort(cells);
-        return cells;
+    public static List<String> getCellsWithFunctionalName(final String searched) {
+        return getLineageNamesByFunctionalName(searched);
     }
 
     /**
@@ -132,29 +125,26 @@ public class SearchUtil {
      * @return lineage names whose function description contains all parts of the search string, in alphabetical order
      */
     public static List<String> getCellsWithFunctionalDescription(final String searched) {
-        final List<String> cells = new ArrayList<>();
-
+        final Set<String> cellsSet = new HashSet<>();
         final String[] keywords = searched.split(" ");
 
+        String description;
+        boolean isValidDescription;
+        String cell;
         for (int i = 0; i < functionalDescriptions.size(); i++) {
-            final String description = functionalDescriptions.get(i).toLowerCase();
-            boolean isValidDescription = true;
-
+            description = functionalDescriptions.get(i).toLowerCase();
+            isValidDescription = true;
             for (String keyword : keywords) {
                 if (!description.contains(keyword)) {
                     isValidDescription = false;
                     break;
                 }
             }
-
             if (isValidDescription) {
-                final String cell = getLineageNameByIndex(i);
-                if (!cells.contains(cell)) {
-                    cells.add(cell);
-                }
+                cellsSet.add(getLineageNameByIndex(i));
             }
         }
-
+        final List<String> cells = new ArrayList<>(cellsSet);
         sort(cells);
         return cells;
     }
@@ -166,18 +156,16 @@ public class SearchUtil {
      * @return lineage names of cells that belong to the searched structure, in alphabetical order
      */
     public static List<String> getCellsInMulticellularStructure(final String searched) {
-        final List<String> cells = new ArrayList<>();
+        final Set<String> cellsSet = new HashSet<>();
         if (sceneElementsList != null) {
             sceneElementsList.getElementsList()
                     .stream()
                     .filter(SceneElement::isMulticellular)
                     .filter(se -> isMulticellularStructureSearched(se.getSceneName(), searched))
-                    .forEach(se -> se.getAllCellNames()
-                            .stream()
-                            .filter(cellName -> !cells.contains(cellName))
-                            .forEach(cells::add)
+                    .forEach(se -> se.getAllCells().forEach(cellsSet::add)
                     );
         }
+        final List<String> cells = new ArrayList<>(cellsSet);
         sort(cells);
         return cells;
     }
@@ -210,14 +198,12 @@ public class SearchUtil {
         if (structureName == null || searched == null) {
             return false;
         }
-
         // search in structure scene names
         structureName = structureName.trim()
                 .toLowerCase();
         final String[] terms = searched.trim()
                 .toLowerCase()
                 .split(" ");
-
         boolean appliesToName = true;
         for (String term : terms) {
             if (!structureName.contains(term)) {
@@ -225,24 +211,20 @@ public class SearchUtil {
                 break;
             }
         }
-
         // search in comments if name does not already apply
         if (!appliesToName) {
             boolean appliesToComment = true;
             final String comment = sceneElementsList.getNameToCommentsMap()
                     .get(structureName)
                     .toLowerCase();
-
             for (String term : terms) {
                 if (!comment.contains(term)) {
                     appliesToComment = false;
                     break;
                 }
             }
-
             // search does not apply to scene name, return whether it applies to the comment
             return appliesToComment;
-
         } else {
             // search applies to scene name
             return true;
@@ -269,18 +251,14 @@ public class SearchUtil {
             final boolean isPostsynapticQueried,
             final boolean isNeuromuscularQueried,
             final boolean isElectricalQueried) {
-
-        final List<String> cells = new ArrayList<>();
-        if (connectome != null) {
-            cells.addAll(connectome.queryConnectivity(
-                    searched,
-                    isPresynapticQueried,
-                    isPostsynapticQueried,
-                    isNeuromuscularQueried,
-                    isElectricalQueried,
-                    true));
-            cells.remove(searched);
-        }
+        final List<String> cells = new ArrayList<>(connectome.queryConnectivity(
+                searched,
+                isPresynapticQueried,
+                isPostsynapticQueried,
+                isNeuromuscularQueried,
+                isElectricalQueried,
+                true));
+        cells.remove(searched);
         sort(cells);
         return cells;
     }
@@ -315,10 +293,10 @@ public class SearchUtil {
      * @return lineage names of all neighboring cells
      */
     public static List<String> getNeighboringCells(final String cellName) {
-        List<String> cells = new ArrayList<>();
+        final Set<String> cellsSet = new HashSet<>();
 
         if (cellName == null || !lineageData.isCellName(cellName)) {
-            return cells;
+            return new ArrayList<>();
         }
 
         // get time range for cell
@@ -371,14 +349,14 @@ public class SearchUtil {
                     // compute distance from each cell to query cell
                     if (distance(x, positions[n][0], y, positions[n][1], z, positions[n][2]) <= maxSphericalRadius) {
                         // only add new entries
-                        if (!cells.contains(names[n]) && !names[n].equalsIgnoreCase(cellName)) {
-                            cells.add(names[n]);
+                        if (!names[n].equalsIgnoreCase(cellName)) {
+                            cellsSet.add(names[n]);
                         }
                     }
                 }
             }
         }
-
+        final List<String> cells = new ArrayList<>(cellsSet);
         sort(cells);
         return cells;
     }
@@ -404,7 +382,7 @@ public class SearchUtil {
     }
 
     /**
-     * Retrieves the terminal descendants for a cell. This is called by {@link wormguides.models.NonTerminalCellCase}.
+     * Retrieves the terminal descendants for a cell. This is called by {@link NonTerminalCellCase}.
      *
      * @param queryCell
      *         the cell queried
@@ -413,14 +391,14 @@ public class SearchUtil {
      * @return list of terminal descendants for the query cell
      */
     public static List<String> getDescendantsList(final String queryCell) {
-        final List<String> descendants = new ArrayList<>();
+        final Set<String> descendantsSet = new HashSet<>();
         if (queryCell != null) {
             getLineageNames()
                     .stream()
-                    .filter(name -> !descendants.contains(name) && isDescendant(name, queryCell))
-                    .forEachOrdered(descendants::add);
+                    .filter(name -> isDescendant(name, queryCell))
+                    .forEachOrdered(descendantsSet::add);
         }
-        return descendants;
+        return new ArrayList<>(descendantsSet);
     }
 
     /**
@@ -432,10 +410,10 @@ public class SearchUtil {
      * @return list of descendants of all the cells, with no repeats
      */
     public static List<String> getDescendantsList(final List<String> cells, final String searchedText) {
-        final List<String> descendants = new ArrayList<>();
+        final Set<String> descendantsSet = new HashSet<>();
 
         if (cells == null) {
-            return descendants;
+            return new ArrayList<>();
         }
 
         // special cases for 'ab' and 'p0' because the input list of cells would be empty
@@ -450,10 +428,10 @@ public class SearchUtil {
 
         for (String cell : cells) {
             activeLineageNames.stream()
-                    .filter(name -> !descendants.contains(name) && isDescendant(name, cell))
-                    .forEach(descendants::add);
+                    .filter(name -> isDescendant(name, cell))
+                    .forEach(descendantsSet::add);
         }
-        return descendants;
+        return new ArrayList<>(descendantsSet);
     }
 
     /**
@@ -465,12 +443,10 @@ public class SearchUtil {
      * @return list of ancestors of all the cells, with no repeats
      */
     public static List<String> getAncestorsList(final List<String> cells, final String searchedText) {
-        final List<String> ancestors = new ArrayList<>();
-
+        final Set<String> ancestorsSet = new HashSet<>();
         if (cells == null) {
-            return ancestors;
+            return new ArrayList<>();
         }
-
         // special cases for 'ab' and 'p0' because the input list of cells would be empty
         final String searched = searchedText.trim().toLowerCase();
         if (cells.isEmpty()) {
@@ -480,14 +456,12 @@ public class SearchUtil {
                 cells.add("p0");
             }
         }
-
         for (String cell : cells) {
             activeLineageNames.stream()
-                    .filter(name -> !ancestors.contains(name) && isAncestor(name, cell))
-                    .forEach(ancestors::add);
+                    .filter(name -> isAncestor(name, cell))
+                    .forEach(ancestorsSet::add);
         }
-
-        return ancestors;
+        return new ArrayList<>(ancestorsSet);
     }
 
     /**
@@ -499,11 +473,9 @@ public class SearchUtil {
     public static int getFirstOccurenceOf(final String cellName) {
         if (lineageData != null && lineageData.isCellName(cellName)) {
             return lineageData.getFirstOccurrenceOf(cellName);
-
         } else if (sceneElementsList != null && sceneElementsList.isSceneElementName(cellName)) {
             return sceneElementsList.getFirstOccurrenceOf(cellName);
         }
-
         return -1;
     }
 
@@ -516,11 +488,9 @@ public class SearchUtil {
     public static int getLastOccurenceOf(final String cellName) {
         if (lineageData != null && lineageData.isCellName(cellName)) {
             return lineageData.getLastOccurrenceOf(cellName);
-
         } else if (sceneElementsList != null && sceneElementsList.isSceneElementName(cellName)) {
             return sceneElementsList.getLastOccurrenceOf(cellName);
         }
-
         return -1;
     }
 

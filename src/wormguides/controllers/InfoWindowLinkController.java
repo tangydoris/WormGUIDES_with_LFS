@@ -7,18 +7,20 @@ package wormguides.controllers;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javafx.beans.property.StringProperty;
 import javafx.stage.Stage;
 
-import partslist.PartsList;
 import wormguides.layers.SearchLayer;
 
 import static java.awt.Desktop.getDesktop;
 import static java.awt.Desktop.isDesktopSupported;
 import static java.util.Objects.requireNonNull;
 
-import static wormguides.models.AnatomyTerm.AMPHID_SENSILLA;
+import static partslist.PartsList.getLineageNamesByFunctionalName;
+import static wormguides.models.anatomy.AnatomyTerm.AMPHID_SENSILLA;
 
 /**
  * Callback class for HTML pages HTML pages generated for Info Window contain links which when clicked fire a JS
@@ -70,35 +72,31 @@ public class InfoWindowLinkController {
      * @param cellName
      *         the name of the clicked wiring partner
      */
-    public void handleWiringPartnerClick(String cellName) {
-        // translate to lineage name
-        String cell = cellName;
-
-        String lineageName = PartsList.getLineageNameByFunctionalName(cellName);
-        if (lineageName != null) {
-            cell = lineageName;
+    public void handleWiringPartnerClick(final String cellName) {
+        // translate to lineage name(s) if possible
+        final List<String> cells = new ArrayList<>(getLineageNamesByFunctionalName(cellName));
+        if (cells.isEmpty()) {
+            cells.add(cellName);
         }
 
-        // handle the case of " " to "_" discrepancy --> change all spaces to
-        // underscore
-        if (cell.contains(" ")) {
-            for (int i = 0; i < cell.length(); i++) {
-                if (cell.charAt(i) == ' ') {
-                    cell = cell.substring(0, i) + "_" + cell.substring(i + 1);
+        for (String cell : cells) {
+            // handle the case of " " to "_" discrepancy --> change all spaces to
+            // underscore
+            if (cell.contains(" ")) {
+                for (int i = 0; i < cell.length(); i++) {
+                    if (cell.charAt(i) == ' ') {
+                        cell = cell.substring(0, i) + "_" + cell.substring(i + 1);
+                    }
                 }
             }
-        }
-
-        // view in 3D
-        viewInCellTheater(cell);
-
-        if (!searchLayer.hasCellCase(cell)) {
-            // generate a new cell case
-            searchLayer.addToInfoWindow(cell);
-        } else {
-            /*
-             * TODO focus the tab if it already exists
-			 */
+            // view in 3D
+            viewInCellTheater(cell);
+            if (!searchLayer.hasCellCase(cell)) {
+                // generate a new cell case
+                searchLayer.addToInfoWindow(cell);
+            } else {
+                // TODO focus the tab if it already exists
+            }
         }
     }
 

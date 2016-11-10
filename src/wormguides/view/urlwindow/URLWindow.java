@@ -20,7 +20,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 import wormguides.loaders.ImageLoader;
-import wormguides.models.Rule;
+import wormguides.models.colorrule.Rule;
 import wormguides.util.AppFont;
 
 import static java.awt.Toolkit.getDefaultToolkit;

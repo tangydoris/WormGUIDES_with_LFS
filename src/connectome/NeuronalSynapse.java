@@ -4,8 +4,6 @@
 
 package connectome;
 
-import wormguides.models.SynapseType;
-
 /**
  * The Synapse between two cells
  */
