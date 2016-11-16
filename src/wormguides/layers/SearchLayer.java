@@ -54,6 +54,7 @@ import static search.SearchType.FUNCTIONAL;
 import static search.SearchType.GENE;
 import static search.SearchType.LINEAGE;
 import static search.SearchType.MULTICELLULAR_CELL_BASED;
+import static search.SearchType.STRUCTURE_SCENE_NAME_BASED;
 import static search.SearchUtil.getAncestorsList;
 import static search.SearchUtil.getCellsInMulticellularStructure;
 import static search.SearchUtil.getCellsWithConnectivity;
@@ -70,7 +71,6 @@ import static wormguides.models.colorrule.SearchOption.ANCESTOR;
 import static wormguides.models.colorrule.SearchOption.CELL_BODY;
 import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
 import static wormguides.models.colorrule.SearchOption.DESCENDANT;
-import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 
 public class SearchLayer {
 
@@ -436,8 +436,8 @@ public class SearchLayer {
      *
      * @return the multicellular structure rule added
      */
-    public Rule addMulticellularStructureRule(final String searched, final Color color) {
-        return addColorRule(null, searched, color, MULTICELLULAR_NAME_BASED);
+    public Rule addStructureRuleBySceneName(final String searched, final Color color) {
+        return addColorRule(STRUCTURE_SCENE_NAME_BASED, searched, color, new ArrayList<>());
     }
 
     /**

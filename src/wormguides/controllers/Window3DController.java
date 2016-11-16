@@ -75,7 +75,6 @@ import wormguides.models.camerageometry.Quaternion;
 import wormguides.models.camerageometry.Xform;
 import wormguides.models.cellcase.CasesLists;
 import wormguides.models.colorrule.Rule;
-import wormguides.models.colorrule.SearchOption;
 import wormguides.models.subscenegeometry.SceneElement;
 import wormguides.models.subscenegeometry.SceneElementsList;
 import wormguides.resources.ProductionInfo;
@@ -124,7 +123,6 @@ import static search.SearchUtil.getFirstOccurenceOf;
 import static search.SearchUtil.getLastOccurenceOf;
 import static wormguides.models.colorrule.SearchOption.CELL_BODY;
 import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
-import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 import static wormguides.stories.Note.Display.OVERLAY;
 import static wormguides.util.AppFont.getBillboardFont;
 import static wormguides.util.AppFont.getSpriteAndOverlayFont;
@@ -914,7 +912,7 @@ public class Window3DController {
 
         hideContextPopups();
 
-        Node node = event.getPickResult().getIntersectedNode();
+        final Node node = event.getPickResult().getIntersectedNode();
 
         // Nucleus
         if (node instanceof Sphere) {
@@ -931,8 +929,6 @@ public class Window3DController {
                         name,
                         event.getScreenX(),
                         event.getScreenY(),
-                        CELL_NUCLEUS,
-                        false,
                         false);
             } else if (event.getButton() == PRIMARY) {
                 if (allLabels.contains(name)) {
@@ -941,8 +937,7 @@ public class Window3DController {
                     if (!allLabels.contains(name)) {
                         allLabels.add(name);
                         currentLabels.add(name);
-
-                        Shape3D entity = getEntityWithName(name);
+                        final Shape3D entity = getEntityWithName(name);
                         insertLabelFor(name, entity);
                         highlightActiveCellLabel(entity);
                     }
@@ -951,7 +946,7 @@ public class Window3DController {
 
         }
 
-        // Cell body/structure
+        // Structure
         else if (node instanceof MeshView) {
             boolean found = false;
             MeshView curr;
@@ -963,23 +958,13 @@ public class Window3DController {
                     selectedNameProperty.set(name);
                     found = true;
 
-                    if (event.getButton() == SECONDARY || (event.getButton() == PRIMARY
-                            && (event.isMetaDown() || event.isControlDown()))) {
-                        if (sceneElementsList.isMulticellStructureName(name)) {
+                    if (event.getButton() == SECONDARY
+                            || (event.getButton() == PRIMARY && (event.isMetaDown() || event.isControlDown()))) {
+                        if (sceneElementsList.isStructureSceneName(name)) {
                             showContextMenu(
                                     name,
                                     event.getScreenX(),
                                     event.getScreenY(),
-                                    MULTICELLULAR_NAME_BASED,
-                                    true,
-                                    false);
-                        } else {
-                            showContextMenu(
-                                    name,
-                                    event.getScreenX(),
-                                    event.getScreenY(),
-                                    CELL_BODY,
-                                    false,
                                     true);
                         }
                     } else if (event.getButton() == PRIMARY) {
@@ -988,13 +973,11 @@ public class Window3DController {
                         } else {
                             allLabels.add(name);
                             currentLabels.add(name);
-
-                            Shape3D entity = getEntityWithName(name);
+                            final Shape3D entity = getEntityWithName(name);
                             insertLabelFor(name, entity);
                             highlightActiveCellLabel(entity);
                         }
                     }
-
                     break;
                 }
             }
@@ -1006,6 +989,7 @@ public class Window3DController {
                         .filter(note -> currentNoteMeshMap.get(note).equals(node))
                         .forEachOrdered(note -> selectedNameProperty.set(note.getTagName()));
             }
+
         } else {
             selectedIndex.set(-1);
             selectedNameProperty.set("");
@@ -1068,12 +1052,10 @@ public class Window3DController {
             final String name,
             final double sceneX,
             final double sceneY,
-            final SearchOption option,
-            final boolean isMulticellstructure,
-            final boolean isCellBody) {
+            final boolean isStructure) {
 
         contextMenuController.setName(name);
-        contextMenuController.setColorButtonText(isMulticellstructure, isCellBody);
+        contextMenuController.setColorButtonText(isStructure);
 
         String funcName = getFunctionalNameByLineageName(name);
         if (funcName == null) {
@@ -1084,10 +1066,10 @@ public class Window3DController {
 
         contextMenuController.setColorButtonListener(event -> {
             contextMenuStage.hide();
-            if (isMulticellstructure) {
-                searchLayer.addMulticellularStructureRule(name, WHITE).showEditStage(parentStage);
+            if (isStructure) {
+                searchLayer.addStructureRuleBySceneName(name, WHITE).showEditStage(parentStage);
             } else {
-                searchLayer.addColorRule(LINEAGE, name, WHITE, option).showEditStage(parentStage);
+                searchLayer.addColorRule(LINEAGE, name, WHITE, CELL_NUCLEUS, CELL_BODY).showEditStage(parentStage);
             }
         });
 
@@ -1478,7 +1460,7 @@ public class Window3DController {
                         }
 
                     } else {
-                        // in regular view mode
+                        // in regular viewing mode
                         final List<String> allNames = sceneElement.getAllCells();
                         // note meshes default to white
                         if (allNames.isEmpty()) {
@@ -1488,8 +1470,7 @@ public class Window3DController {
                             // if mesh has cells name(s), then process rules (cell or shape) that apply to it
                             final List<Color> colors = new ArrayList<>();
                             for (Rule rule : rulesList) {
-                                if (rule.isMulticellularStructureRule()
-                                        && rule.appliesToMulticellularStructure(sceneElement.getSceneName())) {
+                                if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
                                     colors.add(rule.getColor());
                                 } else {
                                     colors.addAll(allNames
@@ -2011,7 +1992,7 @@ public class Window3DController {
             }
         }
         for (Rule rule : rulesList) {
-            if (rule.isMulticellularStructureRule() && rule.appliesToMulticellularStructure(sceneName)) {
+            if (rule.isStructureRuleBySceneName() && rule.appliesToStructureWithSceneName(sceneName)) {
                 return true;
             } else if (rule.appliesToCellBody(name)) {
                 return true;

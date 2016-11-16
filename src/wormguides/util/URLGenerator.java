@@ -154,7 +154,7 @@ public class URLGenerator {
 
             // rule from cell search
             // rule from multicellular structure search
-            if (rule.isMulticellularStructureRule()) {
+            if (rule.isStructureRuleBySceneName()) {
                 // specify a multicellular structure rule that is not
                 // cell-based, but scene name-based
                 builder.append("-M");
@@ -220,7 +220,7 @@ public class URLGenerator {
         String color;
         boolean isMulticellularStructureRule;
         for (Rule rule : rules) {
-            isMulticellularStructureRule = rule.isMulticellularStructureRule();
+            isMulticellularStructureRule = rule.isStructureRuleBySceneName();
 
             // get the rule's searched text
             ruleText = rule.getSearchedText();

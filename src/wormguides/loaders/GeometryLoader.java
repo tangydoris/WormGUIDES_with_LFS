@@ -24,21 +24,56 @@ import static java.util.Objects.requireNonNull;
 public class GeometryLoader {
 
     private static final String ARCHIVE_PATH = "/wormguides/models/obj_files.zip";
-
     private static final String VERTEX_LINE = "v";
     private static final String FACE_LINE = "f";
 
     /**
+     * Checks to see if a spefified resource exists in the shape files archive. A resource exists if there
+     *
+     * @param resourceName
+     *         the resource to check, without the .obj extension
+     *
+     * @return true if the resource exists, false otherwise
+     */
+    public static boolean doesResourceExist(
+            final String resourceName,
+            final int startTime,
+            final int endTime) {
+        final String objFileName = requireNonNull(resourceName).substring(resourceName.lastIndexOf("/") + 1);
+        final URL url = MainApp.class.getResource(ARCHIVE_PATH);
+
+        try (final ZipFile zipFile = new ZipFile(url.getFile())) {
+            ZipEntry entry = zipFile.getEntry(objFileName + ".obj");
+            // check for obj file with no time specified
+            if (entry != null) {
+                return true;
+            } else {
+                // check for obj file with a time
+                for (int time = startTime; time <= endTime; time++) {
+                    entry = zipFile.getEntry(objFileName + "_t" + time + ".obj");
+                    if (entry != null) {
+                        return true;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Could not open " + ARCHIVE_PATH + " for reading");
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
      * Builds a 3D mesh from a file
      *
-     * @param fileName
+     * @param resourceName
      *         the name of the obj fle for the mesh
      *
      * @return the 3D mesh
      */
-    public static MeshView loadOBJ(final String fileName) {
+    public static MeshView loadOBJ(final String resourceName) {
         // extract name of actual obj file from input file name
-        final String objFileName = requireNonNull(fileName).substring(fileName.lastIndexOf("/") + 1);
+        final String objFileName = requireNonNull(resourceName).substring(resourceName.lastIndexOf("/") + 1);
         final URL url = MainApp.class.getResource(ARCHIVE_PATH);
 
         MeshView meshView = null;
@@ -47,8 +82,8 @@ public class GeometryLoader {
             final List<double[]> coords = new ArrayList<>();
             final List<int[]> faces = new ArrayList<>();
 
-            try {
-                final ZipFile zipFile = new ZipFile(url.getFile());
+            try (final ZipFile zipFile = new ZipFile(url.getFile())) {
+
                 final ZipEntry entry = zipFile.getEntry(objFileName);
                 if (entry != null) {
                     final InputStream inputStream = zipFile.getInputStream(entry);
@@ -100,10 +135,9 @@ public class GeometryLoader {
                     }
                     meshView = new MeshView(createMesh(coords, faces));
                 }
-
-            } catch (IOException ioe) {
+            } catch (IOException e) {
                 System.out.println("Could not open " + ARCHIVE_PATH + " for reading");
-                ioe.printStackTrace();
+                e.printStackTrace();
             }
         }
         return meshView;

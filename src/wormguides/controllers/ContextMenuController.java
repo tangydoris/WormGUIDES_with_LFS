@@ -346,15 +346,11 @@ public class ContextMenuController extends AnchorPane implements Initializable {
         color.setOnMouseClicked(handler);
     }
 
-    public void setColorButtonText(
-            final boolean isMulticellularStructure,
-            final boolean isCellBody) {
-        if (isMulticellularStructure) {
-            color.setText("Color this Structure");
-        } else if (isCellBody) {
-            color.setText("Color this Body");
+    public void setColorButtonText(final boolean isStructure) {
+        if (isStructure) {
+            color.setText("Color Structure");
         } else {
-            color.setText("Color this Cell");
+            color.setText("Color Cell");
         }
     }
 

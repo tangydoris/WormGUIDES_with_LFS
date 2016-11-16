@@ -236,7 +236,7 @@ public class Note {
         }
     }
 
-    public void addSceneElementsToList(SceneElementsList list) {
+    public void addSceneElementsToList(final SceneElementsList list) {
         if (list != null && elements != null) {
             elements.forEach(list::addSceneElement);
         }

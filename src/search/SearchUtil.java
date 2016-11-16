@@ -473,7 +473,7 @@ public class SearchUtil {
     public static int getFirstOccurenceOf(final String cellName) {
         if (lineageData != null && lineageData.isCellName(cellName)) {
             return lineageData.getFirstOccurrenceOf(cellName);
-        } else if (sceneElementsList != null && sceneElementsList.isSceneElementName(cellName)) {
+        } else if (sceneElementsList != null && sceneElementsList.isStructureSceneName(cellName)) {
             return sceneElementsList.getFirstOccurrenceOf(cellName);
         }
         return -1;
@@ -488,7 +488,7 @@ public class SearchUtil {
     public static int getLastOccurenceOf(final String cellName) {
         if (lineageData != null && lineageData.isCellName(cellName)) {
             return lineageData.getLastOccurrenceOf(cellName);
-        } else if (sceneElementsList != null && sceneElementsList.isSceneElementName(cellName)) {
+        } else if (sceneElementsList != null && sceneElementsList.isStructureSceneName(cellName)) {
             return sceneElementsList.getLastOccurrenceOf(cellName);
         }
         return -1;

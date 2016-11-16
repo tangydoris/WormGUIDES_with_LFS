@@ -11,12 +11,20 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import wormguides.MainApp;
+
 import static java.lang.Integer.MIN_VALUE;
+import static java.lang.Integer.parseInt;
+import static java.util.Collections.sort;
+
+import static wormguides.loaders.GeometryLoader.doesResourceExist;
 
 /**
  * Record of {@link SceneElement}s over the life of the embryo
@@ -39,9 +47,16 @@ public class SceneElementsList {
         buildListFromConfig();
     }
 
-    public boolean isSceneElementName(final String name) {
+    /**
+     * @param name
+     *         the name to check
+     *
+     * @return true if the name is the scene name of a structure, false otherwise
+     */
+    public boolean isStructureSceneName(String name) {
+        name = name.trim().toLowerCase();
         for (SceneElement se : elementsList) {
-            if (se.getSceneName().equalsIgnoreCase(name)) {
+            if (se.getSceneName().toLowerCase().equals(name)) {
                 return true;
             }
         }
@@ -49,10 +64,10 @@ public class SceneElementsList {
     }
 
     private void buildListFromConfig() {
-        final URL url = SceneElementsList.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
+        final URL url = MainApp.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
         if (url != null) {
             try (InputStream stream = url.openStream()) {
-                processStreamString(stream);
+                processStream(stream);
                 processCells();
             } catch (IOException e) {
                 System.out.println("The config file '" + CELL_CONFIG_FILE_NAME + "' wasn't found on the system.");
@@ -60,9 +75,9 @@ public class SceneElementsList {
         }
     }
 
-    private void processStreamString(final InputStream stream) {
-        try (InputStreamReader streamReader = new InputStreamReader(stream);
-             BufferedReader reader = new BufferedReader(streamReader)) {
+    private void processStream(final InputStream stream) {
+        try (final InputStreamReader streamReader = new InputStreamReader(stream);
+             final BufferedReader reader = new BufferedReader(streamReader)) {
 
             // skip csv file heading
             reader.readLine();
@@ -70,25 +85,37 @@ public class SceneElementsList {
             String line;
             // process each line
             while ((line = reader.readLine()) != null) {
-                String[] splits = line.split(",", 8);
+                final String[] splits = line.split(",", 8);
 
                 // BUIILD SCENE ELEMENT
                 // vector of cell names
-                ArrayList<String> cellNames = new ArrayList<>();
-                StringTokenizer st = new StringTokenizer(splits[1]);
+                final List<String> cellNames = new ArrayList<>();
+                final StringTokenizer st = new StringTokenizer(splits[1]);
                 while (st.hasMoreTokens()) {
                     cellNames.add(st.nextToken());
                 }
 
                 try {
-                    SceneElement se = new SceneElement(// objEntries,
-                            splits[0], cellNames, splits[2], splits[3], splits[4], Integer.parseInt(splits[5]),
-                            Integer.parseInt(splits[6]), splits[7]);
-
-                    // add scene element to list
-                    elementsList.add(se);
-                    addComments(se);
-
+                    final String resourceLocation = splits[4];
+                    final int startTime = parseInt(splits[5]);
+                    final int endTime = parseInt(splits[6]);
+                    // check to see if resource exists in the shape files archive
+                    // only create a scene element if it does
+                    if (doesResourceExist(resourceLocation, startTime, endTime)) {
+                        final SceneElement element = new SceneElement(
+                                splits[0],
+                                cellNames,
+                                splits[2],
+                                splits[3],
+                                resourceLocation,
+                                startTime,
+                                endTime,
+                                splits[7]);
+                        addSceneElement(element);
+                        if (!element.getComments().isEmpty()) {
+                            nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
+                        }
+                    }
                 } catch (NumberFormatException e) {
                     System.out.println("error in reading scene element time for line " + line);
                 }
@@ -167,22 +194,21 @@ public class SceneElementsList {
         return time + 1;
     }
 
-    private void addComments(SceneElement element) {
-        if (element != null && element.isMulticellular()) {
-            nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
-        }
-    }
-
+    /**
+     * Adds a scene element to the data store.
+     *
+     * @param element
+     *         the scene element to add
+     */
     public void addSceneElement(final SceneElement element) {
         if (element != null) {
             elementsList.add(element);
         }
-        addComments(element);
     }
 
     public String[] getSceneElementNamesAtTime(final int time) {
         // Add lineage names of all structures at time
-        List<String> list = new ArrayList<>();
+        final List<String> list = new ArrayList<>();
         elementsList.stream().filter(se -> se.existsAtTime(time)).forEachOrdered(se -> {
             if (se.isMulticellular()) {
                 list.add(se.getSceneName());
@@ -200,21 +226,23 @@ public class SceneElementsList {
         return sceneElements;
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("Scene elements list:\n");
-        for (SceneElement se : elementsList) {
-            sb.append(se.getSceneName()).append("\n");
-        }
-        return sb.toString();
+    public List<String> getAllSceneNames() {
+        final Set<String> namesSet = new HashSet<>();
+        elementsList.stream()
+                .forEachOrdered(se -> namesSet.add(se.getSceneName()));
+        final List<String> namesSorted = new ArrayList<>(namesSet);
+        sort(namesSorted);
+        return namesSorted;
     }
 
     public List<String> getAllMulticellSceneNames() {
-        final List<String> names = new ArrayList<>();
+        final Set<String> namesSet = new HashSet<>();
         elementsList.stream()
-                .filter(se -> se.isMulticellular() && !names.contains(se.getSceneName()))
-                .forEachOrdered(se -> names.add(se.getSceneName()));
-        return names;
+                .filter(SceneElement::isMulticellular)
+                .forEachOrdered(se -> namesSet.add(se.getSceneName()));
+        final List<String> namesSorted = new ArrayList<>(namesSet);
+        sort(namesSorted);
+        return namesSorted;
     }
 
     public List<SceneElement> getMulticellSceneElements() {
@@ -253,5 +281,14 @@ public class SceneElementsList {
 
     public List<SceneElement> getElementsList() {
         return elementsList;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Scene elements list:\n");
+        for (SceneElement se : elementsList) {
+            sb.append(se.getSceneName()).append("\n");
+        }
+        return sb.toString();
     }
 }

@@ -18,12 +18,6 @@ public enum SearchOption {
     /** Search for cell bodies that contain the cells in the search results list */
     CELL_BODY("cell body"),
 
-    /**
-     * Used to distinguish multicellular structures from cell bodies when scene element meshes query the rules to see
-     * if the rule applies to it.
-     */
-    MULTICELLULAR_NAME_BASED("multicellular structure"),
-
     /** SearchLayer for ancestors of cells in the search results list */
     ANCESTOR("its ancestors"),
 

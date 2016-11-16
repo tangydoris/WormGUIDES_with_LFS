@@ -96,7 +96,9 @@ public class StructuresLayer {
         });
 
         requireNonNull(sceneElementsList);
-        allStructuresList.addAll(sceneElementsList.getAllMulticellSceneNames());
+        // TODO change to all structure names
+//        allStructuresList.addAll(sceneElementsList.getAllMulticellSceneNames());
+        allStructuresList.addAll(sceneElementsList.getAllSceneNames());
         nameToCellsMap = sceneElementsList.getNameToCellsMap();
         nameToCommentsMap = sceneElementsList.getNameToCommentsMap();
 
@@ -162,15 +164,19 @@ public class StructuresLayer {
         if (name == null || color == null) {
             return;
         }
-
         // Check for validity of name
         name = name.trim();
         if (allStructuresList.contains(name)) {
-            searchLayer.addMulticellularStructureRule(name, color);
+            searchLayer.addStructureRuleBySceneName(name, color);
         }
     }
 
-    // Only searches names for now
+    /**
+     * Searches for scene elements (single-celled and multicellular) whose scene name or comment is specified by the
+     * searched term. The search results list is updated with those structure scene names.
+     *
+     * @param searched the searched term
+     */
     public void searchAndUpdateResults(String searched) {
         if (searched == null || searched.isEmpty()) {
             return;
@@ -187,7 +193,7 @@ public class StructuresLayer {
 
                 boolean appliesToName = true;
                 boolean appliesToCell = false;
-                boolean appliesToComment = true;
+                boolean appliesToComment = false;
 
                 for (String term : terms) {
                     if (!nameLower.contains(term)) {
@@ -223,12 +229,15 @@ public class StructuresLayer {
                 }
 
                 // search in comments if name does not already apply
-                String comment = nameToCommentsMap.get(nameLower);
-                String commentLower = comment.toLowerCase();
-                for (String term : terms) {
-                    if (!commentLower.contains(term)) {
-                        appliesToComment = false;
-                        break;
+                if (nameToCommentsMap.containsKey(nameLower)) {
+                    final String commentLowerCase = nameToCommentsMap.get(nameLower).toLowerCase();
+                    for (String term : terms) {
+                        if (commentLowerCase.contains(term)) {
+                            appliesToComment = true;
+                        } else {
+                            appliesToComment = false;
+                            break;
+                        }
                     }
                 }
 
