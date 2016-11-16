@@ -9,7 +9,8 @@ Lineage 	->	"-s"
 Functional 	->	"-n"
 Description	->	"-d"
 Gene		->	"-g"
-Multicell	->	"-m"	* added later
+Multicellular Structure Cells	->	"-m"	* added later
+Structure by Scene Name	        ->	"-M"	* added later
 Connectome	->	"-c"	* added later
 Neighbor	->	"-b"	* added later
 
@@ -29,14 +30,12 @@ Cell Nucleus			->	"$"
 Descendant				->	"<" (%3E in UTF8)
 Ancestor				->	">" (%3C in UTF8)
 Cell Body				->	"@"	* added later
-Multicellular Structure	->	"-M"	* added later
 
 Ex.
 Cell, Descendant		->	"<$" 	(%3E$)
 Cell, Ancestor			->	"$>" 	($%3C)
 Descendant, Ancestor	->	"<>"	(%3E%3C)
 All						->	"<$>" 	(%3E$%3C)
-All * added later		->	"-M<$@>	* added later
 
 Note:	The "$" is not used in the Android version. There is ambiguity in whether or not the cell
 		modifier is implicitly selected.

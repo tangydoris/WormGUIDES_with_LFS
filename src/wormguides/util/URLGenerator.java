@@ -51,15 +51,15 @@ public class URLGenerator {
 
         return "http://scene.wormguides.org/wormguides/testurlscript?"
                 + generateParameterString(
-                        rules,
-                        time,
-                        rX,
-                        rY,
-                        rZ,
-                        tX,
-                        tY,
-                        scale,
-                        dim)
+                rules,
+                time,
+                rX,
+                rY,
+                rZ,
+                tX,
+                tY,
+                scale,
+                dim)
                 + "/Android/";
     }
 
@@ -76,15 +76,15 @@ public class URLGenerator {
 
         return "http://scene.wormguides.org/wormguides/testurlscript?"
                 + generateParameterString(
-                        rules,
-                        time,
-                        rX,
-                        rY,
-                        rZ,
-                        tX,
-                        tY,
-                        scale,
-                        dim)
+                rules,
+                time,
+                rX,
+                rY,
+                rZ,
+                tX,
+                tY,
+                scale,
+                dim)
                 + "/browser/";
     }
 
@@ -101,15 +101,15 @@ public class URLGenerator {
 
         return "http://scene.wormguides.org/wormguides/testurlscript?"
                 + generateInternalParameterString(
-                        rules,
-                        time,
-                        rX,
-                        rY,
-                        rZ,
-                        tX,
-                        tY,
-                        scale,
-                        dim)
+                rules,
+                time,
+                rX,
+                rY,
+                rZ,
+                tX,
+                tY,
+                scale,
+                dim)
                 + "/browser/";
     }
 
@@ -218,72 +218,70 @@ public class URLGenerator {
 
         String ruleText;
         String color;
-        boolean isMulticellularStructureRule;
-        for (Rule rule : rules) {
-            isMulticellularStructureRule = rule.isStructureRuleBySceneName();
 
+        for (Rule rule : rules) {
             // get the rule's searched text
             ruleText = rule.getSearchedText();
-            if (!isMulticellularStructureRule) {
+            if (!rule.isStructureRuleBySceneName()) {
                 if (ruleText.contains("'")) {
                     ruleText = ruleText.substring(0, ruleText.lastIndexOf("'"));
                     ruleText = ruleText.substring(ruleText.indexOf("'") + 1, ruleText.length());
                 }
             } else {
-                ruleText = ruleText.replace(" ", "=");
+                ruleText = ruleText.substring(1, ruleText.lastIndexOf("'")).replace(" ", "=");
             }
             builder.append("/").append(ruleText);
 
-            if (!isMulticellularStructureRule) {
-                // search types
-                if (rule.getSearchType() == null) {
-                    System.out.println(rule.toStringFull());
-                }
-                switch (rule.getSearchType()) {
-                    case LINEAGE:
-                        builder.append("-s");
-                        break;
-                    case DESCRIPTION:
-                        builder.append("-d");
-                        break;
-                    case FUNCTIONAL:
-                        builder.append("-n");
-                        break;
-                    case GENE:
-                        builder.append("-g");
-                        break;
-                    case CONNECTOME:
-                        builder.append("-c");
-                        break;
-                    case NEIGHBOR:
-                        builder.append("-b");
-                        break;
-                    case MULTICELLULAR_CELL_BASED:
-                        builder.append("-m");
-                        break;
-                    default:
-                        break;
-                }
-                // ancestry modifiers
-                // descendant (<)
-                if (rule.isDescendantSelected()) {
-                    builder.append("<");
-                }
-                // cell ($)
-                if (rule.isCellSelected()) {
-                    builder.append("$");
-                }
-                // ancestor (>)
-                if (rule.isAncestorSelected()) {
-                    builder.append(">");
-                }
-                // cell body
-                if (rule.isCellBodySelected()) {
-                    builder.append("@");
-                }
-            } else {
-                builder.append("-M");
+            // search types
+            if (rule.getSearchType() == null) {
+                System.out.println(rule.toStringFull());
             }
+            switch (rule.getSearchType()) {
+                case LINEAGE:
+                    builder.append("-s");
+                    break;
+                case DESCRIPTION:
+                    builder.append("-d");
+                    break;
+                case FUNCTIONAL:
+                    builder.append("-n");
+                    break;
+                case GENE:
+                    builder.append("-g");
+                    break;
+                case CONNECTOME:
+                    builder.append("-c");
+                    break;
+                case NEIGHBOR:
+                    builder.append("-b");
+                    break;
+                case MULTICELLULAR_CELL_BASED:
+                    builder.append("-m");
+                    break;
+                case STRUCTURE_SCENE_NAME_BASED:
+                    builder.append("-M");
+                    break;
+                default:
+                    break;
+            }
+            // ancestry modifiers
+            // descendant (<)
+            if (rule.isDescendantSelected()) {
+                builder.append("<");
+            }
+            // cell ($)
+            if (rule.isCellSelected()) {
+                builder.append("$");
+            }
+            // ancestor (>)
+            if (rule.isAncestorSelected()) {
+                builder.append(">");
+            }
+            // cell body
+            if (rule.isCellBodySelected()) {
+                builder.append("@");
+            }
+
             // color
             color = rule.getColor().toString();
             color = color.substring(color.indexOf("x") + 1, color.length() - 2);

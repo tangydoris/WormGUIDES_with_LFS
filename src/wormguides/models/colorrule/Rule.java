@@ -18,7 +18,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -32,7 +31,6 @@ import wormguides.MainApp;
 import wormguides.controllers.RuleEditorController;
 import wormguides.layers.SearchLayer;
 import wormguides.loaders.ImageLoader;
-import wormguides.util.AppFont;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
@@ -40,8 +38,11 @@ import static java.util.stream.Collectors.toList;
 
 import static javafx.application.Platform.runLater;
 import static javafx.scene.control.ContentDisplay.GRAPHIC_ONLY;
+import static javafx.scene.control.OverrunStyle.ELLIPSIS;
 import static javafx.scene.layout.HBox.setHgrow;
 import static javafx.scene.layout.Priority.ALWAYS;
+import static javafx.scene.layout.Priority.SOMETIMES;
+import static javafx.scene.paint.Color.LIGHTGREY;
 import static javafx.stage.Modality.NONE;
 
 import static search.SearchType.STRUCTURE_SCENE_NAME_BASED;
@@ -51,6 +52,7 @@ import static wormguides.models.colorrule.SearchOption.ANCESTOR;
 import static wormguides.models.colorrule.SearchOption.CELL_BODY;
 import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
 import static wormguides.models.colorrule.SearchOption.DESCENDANT;
+import static wormguides.util.AppFont.getFont;
 
 /**
  * This class is the color rule that determines the coloring/striping of cell, cell bodies, and multicellular
@@ -90,6 +92,10 @@ public class Rule {
     private Color color;
 
     private List<String> cells;
+    /**
+     * True if the list of cells has been set, false otherwise. The cells list of a structure rule based on a scene
+     * name (with the search type {@link SearchType#STRUCTURE_SCENE_NAME_BASED}) is never set.
+     */
     private boolean cellsSet;
 
     private RuleEditorController editController;
@@ -168,31 +174,26 @@ public class Rule {
         submitHandler = new SubmitHandler();
 
         cells = new ArrayList<>();
-        // if the cells list from SearchLayer is set for this rule, cellsSet is true
-        // is false before the list is set
         cellsSet = false;
 
         hbox.setSpacing(3);
         hbox.setPadding(new Insets(3));
         hbox.setPrefWidth(275);
-        hbox.setMinWidth(275);
-        hbox.setMaxWidth(275);
         hbox.setMinWidth(hbox.getPrefWidth());
-        hbox.setMaxWidth(hbox.getPrefWidth());
 
-        label.setFont(AppFont.getFont());
+        label.setFont(getFont());
         label.setPrefHeight(UI_SIDE_LENGTH);
         label.setMaxHeight(UI_SIDE_LENGTH);
         label.setMinHeight(UI_SIDE_LENGTH);
-        label.textOverrunProperty().set(OverrunStyle.ELLIPSIS);
-        label.setFont(AppFont.getFont());
+        setHgrow(label, ALWAYS);
+        label.textOverrunProperty().set(ELLIPSIS);
 
         final Region r = new Region();
-        setHgrow(r, ALWAYS);
+        setHgrow(r, SOMETIMES);
 
         colorRectangle.setHeight(UI_SIDE_LENGTH);
         colorRectangle.setWidth(UI_SIDE_LENGTH);
-        colorRectangle.setStroke(Color.LIGHTGREY);
+        colorRectangle.setStroke(LIGHTGREY);
         setColorButton(color);
 
         editBtn.setPrefSize(UI_SIDE_LENGTH, UI_SIDE_LENGTH);
@@ -228,7 +229,7 @@ public class Rule {
         deleteBtn.setGraphic(ImageLoader.getCloseIcon());
 
         toolTip.setText(toStringFull());
-        toolTip.setFont(AppFont.getFont());
+        toolTip.setFont(getFont());
         label.setTooltip(toolTip);
 
         hbox.getChildren().addAll(label, r, colorRectangle, editBtn, visibleBtn, deleteBtn);

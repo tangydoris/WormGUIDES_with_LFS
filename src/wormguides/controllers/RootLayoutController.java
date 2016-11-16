@@ -84,7 +84,7 @@ import wormguides.view.popups.StorySavePane;
 import wormguides.view.popups.SulstonTreePane;
 import wormguides.view.urlwindow.URLLoadWarningDialog;
 import wormguides.view.urlwindow.URLLoadWindow;
-import wormguides.view.urlwindow.URLWindow;
+import wormguides.view.urlwindow.URLShareWindow;
 
 import static java.util.Collections.sort;
 
@@ -253,7 +253,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private Popup exitSavePopup;
 
     // URL generation/loading
-    private URLWindow urlWindow;
+    private URLShareWindow urlShareWindow;
     private URLLoadWindow urlLoadWindow;
     private URLLoadWarningDialog warning;
 
@@ -388,7 +388,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     public void generateURLAction() {
         if (urlDisplayStage == null) {
             urlDisplayStage = new Stage();
-            urlWindow = new URLWindow(
+            urlShareWindow = new URLShareWindow(
                     rulesList,
                     timeProperty,
                     rotateXAngleProperty,
@@ -398,13 +398,13 @@ public class RootLayoutController extends BorderPane implements Initializable {
                     translateYProperty,
                     zoomProperty,
                     othersOpacityProperty);
-            urlWindow.getCloseButton().setOnAction(event -> urlDisplayStage.hide());
-            urlDisplayStage.setScene(new Scene(urlWindow));
+            urlShareWindow.getCloseButton().setOnAction(event -> urlDisplayStage.hide());
+            urlDisplayStage.setScene(new Scene(urlShareWindow));
             urlDisplayStage.setTitle("Share Scene");
             urlDisplayStage.setResizable(false);
             urlDisplayStage.initModality(NONE);
         }
-        urlWindow.resetURLs();
+        urlShareWindow.resetURLs();
         urlDisplayStage.show();
     }
 

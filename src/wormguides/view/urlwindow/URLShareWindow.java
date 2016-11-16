@@ -11,27 +11,27 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 import wormguides.loaders.ImageLoader;
 import wormguides.models.colorrule.Rule;
-import wormguides.util.AppFont;
 
 import static java.awt.Toolkit.getDefaultToolkit;
 import static java.util.Objects.requireNonNull;
 
 import static javafx.geometry.Pos.CENTER;
+import static javafx.scene.control.ContentDisplay.GRAPHIC_ONLY;
 import static javafx.scene.layout.HBox.setHgrow;
+import static javafx.scene.layout.Priority.ALWAYS;
 
+import static wormguides.util.AppFont.getFont;
 import static wormguides.util.URLGenerator.generateAndroid;
 
-public class URLWindow extends AnchorPane {
+public class URLShareWindow extends AnchorPane {
 
     private final TextField urlField;
     private final Button resetBtn;
@@ -50,7 +50,7 @@ public class URLWindow extends AnchorPane {
 
     private String urlString;
 
-    public URLWindow(
+    public URLShareWindow(
             final ObservableList<Rule> rulesList,
             final IntegerProperty timeProperty,
             final DoubleProperty rotateXAngleProperty,
@@ -79,29 +79,28 @@ public class URLWindow extends AnchorPane {
 
         final VBox vBox = new VBox();
         vBox.setSpacing(10);
-        AnchorPane.setTopAnchor(vBox, 10.0);
-        AnchorPane.setLeftAnchor(vBox, 10.0);
-        AnchorPane.setRightAnchor(vBox, 10.0);
-        AnchorPane.setBottomAnchor(vBox, 10.0);
+        setTopAnchor(vBox, 10.0);
+        setLeftAnchor(vBox, 10.0);
+        setRightAnchor(vBox, 10.0);
+        setBottomAnchor(vBox, 10.0);
         getChildren().add(vBox);
 
         final HBox androidHBox = new HBox(10);
         urlField = new TextField();
-        urlField.setFont(AppFont.getFont());
+        urlField.setFont(getFont());
         urlField.setPrefHeight(28);
         urlField.setEditable(false);
         urlField.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
-        setHgrow(urlField, Priority.ALWAYS);
+        setHgrow(urlField, ALWAYS);
         Button androidCopyBtn = new Button();
         androidCopyBtn.setPrefSize(28, 28);
         androidCopyBtn.setMinSize(28, 28);
-        androidCopyBtn.setMaxSize(28, 28);
         androidCopyBtn.setTooltip(tooltip);
         androidCopyBtn.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
-        androidCopyBtn.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        androidCopyBtn.setContentDisplay(GRAPHIC_ONLY);
         androidCopyBtn.setGraphic(ImageLoader.getCopyIcon());
-        androidCopyBtn.setOnAction(arg0 -> {
-            StringSelection ss = new StringSelection(urlField.getText());
+        androidCopyBtn.setOnAction(event -> {
+            final StringSelection ss = new StringSelection(urlField.getText());
             cb.setContents(ss, null);
         });
         androidHBox.getChildren().addAll(urlField, androidCopyBtn);
@@ -109,13 +108,13 @@ public class URLWindow extends AnchorPane {
         resetBtn = new Button("Generate");
         resetBtn.setPrefWidth(100);
         resetBtn.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
-        resetBtn.setFont(AppFont.getFont());
-        resetBtn.setOnAction(arg0 -> resetURLs());
+        resetBtn.setFont(getFont());
+        resetBtn.setOnAction(event -> resetURLs());
 
         closeBtn = new Button("Close");
         closeBtn.setPrefWidth(100);
         closeBtn.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
-        closeBtn.setFont(AppFont.getFont());
+        closeBtn.setFont(getFont());
 
         final HBox hBox = new HBox();
         hBox.setSpacing(20);
