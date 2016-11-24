@@ -6,6 +6,14 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.controllers;
 
 import java.io.File;
@@ -1137,7 +1145,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private void initializeWithLineageData() {
         initLineageTree(lineageData.getAllCellNames());
 
-        sceneElementsList = new SceneElementsList();
+        sceneElementsList = new SceneElementsList(lineageData);
         connectome = new Connectome();
 
         initSearchLayer();

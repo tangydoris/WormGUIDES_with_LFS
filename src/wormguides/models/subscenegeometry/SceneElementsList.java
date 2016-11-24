@@ -14,6 +14,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.subscenegeometry;
 
 import java.io.BufferedReader;
@@ -32,6 +36,7 @@ import java.util.stream.Collectors;
 
 import javafx.scene.control.TreeItem;
 
+import acetree.LineageData;
 import wormguides.MainApp;
 
 import static java.lang.Integer.MIN_VALUE;
@@ -62,19 +67,19 @@ public class SceneElementsList {
     private final Map<String, List<String>> nameCellsMap;
     private final Map<String, String> nameCommentsMap;
 
-    public SceneElementsList() {
+    public SceneElementsList(final LineageData lineageData) {
         elementsList = new ArrayList<>();
         root = new TreeItem<>(new StructureTreeNode(true, "root"));
         nameCellsMap = new HashMap<>();
         nameCommentsMap = new HashMap<>();
-        buildListFromConfig();
+        buildListFromConfig(lineageData);
     }
 
-    private void buildListFromConfig() {
+    private void buildListFromConfig(final LineageData lineageData) {
         final URL url = MainApp.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
         if (url != null) {
             try (final InputStream stream = url.openStream()) {
-                processStream(stream);
+                processStream(stream, lineageData);
                 processCells();
             } catch (IOException e) {
                 System.out.println("Config file '" + CELL_CONFIG_FILE_NAME + "' was not found.");
@@ -98,26 +103,30 @@ public class SceneElementsList {
         return false;
     }
 
-    private void processStream(final InputStream stream) {
+    private void processStream(final InputStream stream, final LineageData lineageData) {
         try (final InputStreamReader streamReader = new InputStreamReader(stream);
              final BufferedReader reader = new BufferedReader(streamReader)) {
             // skip csv file heading
             reader.readLine();
 
             String line;
+            String name;
+            String resourceLocation;
+            int startTime;
+            int endTime;
             TreeItem<StructureTreeNode> currentCategoryNode = root;
             // process each line
             while ((line = reader.readLine()) != null) {
                 final String[] tokens = line.split(",", NUM_OF_CSV_FIELDS);
+                name = tokens[DESCRIPTION_INDEX];
                 if (isCategoryLine(tokens)) {
-                    final String category = tokens[DESCRIPTION_INDEX];
-                    if (category.equalsIgnoreCase(currentCategoryNode.getValue().getNodeText())) {
+                    if (name.equalsIgnoreCase(currentCategoryNode.getValue().getNodeText())) {
                         // the ending of a category
                         currentCategoryNode = currentCategoryNode.getParent();
                     } else {
                         final TreeItem<StructureTreeNode> newTreeNode = new TreeItem<>(new StructureTreeNode(
                                 true,
-                                category));
+                                name));
                         currentCategoryNode.getChildren().add(newTreeNode);
                         currentCategoryNode = newTreeNode;
                     }
@@ -131,14 +140,25 @@ public class SceneElementsList {
                     }
 
                     try {
-                        final String resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
-                        final int startTime = parseInt(tokens[START_TIME_INDEX]);
-                        final int endTime = parseInt(tokens[END_TIME_INDEX]);
+                        resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
+                        startTime = parseInt(tokens[START_TIME_INDEX]);
+                        endTime = parseInt(tokens[END_TIME_INDEX]);
+
+                        // TODO don't just use start and end times specified in the config file
+                        String lineageName = name;
+                        if (name.contains("(")) {
+                            lineageName = name.substring(0, name.indexOf("(")).trim();
+                        }
+                        if (lineageData.isCellName(lineageName)) {
+                            startTime = lineageData.getFirstOccurrenceOf(lineageName);
+                            endTime = lineageData.getLastOccurrenceOf(lineageName);
+                        }
+
                         // this is extremely slow with the experimental shapes:
                         // check to see if resource exists in the shape files archive
                         // only create a scene element if it does
                         final SceneElement element = new SceneElement(
-                                tokens[DESCRIPTION_INDEX],
+                                name,
                                 cellNames,
                                 tokens[MARKER_INDEX],
                                 tokens[IMAGING_SOURCE_INDEX],

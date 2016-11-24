@@ -2,6 +2,14 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package acetree.tablelineagedata;
 
 import java.util.ArrayList;
@@ -9,6 +17,7 @@ import java.util.List;
 
 import acetree.LineageData;
 
+import static java.lang.Integer.MIN_VALUE;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -135,7 +144,6 @@ public class TableLineageData implements LineageData {
     @Override
     public int getFirstOccurrenceOf(final String name) {
         final String trimmed = name.trim();
-
         for (int i = 0; i < timeFrames.size(); i++) {
             for (String cell : timeFrames.get(i).getNames()) {
                 if (cell.equalsIgnoreCase(trimmed)) {
@@ -143,7 +151,7 @@ public class TableLineageData implements LineageData {
                 }
             }
         }
-        return Integer.MIN_VALUE;
+        return MIN_VALUE;
     }
 
     /** {@inheritDoc} */
@@ -151,7 +159,6 @@ public class TableLineageData implements LineageData {
     public int getLastOccurrenceOf(final String name) {
         final String trimmed = name.trim();
         int time = getFirstOccurrenceOf(trimmed);
-
         if (time >= 1) {
             outer:
             for (int i = time; i < timeFrames.size(); i++) {

@@ -2,6 +2,14 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.subscenegeometry;
 
 import java.util.ArrayList;
@@ -80,6 +88,7 @@ public class SceneElement {
         this.imagingSource = requireNonNull(imagingSource);
         this.resourceLocation = requireNonNull(resourceLocation);
         completeResourceFlag = isResourceComplete();
+
         this.startTime = startTime;
         this.endTime = endTime;
         this.comments = requireNonNull(comments);
@@ -101,6 +110,8 @@ public class SceneElement {
             }
         }
         cellNames.addAll(editedNames);
+
+
     }
 
     // Geometry used for notes in wormguides.stories

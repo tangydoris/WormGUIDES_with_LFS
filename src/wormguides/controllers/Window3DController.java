@@ -6,11 +6,20 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1241,10 +1250,18 @@ public class Window3DController {
                 currentSceneElements.clear();
             }
 
+            // TODO remove debug
+            final Instant now = Instant.now();
             sceneElementsAtCurrentTime = sceneElementsList.getSceneElementsAtTime(requestedTime);
+//            System.out.println("# elements at time " + requestedTime + ": " + sceneElementsAtCurrentTime.size());
             for (SceneElement se : sceneElementsAtCurrentTime) {
+                // TODO remove debug
+//                System.out.println(se.getSceneName());
                 // add meshes from each scene element
+//                final Instant mesh1 = Instant.now();
                 MeshView mesh = se.buildGeometry(requestedTime - 1);
+//                final Instant mesh2 = Instant.now();
+//                System.out.println("time to build mesh: " + (mesh2.toEpochMilli() - mesh1.toEpochMilli()) + "ms");
 
                 if (mesh != null) {
                     mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
@@ -1258,6 +1275,11 @@ public class Window3DController {
                     currentSceneElements.add(se);
                 }
             }
+            // TODO remove debug
+            final Instant now2 = Instant.now();
+//            System.out.println("time to get scene element data: "
+//                    + (now2.toEpochMilli() - now.toEpochMilli())
+//                    + "ms");
             // End scene element mesh loading/building
         }
 
