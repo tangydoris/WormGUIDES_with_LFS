@@ -6,6 +6,14 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.subscenegeometry;
 
 import java.io.BufferedReader;
@@ -30,8 +38,6 @@ import static java.lang.Integer.MIN_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.util.Collections.sort;
 
-import static wormguides.loaders.GeometryLoader.doesResourceExist;
-
 /**
  * Record of {@link SceneElement}s over the life of the embryo
  */
@@ -51,14 +57,14 @@ public class SceneElementsList {
     private final int COMMENTS_INDEX = 7;
 
     private final List<SceneElement> elementsList;
-    private final SceneElementsTree structureTree;
+    private final TreeItem<StructureTreeNode> root;
 
     private final Map<String, List<String>> nameCellsMap;
     private final Map<String, String> nameCommentsMap;
 
     public SceneElementsList() {
         elementsList = new ArrayList<>();
-        structureTree = new SceneElementsTree();
+        root = new TreeItem<>(new StructureTreeNode(true, "root"));
         nameCellsMap = new HashMap<>();
         nameCommentsMap = new HashMap<>();
         buildListFromConfig();
@@ -99,17 +105,21 @@ public class SceneElementsList {
             reader.readLine();
 
             String line;
-            String currentCategory = "root";
+            TreeItem<StructureTreeNode> currentCategoryNode = root;
             // process each line
             while ((line = reader.readLine()) != null) {
                 final String[] tokens = line.split(",", NUM_OF_CSV_FIELDS);
                 if (isCategoryLine(tokens)) {
                     final String category = tokens[DESCRIPTION_INDEX];
-                    if (category.equalsIgnoreCase(currentCategory)) {
-                        currentCategory = structureTree.getParentCategory(category);
+                    if (category.equalsIgnoreCase(currentCategoryNode.getValue().getNodeText())) {
+                        // the ending of a category
+                        currentCategoryNode = currentCategoryNode.getParent();
                     } else {
-                        structureTree.addCategory(currentCategory, category);
-                        currentCategory = category;
+                        final TreeItem<StructureTreeNode> newTreeNode = new TreeItem<>(new StructureTreeNode(
+                                true,
+                                category));
+                        currentCategoryNode.getChildren().add(newTreeNode);
+                        currentCategoryNode = newTreeNode;
                     }
                 } else {
                     // build scene element
@@ -124,25 +134,25 @@ public class SceneElementsList {
                         final String resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
                         final int startTime = parseInt(tokens[START_TIME_INDEX]);
                         final int endTime = parseInt(tokens[END_TIME_INDEX]);
+                        // this is extremely slow with the experimental shapes:
                         // check to see if resource exists in the shape files archive
                         // only create a scene element if it does
-                        if (doesResourceExist(resourceLocation, startTime, endTime)) {
-                            final SceneElement element = new SceneElement(
-                                    tokens[DESCRIPTION_INDEX],
-                                    cellNames,
-                                    tokens[MARKER_INDEX],
-                                    tokens[IMAGING_SOURCE_INDEX],
-                                    resourceLocation,
-                                    startTime,
-                                    endTime,
-                                    tokens[COMMENTS_INDEX]);
-                            addSceneElement(element);
-                            if (!element.getComments().isEmpty()) {
-                                nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
-                            }
-                            // insert structure into tree
-                            structureTree.addStructure(element.getSceneName(), currentCategory);
+                        final SceneElement element = new SceneElement(
+                                tokens[DESCRIPTION_INDEX],
+                                cellNames,
+                                tokens[MARKER_INDEX],
+                                tokens[IMAGING_SOURCE_INDEX],
+                                resourceLocation,
+                                startTime,
+                                endTime,
+                                tokens[COMMENTS_INDEX]);
+                        addSceneElement(element);
+                        if (!element.getComments().isEmpty()) {
+                            nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
                         }
+                        // insert structure into tree
+                        currentCategoryNode.getChildren()
+                                .add(new TreeItem<>(new StructureTreeNode(false, element.getSceneName())));
                     } catch (NumberFormatException e) {
                         System.out.println("error in reading scene element time for line " + line);
                     }
@@ -320,14 +330,7 @@ public class SceneElementsList {
      * @return the root of the hierarchy structures tree
      */
     public TreeItem<StructureTreeNode> getTreeRoot() {
-        return structureTree.getRoot();
-    }
-
-    /**
-     * Deselects all nodes in the structure tree
-     */
-    public void deselectAllStructureTreeNodes() {
-        structureTree.deselectAllNodes();
+        return root;
     }
 
     @Override
