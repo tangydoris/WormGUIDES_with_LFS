@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.cellcase;
 
 import java.net.URL;
@@ -250,10 +254,7 @@ public abstract class CellCase {
 
             //add matches and documents to top of references list
             references.add("<em>Textpresso</em>: " + matchesStr + " matches found in " + documentsStr + " documents");
-            /*
-             * TODO
-			 * add textpresso url to page with open in browser
-			 */
+            // TODO add textpresso url to page with open in browser
 
             //parse the document for "Title: "
             int lastIDX = 0;

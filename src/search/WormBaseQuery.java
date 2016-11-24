@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package search;
 
 import java.io.BufferedReader;
@@ -78,7 +82,6 @@ public class WormBaseQuery {
                                         .matcher(wbGeneLine);
                                 while (m.find()) {
                                     final String name = m.group(1);
-                                    // TODO remove comment
                                     if (isLineageName(name)) {
                                         results.add(name);
                                     }

@@ -4,6 +4,10 @@
   ~ Bao Lab 2016
   -->
 
+<!--
+  ~ Bao Lab 2016
+  -->
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
@@ -19,6 +23,7 @@
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -100,15 +105,13 @@
                                            <HBox>
                                               <children>
                                                   <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
-                                                  <Button fx:id="newStoryButton" maxHeight="1.7976931348623157E308"
-                                                          mnemonicParsing="false" text="New Story">
+                                                  <Button fx:id="newStoryButton" maxHeight="1.7976931348623157E308" mnemonicParsing="false" text="New Story">
                                                       <font>
                                                           <Font size="14.0" />
                                                       </font>
                                                   </Button>
                                                   <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
-                                                  <Button fx:id="deleteStoryButton" maxHeight="1.7976931348623157E308"
-                                                          mnemonicParsing="false" text="Delete Selected Story">
+                                                  <Button fx:id="deleteStoryButton" maxHeight="1.7976931348623157E308" mnemonicParsing="false" text="Delete Selected Story">
                                                       <font>
                                                           <Font size="14.0" />
                                                       </font>
@@ -119,10 +122,7 @@
                                            <HBox>
                                               <children>
                                                   <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
-                                                  <Button fx:id="editNoteButton" maxHeight="-Infinity"
-                                                          maxWidth="1.7976931348623157E308" minHeight="-Infinity"
-                                                          minWidth="-Infinity" mnemonicParsing="false" prefHeight="30.0"
-                                                          text="Edit Selected Story">
+                                                  <Button fx:id="editNoteButton" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="30.0" text="Edit Selected Story">
                                                       <font>
                                                           <Font size="14.0" />
                                                       </font>
@@ -249,11 +249,7 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox
-                                                                                             fx:id="presynapticCheckBox"
-                                                                                             focusTraversable="false"
-                                                                                             maxHeight="1.7976931348623157E308"
-                                                                                             mnemonicParsing="false"/>
+                                                                                     <CheckBox fx:id="presynapticCheckBox" focusTraversable="false" maxHeight="1.7976931348623157E308" mnemonicParsing="false" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0">
@@ -265,11 +261,7 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox
-                                                                                             fx:id="postsynapticCheckBox"
-                                                                                             focusTraversable="false"
-                                                                                             maxHeight="1.7976931348623157E308"
-                                                                                             mnemonicParsing="false"/>
+                                                                                     <CheckBox fx:id="postsynapticCheckBox" focusTraversable="false" maxHeight="1.7976931348623157E308" mnemonicParsing="false" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0">
@@ -281,11 +273,7 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox
-                                                                                             fx:id="electricalCheckBox"
-                                                                                             focusTraversable="false"
-                                                                                             maxHeight="1.7976931348623157E308"
-                                                                                             mnemonicParsing="false"/>
+                                                                                     <CheckBox fx:id="electricalCheckBox" focusTraversable="false" maxHeight="1.7976931348623157E308" mnemonicParsing="false" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0">
@@ -297,11 +285,7 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox
-                                                                                             fx:id="neuromuscularCheckBox"
-                                                                                             focusTraversable="false"
-                                                                                             maxHeight="1.7976931348623157E308"
-                                                                                             mnemonicParsing="false"/>
+                                                                                     <CheckBox fx:id="neuromuscularCheckBox" focusTraversable="false" maxHeight="1.7976931348623157E308" mnemonicParsing="false" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="230.0">
@@ -330,10 +314,7 @@
                                                                               </HBox>
                                                                               <HBox maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
                                                                                  <children>
-                                                                                     <ListView
-                                                                                             fx:id="searchResultsListView"
-                                                                                             minHeight="80.0"
-                                                                                             HBox.hgrow="ALWAYS"/>
+                                                                                     <ListView fx:id="searchResultsListView" minHeight="80.0" HBox.hgrow="ALWAYS" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox prefHeight="11.0" prefWidth="298.0" VBox.vgrow="NEVER">
@@ -354,11 +335,7 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region prefHeight="22.0" HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox
-                                                                                             fx:id="cellNucleusCheckBox"
-                                                                                             focusTraversable="false"
-                                                                                             mnemonicParsing="false"
-                                                                                             prefHeight="22.0"/>
+                                                                                     <CheckBox fx:id="cellNucleusCheckBox" focusTraversable="false" mnemonicParsing="false" prefHeight="22.0" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="230.0">
@@ -370,20 +347,12 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region prefHeight="22.0" HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox fx:id="cellBodyCheckBox"
-                                                                                               focusTraversable="false"
-                                                                                               mnemonicParsing="false"
-                                                                                               prefHeight="22.0"/>
+                                                                                     <CheckBox fx:id="cellBodyCheckBox" focusTraversable="false" mnemonicParsing="false" prefHeight="22.0" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox maxWidth="1.7976931348623157E308" VBox.vgrow="NEVER">
                                                                                  <children>
-                                                                                     <ColorPicker fx:id="colorPicker"
-                                                                                                  maxHeight="-Infinity"
-                                                                                                  maxWidth="1.7976931348623157E308"
-                                                                                                  minHeight="-Infinity"
-                                                                                                  prefHeight="45.0"
-                                                                                                  HBox.hgrow="ALWAYS"/>
+                                                                                     <ColorPicker fx:id="colorPicker" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" prefHeight="45.0" HBox.hgrow="ALWAYS" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <Label maxHeight="-Infinity" minHeight="-Infinity" prefHeight="22.0" text="Propagate Colors to:">
@@ -400,10 +369,7 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region prefHeight="22.0" HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox fx:id="ancestorCheckBox"
-                                                                                               focusTraversable="false"
-                                                                                               mnemonicParsing="false"
-                                                                                               prefHeight="22.0"/>
+                                                                                     <CheckBox fx:id="ancestorCheckBox" focusTraversable="false" mnemonicParsing="false" prefHeight="22.0" />
                                                                                  </children>
                                                                               </HBox>
                                                                               <HBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="230.0">
@@ -415,11 +381,7 @@
                                                                                          </font>
                                                                                      </Label>
                                                                                      <Region prefHeight="22.0" HBox.hgrow="ALWAYS" />
-                                                                                     <CheckBox
-                                                                                             fx:id="descendantCheckBox"
-                                                                                             focusTraversable="false"
-                                                                                             mnemonicParsing="false"
-                                                                                             prefHeight="22.0"/>
+                                                                                     <CheckBox fx:id="descendantCheckBox" focusTraversable="false" mnemonicParsing="false" prefHeight="22.0" />
                                                                                  </children>
                                                                               </HBox>
                                                                           </children>
@@ -461,10 +423,9 @@
                                                                 <HBox prefHeight="22.0" prefWidth="247.0">
                                                                    <children>
                                                                        <Region HBox.hgrow="ALWAYS" />
-                                                                       <Label text="(cell/structure name, keyword, phrase)"
-                                                                              textAlignment="RIGHT">
+                                                                       <Label text="(cell/structure name, keyword, phrase)" textAlignment="RIGHT">
                                                                            <font>
-                                                                               <Font size="14.0"/>
+                                                                               <Font size="14.0" />
                                                                            </font>
                                                                        </Label>
                                                                    </children>
@@ -477,12 +438,9 @@
                                                                 </AnchorPane>
                                                                 <HBox>
                                                                    <children>
-                                                                       <Label maxHeight="-Infinity"
-                                                                              minHeight="-Infinity" prefHeight="36.0"
-                                                                              text="(If no structures are selected below, a new rule is added for all search results)"
-                                                                              wrapText="true">
+                                                                       <Label maxHeight="-Infinity" minHeight="-Infinity" prefHeight="36.0" text="(If no structures are selected below, a new rule is added for all search results)" wrapText="true">
                                                                            <font>
-                                                                               <Font size="14.0"/>
+                                                                               <Font size="14.0" />
                                                                            </font>
                                                                        </Label>
                                                                    </children>
@@ -493,9 +451,9 @@
                                                                         <Font size="14.0" />
                                                                     </font>
                                                                 </Label>
-                                                                <AnchorPane maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                                                                <AnchorPane maxHeight="1.7976931348623157E308" minHeight="230.0" VBox.vgrow="ALWAYS">
                                                                    <children>
-                                                                       <ListView fx:id="allStructuresListView" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                                            <TreeView fx:id="allStructuresTreeView" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                                                    </children>
                                                                 </AnchorPane>
                                                                 <Region maxHeight="-Infinity" minHeight="-Infinity" prefHeight="5.0" />
@@ -506,12 +464,7 @@
                                                                 </HBox>
                                                                 <HBox>
                                                                    <children>
-                                                                       <ColorPicker fx:id="structureRuleColorPicker"
-                                                                                    maxHeight="-Infinity"
-                                                                                    maxWidth="1.7976931348623157E308"
-                                                                                    minHeight="-Infinity"
-                                                                                    prefHeight="55.0"
-                                                                                    HBox.hgrow="ALWAYS"/>
+                                                                       <ColorPicker fx:id="structureRuleColorPicker" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" prefHeight="55.0" HBox.hgrow="ALWAYS" />
                                                                    </children>
                                                                 </HBox>
                                                                 <Region maxHeight="-Infinity" minHeight="-Infinity" prefHeight="5.0" />

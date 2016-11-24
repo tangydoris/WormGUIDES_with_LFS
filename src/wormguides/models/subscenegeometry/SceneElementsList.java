@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.subscenegeometry;
 
 import java.io.BufferedReader;
@@ -17,6 +21,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
+
+import javafx.scene.control.TreeItem;
 
 import wormguides.MainApp;
 
@@ -34,17 +40,40 @@ public class SceneElementsList {
     private final String CELL_CONFIG_FILE_NAME = "CellShapesConfig.csv";
     private final String ASTERISK = "*";
 
+    private final int NUM_OF_CSV_FIELDS = 8;
+    private final int DESCRIPTION_INDEX = 0;
+    private final int CELLS_INDEX = 1;
+    private final int MARKER_INDEX = 2;
+    private final int IMAGING_SOURCE_INDEX = 3;
+    private final int RESOURCE_LOCATION_INDEX = 4;
+    private final int START_TIME_INDEX = 5;
+    private final int END_TIME_INDEX = 6;
+    private final int COMMENTS_INDEX = 7;
+
     private final List<SceneElement> elementsList;
+    private final SceneElementsTree structureTree;
+
     private final Map<String, List<String>> nameCellsMap;
     private final Map<String, String> nameCommentsMap;
 
-    // this will eventually be constructed using a .txt file that contains the
-    // Scene Element information for the embryo
     public SceneElementsList() {
         elementsList = new ArrayList<>();
+        structureTree = new SceneElementsTree();
         nameCellsMap = new HashMap<>();
         nameCommentsMap = new HashMap<>();
         buildListFromConfig();
+    }
+
+    private void buildListFromConfig() {
+        final URL url = MainApp.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
+        if (url != null) {
+            try (final InputStream stream = url.openStream()) {
+                processStream(stream);
+                processCells();
+            } catch (IOException e) {
+                System.out.println("Config file '" + CELL_CONFIG_FILE_NAME + "' was not found.");
+            }
+        }
     }
 
     /**
@@ -63,68 +92,84 @@ public class SceneElementsList {
         return false;
     }
 
-    private void buildListFromConfig() {
-        final URL url = MainApp.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
-        if (url != null) {
-            try (InputStream stream = url.openStream()) {
-                processStream(stream);
-                processCells();
-            } catch (IOException e) {
-                System.out.println("The config file '" + CELL_CONFIG_FILE_NAME + "' wasn't found on the system.");
-            }
-        }
-    }
-
     private void processStream(final InputStream stream) {
         try (final InputStreamReader streamReader = new InputStreamReader(stream);
              final BufferedReader reader = new BufferedReader(streamReader)) {
-
             // skip csv file heading
             reader.readLine();
 
             String line;
+            String currentCategory = "root";
             // process each line
             while ((line = reader.readLine()) != null) {
-                final String[] splits = line.split(",", 8);
-
-                // BUIILD SCENE ELEMENT
-                // vector of cell names
-                final List<String> cellNames = new ArrayList<>();
-                final StringTokenizer st = new StringTokenizer(splits[1]);
-                while (st.hasMoreTokens()) {
-                    cellNames.add(st.nextToken());
-                }
-
-                try {
-                    final String resourceLocation = splits[4];
-                    final int startTime = parseInt(splits[5]);
-                    final int endTime = parseInt(splits[6]);
-                    // check to see if resource exists in the shape files archive
-                    // only create a scene element if it does
-                    if (doesResourceExist(resourceLocation, startTime, endTime)) {
-                        final SceneElement element = new SceneElement(
-                                splits[0],
-                                cellNames,
-                                splits[2],
-                                splits[3],
-                                resourceLocation,
-                                startTime,
-                                endTime,
-                                splits[7]);
-                        addSceneElement(element);
-                        if (!element.getComments().isEmpty()) {
-                            nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
-                        }
+                final String[] tokens = line.split(",", NUM_OF_CSV_FIELDS);
+                if (isCategoryLine(tokens)) {
+                    final String category = tokens[DESCRIPTION_INDEX];
+                    if (category.equalsIgnoreCase(currentCategory)) {
+                        currentCategory = structureTree.getParentCategory(category);
+                    } else {
+                        structureTree.addCategory(currentCategory, category);
+                        currentCategory = category;
                     }
-                } catch (NumberFormatException e) {
-                    System.out.println("error in reading scene element time for line " + line);
+                } else {
+                    // build scene element
+                    // vector of cell names
+                    final List<String> cellNames = new ArrayList<>();
+                    final StringTokenizer st = new StringTokenizer(tokens[1]);
+                    while (st.hasMoreTokens()) {
+                        cellNames.add(st.nextToken());
+                    }
+
+                    try {
+                        final String resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
+                        final int startTime = parseInt(tokens[START_TIME_INDEX]);
+                        final int endTime = parseInt(tokens[END_TIME_INDEX]);
+                        // check to see if resource exists in the shape files archive
+                        // only create a scene element if it does
+                        if (doesResourceExist(resourceLocation, startTime, endTime)) {
+                            final SceneElement element = new SceneElement(
+                                    tokens[DESCRIPTION_INDEX],
+                                    cellNames,
+                                    tokens[MARKER_INDEX],
+                                    tokens[IMAGING_SOURCE_INDEX],
+                                    resourceLocation,
+                                    startTime,
+                                    endTime,
+                                    tokens[COMMENTS_INDEX]);
+                            addSceneElement(element);
+                            if (!element.getComments().isEmpty()) {
+                                nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
+                            }
+                            // insert structure into tree
+                            structureTree.addStructure(element.getSceneName(), currentCategory);
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("error in reading scene element time for line " + line);
+                    }
                 }
             }
-
             reader.close();
         } catch (IOException e) {
             System.out.println("Invalid file: '" + CELL_CONFIG_FILE_NAME);
         }
+    }
+
+    /**
+     * @param tokens
+     *         tokens read from one line of the CSV config file
+     *
+     * @return true if the line is a category header/footer, false otherwise
+     */
+    private boolean isCategoryLine(final String[] tokens) {
+        if (tokens.length == NUM_OF_CSV_FIELDS && !tokens[DESCRIPTION_INDEX].isEmpty()) {
+            boolean isCategoryLine = true;
+            // check that all other fields are empty
+            for (int i = 1; i < NUM_OF_CSV_FIELDS; i++) {
+                isCategoryLine &= tokens[i].isEmpty();
+            }
+            return isCategoryLine;
+        }
+        return false;
     }
 
     /*
@@ -132,10 +177,6 @@ public class SceneElementsList {
      * which reference other scene elements' cell list
      */
     private void processCells() {
-        if (elementsList == null) {
-            return;
-        }
-
         for (SceneElement se : elementsList) {
             List<String> cells = se.getAllCells();
             for (int i = 0; i < cells.size(); i++) {
@@ -245,14 +286,6 @@ public class SceneElementsList {
         return namesSorted;
     }
 
-    public List<SceneElement> getMulticellSceneElements() {
-        final List<SceneElement> elements = new ArrayList<>();
-        elementsList.stream()
-                .filter(se -> se.isMulticellular() && !elements.contains(se))
-                .forEachOrdered(elements::add);
-        return elements;
-    }
-
     public boolean isMulticellStructureName(String name) {
         name = name.trim();
         for (String cellName : getAllMulticellSceneNames()) {
@@ -281,6 +314,20 @@ public class SceneElementsList {
 
     public List<SceneElement> getElementsList() {
         return elementsList;
+    }
+
+    /**
+     * @return the root of the hierarchy structures tree
+     */
+    public TreeItem<StructureTreeNode> getTreeRoot() {
+        return structureTree.getRoot();
+    }
+
+    /**
+     * Deselects all nodes in the structure tree
+     */
+    public void deselectAllStructureTreeNodes() {
+        structureTree.deselectAllNodes();
     }
 
     @Override

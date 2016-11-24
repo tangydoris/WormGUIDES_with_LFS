@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.controllers;
 
 import java.io.File;
@@ -28,7 +32,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -47,8 +50,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -73,10 +76,11 @@ import wormguides.models.LineageTree;
 import wormguides.models.cellcase.CasesLists;
 import wormguides.models.colorrule.Rule;
 import wormguides.models.subscenegeometry.SceneElementsList;
+import wormguides.models.subscenegeometry.StructureTreeNode;
 import wormguides.resources.ProductionInfo;
 import wormguides.stories.Story;
 import wormguides.util.ColorHash;
-import wormguides.util.StringListCellFactory;
+import wormguides.util.StringCellFactory;
 import wormguides.view.DraggableTab;
 import wormguides.view.infowindow.InfoWindow;
 import wormguides.view.popups.AboutPane;
@@ -90,7 +94,10 @@ import static java.util.Collections.sort;
 
 import static javafx.application.Platform.runLater;
 import static javafx.collections.FXCollections.observableArrayList;
+import static javafx.scene.Cursor.DEFAULT;
+import static javafx.scene.Cursor.HAND;
 import static javafx.scene.SceneAntialiasing.BALANCED;
+import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.layout.AnchorPane.setBottomAnchor;
 import static javafx.scene.layout.AnchorPane.setLeftAnchor;
 import static javafx.scene.layout.AnchorPane.setRightAnchor;
@@ -104,6 +111,7 @@ import static acetree.tablelineagedata.AceTreeLineageTableLoader.getAvgYOffsetFr
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.getAvgZOffsetFromZero;
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.loadNucFiles;
 import static acetree.tablelineagedata.AceTreeLineageTableLoader.setOriginToZero;
+import static partslist.PartsList.getFunctionalNameByLineageName;
 import static partslist.celldeaths.CellDeaths.isInCellDeaths;
 import static search.SearchUtil.getStructureComment;
 import static search.SearchUtil.isStructureWithComment;
@@ -206,7 +214,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     @FXML
     private ListView<String> structuresSearchListView;
     @FXML
-    private ListView<String> allStructuresListView;
+    private TreeView<StructureTreeNode> allStructuresTreeView;
     @FXML
     private Button addStructureRuleBtn;
     @FXML
@@ -762,28 +770,25 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
         // selectedName string property that has the name of the clicked sphere
         selectedEntityNameProperty.addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                if (!newValue.isEmpty()) {
-                    setSelectedEntityInfo(selectedEntityNameProperty.get());
-                }
+            if (newValue != null && !newValue.isEmpty()) {
+                setSelectedEntityInfo(selectedEntityNameProperty.get());
             }
         });
 
-        // Multicellular structure stuff
-        structuresSearchListView.addEventFilter(MouseEvent.MOUSE_PRESSED, Event::consume);
+        // Disable click on structures search results list view
+        structuresSearchListView.addEventFilter(MOUSE_PRESSED, Event::consume);
 
-        // Modify font for ListView's of String's
-        structuresSearchListView.setCellFactory(new StringListCellFactory());
-        allStructuresListView.setCellFactory(structuresLayer.getCellFactory());
-        searchResultsListView.setCellFactory(new StringListCellFactory());
+        // Modify font for string list/tree cells
+        structuresSearchListView.setCellFactory(new StringCellFactory.StringListCellFactory());
+        searchResultsListView.setCellFactory(new StringCellFactory.StringListCellFactory());
 
         // More info clickable text
         moreInfoClickableText.setOnMouseClicked(event -> {
             openInfoWindow();
             infoWindow.addName(selectedEntityNameProperty.get());
         });
-        moreInfoClickableText.setOnMouseEntered(event -> moreInfoClickableText.setCursor(Cursor.HAND));
-        moreInfoClickableText.setOnMouseExited(event -> moreInfoClickableText.setCursor(Cursor.DEFAULT));
+        moreInfoClickableText.setOnMouseEntered(event -> moreInfoClickableText.setCursor(HAND));
+        moreInfoClickableText.setOnMouseExited(event -> moreInfoClickableText.setCursor(DEFAULT));
 
         // More info in context menu
         bringUpInfoFlag.addListener((observable, oldValue, newValue) -> {
@@ -813,9 +818,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         displayedDescription.setText("");
 
         // Note
-        if (storiesLayer != null) {
-            displayedDescription.setText(storiesLayer.getNoteComments(name));
-        }
+        displayedDescription.setText(storiesLayer.getNoteComments(name));
 
         // Cell body/structue
         if (isStructureWithComment(name)) {
@@ -824,8 +827,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
         // Cell lineage name
         else {
-            String functionalName = PartsList.getFunctionalNameByLineageName(name);
-
+            String functionalName = getFunctionalNameByLineageName(name);
             if (functionalName != null) {
                 displayedName.setText("Active Cell: " + name + " (" + functionalName + ")");
                 displayedDescription.setText(PartsList.getDescriptionByFunctionalName(functionalName));
@@ -981,7 +983,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 selectedEntityNameProperty,
                 structuresSearchField,
                 structuresSearchListView,
-                allStructuresListView,
+                allStructuresTreeView,
                 addStructureRuleBtn,
                 structureRuleColorPicker,
                 rebuildSubsceneFlag);
@@ -992,6 +994,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 mainStage,
                 searchLayer,
                 sceneElementsList,
+                storiesListView,
                 rulesList,
                 selectedEntityNameProperty,
                 activeStoryProperty,
@@ -1014,10 +1017,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 endTime,
                 movieTimeOffset,
                 defaultEmbryoFlag);
-
-        storiesListView.setItems(storiesLayer.getStories());
-        storiesListView.setCellFactory(storiesLayer.getStoryCellFactory());
-        storiesListView.widthProperty().addListener(storiesLayer.getListViewWidthListener());
 
         storiesLayer.getActiveStoryProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.isEmpty()) {
@@ -1164,7 +1163,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     }
 
     private void initSharedVariables() {
-        // TODO
         timeProperty = new SimpleIntegerProperty(startTime);
         totalNucleiProperty = new SimpleIntegerProperty(0);
 

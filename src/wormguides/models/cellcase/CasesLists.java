@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.cellcase;
 
 import java.util.ArrayList;
@@ -206,7 +210,7 @@ public class CasesLists {
      *
      * @return true if a cell case was found for the cell, false otherwise
      */
-    public boolean hasCellCase(String cellName) {
+    public boolean hasCellCase(final String cellName) {
         //TODO refactor this to just be name
         return containsCellCase(cellName) || containsAnatomyTermCase(cellName);
     }

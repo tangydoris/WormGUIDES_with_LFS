@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.controllers;
 
 import java.net.URL;
@@ -37,7 +41,7 @@ import wormguides.stories.Note;
 import wormguides.stories.Note.Display;
 import wormguides.stories.Note.Type;
 import wormguides.stories.Story;
-import wormguides.util.StringListCellFactory;
+import wormguides.util.StringCellFactory;
 
 public class StoryEditorController extends AnchorPane implements Initializable {
 
@@ -85,13 +89,10 @@ public class StoryEditorController extends AnchorPane implements Initializable {
     @FXML
     private ComboBox<String> structuresComboBox;
     private ObservableList<String> structureComboItems;
-    private StringListCellFactory factory;
+    private StringCellFactory.StringListCellFactory listCellFactory;
     @FXML
     private RadioButton axonRadioBtn;
 
-    // callout stuff
-    // @FXML private CheckBox calloutTick;
-    // @FXML private ToggleGroup calloutToggle;
     @FXML
     private RadioButton dendriteRadioBtn;
     @FXML
@@ -233,10 +234,10 @@ public class StoryEditorController extends AnchorPane implements Initializable {
         attachmentToggle.selectedToggleProperty().addListener(new AttachmentToggleListener());
         displayToggle.selectedToggleProperty().addListener(new DisplayToggleListener());
 
-        factory = new StringListCellFactory();
+        listCellFactory = new StringCellFactory.StringListCellFactory();
         structuresComboBox.setItems(structureComboItems);
-        structuresComboBox.setButtonCell(factory.getNewStringListCell());
-        structuresComboBox.setCellFactory(factory);
+        structuresComboBox.setButtonCell(listCellFactory.getNewStringListCell());
+        structuresComboBox.setCellFactory(listCellFactory);
         structuresComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             Toggle selected = attachmentToggle.getSelectedToggle();
             if (activeNote != null && selected != null && selected.equals(structureRadioBtn)) {
@@ -418,8 +419,7 @@ public class StoryEditorController extends AnchorPane implements Initializable {
                             }
                         }
                         attachmentToggle.selectToggle(structureRadioBtn);
-                        // TODO read substructure toggle enum from note (to be
-                        // added)
+                        // TODO read substructure toggle enum from note (to be added)
                         break;
 
                     case BLANK: // fall to default case

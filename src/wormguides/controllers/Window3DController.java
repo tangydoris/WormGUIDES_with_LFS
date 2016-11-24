@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
@@ -13,7 +17,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -1955,62 +1958,6 @@ public class Window3DController {
                 }
             }
         }
-    }
-
-    private boolean currentRulesApplyTo(final String name) {
-        String sceneName = "";
-        List<String> cells = new ArrayList<>();
-        if (defaultEmbryoFlag) {
-            // get the scene name associated with the cell
-            for (int i = 0; i < sceneElementsList.getElementsList().size(); i++) {
-                SceneElement currSE = sceneElementsList.getElementsList().get(i);
-                // check if multicellular structure --> find match with name in
-                // cells
-                if (currSE.isMulticellular()) {
-                    if (currSE.getSceneName().toLowerCase().equals(name.toLowerCase())) {
-                        sceneName = name;
-                        // save the cells in case there isn't an explicit structure rule but the structure is still
-                        // colored
-                        cells = currSE.getAllCells();
-                    }
-                } else {
-                    String ithSceneName = sceneElementsList.getElementsList()
-                            .get(i)
-                            .getSceneName();
-                    StringTokenizer st = new StringTokenizer(ithSceneName);
-                    if (st.countTokens() == 2) {
-                        String sceneNameLineage = st.nextToken();
-                        if (sceneNameLineage.equalsIgnoreCase(name)) {
-                            sceneName = ithSceneName;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (sceneName.equals("")) {
-                sceneName = name;
-            }
-        }
-        for (Rule rule : rulesList) {
-            if (rule.isStructureRuleBySceneName() && rule.appliesToStructureWithSceneName(sceneName)) {
-                return true;
-            } else if (rule.appliesToCellBody(name)) {
-                return true;
-            } else if (rule.appliesToCellNucleus(name)) {
-                return true;
-            } else { // check if cells corresponding to multicellular structure
-                // have rule - in the case of a non explicit
-                // multicellular rule but a structure that's colored
-                if (cells.size() > 0) {
-                    for (String cell : cells) {
-                        if (rule.appliesToCellBody(cell)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     public boolean captureImagesForMovie() {
