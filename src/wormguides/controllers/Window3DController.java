@@ -14,16 +14,11 @@
  * Bao Lab 2016
  */
 
-/*
- * Bao Lab 2016
- */
-
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1254,19 +1249,9 @@ public class Window3DController {
                 currentSceneElements.clear();
             }
 
-            // TODO remove debug
-            final Instant now = Instant.now();
             sceneElementsAtCurrentTime = sceneElementsList.getSceneElementsAtTime(requestedTime);
-            System.out.println("#elements at time " + requestedTime + ": " + sceneElementsAtCurrentTime.size());
             for (SceneElement se : sceneElementsAtCurrentTime) {
-                // TODO remove debug
-//                System.out.println(se.getSceneName());
-                // add meshes from each scene element
-//                final Instant mesh1 = Instant.now();
-                MeshView mesh = se.buildGeometry(requestedTime - 1);
-//                final Instant mesh2 = Instant.now();
-//                System.out.println("time to build mesh: " + (mesh2.toEpochMilli() - mesh1.toEpochMilli()) + "ms");
-
+                final MeshView mesh = se.buildGeometry(requestedTime - 1);
                 if (mesh != null) {
                     mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
                     mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
@@ -1279,11 +1264,6 @@ public class Window3DController {
                     currentSceneElements.add(se);
                 }
             }
-            // TODO remove debug
-            final Instant now2 = Instant.now();
-            System.out.println("time to get scene element data: "
-                    + (now2.toEpochMilli() - now.toEpochMilli())
-                    + "ms");
             // End scene element mesh loading/building
         }
 
@@ -1490,19 +1470,20 @@ public class Window3DController {
 
                     } else {
                         // in regular viewing mode
-                        final List<String> allNames = sceneElement.getAllCells();
-                        // note meshes default to white
-                        if (allNames.isEmpty()) {
+                        final List<String> structureCells = sceneElement.getAllCells();
+
+                        // note meshes have no cells and default to white
+                        if (structureCells.isEmpty()) {
                             meshView.setMaterial(new PhongMaterial(WHITE));
                             meshView.setCullFace(NONE);
                         } else {
-                            // if mesh has cells name(s), then process rules (cell or shape) that apply to it
+                            // process rules that apply to it
                             final List<Color> colors = new ArrayList<>();
                             for (Rule rule : rulesList) {
                                 if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
                                     colors.add(rule.getColor());
                                 } else {
-                                    colors.addAll(allNames
+                                    colors.addAll(structureCells
                                             .stream()
                                             .filter(rule::appliesToCellBody)
                                             .map(name -> rule.getColor())
@@ -1510,7 +1491,6 @@ public class Window3DController {
                                 }
                             }
                             sort(colors, colorComparator);
-
                             // if any rules applied
                             if (!colors.isEmpty()) {
                                 meshView.setMaterial(colorHash.getMaterial(colors));

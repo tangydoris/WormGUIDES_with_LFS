@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.loaders;
 
 import java.util.ArrayList;
@@ -26,7 +30,7 @@ import static search.SearchType.CONNECTOME;
 import static search.SearchType.DESCRIPTION;
 import static search.SearchType.FUNCTIONAL;
 import static search.SearchType.LINEAGE;
-import static search.SearchType.MULTICELLULAR_CELL_BASED;
+import static search.SearchType.MULTICELLULAR_STRUCTURE_BY_CELLS;
 import static search.SearchType.NEIGHBOR;
 import static search.SearchUtil.isGeneFormat;
 import static wormguides.models.colorrule.SearchOption.ANCESTOR;
@@ -245,7 +249,7 @@ public class URLLoader {
                 }
                 if (types.contains("-m")) {
                     searchLayer.addColorRule(
-                            MULTICELLULAR_CELL_BASED,
+                            MULTICELLULAR_STRUCTURE_BY_CELLS,
                             name,
                             web(colorString),
                             options);

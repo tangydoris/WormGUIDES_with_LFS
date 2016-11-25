@@ -22,6 +22,14 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.subscenegeometry;
 
 import java.io.BufferedReader;
@@ -83,9 +91,11 @@ public class SceneElementsList {
     private void buildListFromConfig(final LineageData lineageData) {
         final URL url = MainApp.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
         if (url != null) {
-            try (final InputStream stream = url.openStream()) {
+            try {
+                final InputStream stream = url.openStream();
                 processStream(stream, lineageData);
                 processCells();
+                stream.close();
             } catch (IOException e) {
                 System.out.println("Config file '" + CELL_CONFIG_FILE_NAME + "' was not found.");
             }
@@ -109,8 +119,10 @@ public class SceneElementsList {
     }
 
     private void processStream(final InputStream stream, final LineageData lineageData) {
-        try (final InputStreamReader streamReader = new InputStreamReader(stream);
-             final BufferedReader reader = new BufferedReader(streamReader)) {
+        try {
+            final InputStreamReader streamReader = new InputStreamReader(stream);
+            final BufferedReader reader = new BufferedReader(streamReader);
+
             // skip csv file heading
             reader.readLine();
 
@@ -147,10 +159,10 @@ public class SceneElementsList {
                         resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
                         startTime = parseInt(tokens[START_TIME_INDEX]);
                         endTime = parseInt(tokens[END_TIME_INDEX]);
-                        if (GeometryLoader.doesResourceExist(resourceLocation, startTime, endTime)) {
 
+                        if (GeometryLoader.doesResourceExist(resourceLocation, startTime, endTime)) {
                             // vector of cell names
-                            cellNames.clear();
+                            cellNames = new ArrayList<>();
                             cellNamesTokenizer = new StringTokenizer(tokens[CELLS_INDEX]);
                             while (cellNamesTokenizer.hasMoreTokens()) {
                                 cellNames.add(cellNamesTokenizer.nextToken());
@@ -186,15 +198,15 @@ public class SceneElementsList {
                                 nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
                             }
                             // insert structure into tree
-                            currentCategoryNode.getChildren()
-                                    .add(new TreeItem<>(new StructureTreeNode(false, element.getSceneName())));
+                            currentCategoryNode.getChildren().add(
+                                    new TreeItem<>(new StructureTreeNode(false, element.getSceneName())));
                         }
                     } catch (NumberFormatException e) {
                         System.out.println("error in reading scene element time for line " + line);
                     }
                 }
             }
-            reader.close();
+            streamReader.close();
         } catch (IOException e) {
             System.out.println("Invalid file: '" + CELL_CONFIG_FILE_NAME);
         }
