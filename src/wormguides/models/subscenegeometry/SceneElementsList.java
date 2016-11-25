@@ -50,11 +50,12 @@ import javafx.scene.control.TreeItem;
 
 import acetree.LineageData;
 import wormguides.MainApp;
-import wormguides.loaders.GeometryLoader;
 
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.util.Collections.sort;
+
+import static wormguides.loaders.GeometryLoader.doesResourceExist;
 
 /**
  * Record of {@link SceneElement}s over the life of the embryo
@@ -160,7 +161,7 @@ public class SceneElementsList {
                         startTime = parseInt(tokens[START_TIME_INDEX]);
                         endTime = parseInt(tokens[END_TIME_INDEX]);
 
-                        if (GeometryLoader.doesResourceExist(resourceLocation, startTime, endTime)) {
+                        if (doesResourceExist(resourceLocation, startTime, endTime)) {
                             // vector of cell names
                             cellNames = new ArrayList<>();
                             cellNamesTokenizer = new StringTokenizer(tokens[CELLS_INDEX]);

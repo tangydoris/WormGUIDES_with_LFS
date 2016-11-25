@@ -144,9 +144,7 @@ public class GeometryLoader {
                         }
                     }
                     meshView = new MeshView(createMesh(coords, faces));
-                    inputStream.close();
                 }
-                zipFile.close();
             } catch (IOException e) {
                 System.out.println("Could not open " + ARCHIVE_PATH + " for reading");
                 e.printStackTrace();
