@@ -14,6 +14,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
@@ -1253,7 +1257,7 @@ public class Window3DController {
             // TODO remove debug
             final Instant now = Instant.now();
             sceneElementsAtCurrentTime = sceneElementsList.getSceneElementsAtTime(requestedTime);
-//            System.out.println("# elements at time " + requestedTime + ": " + sceneElementsAtCurrentTime.size());
+            System.out.println("#elements at time " + requestedTime + ": " + sceneElementsAtCurrentTime.size());
             for (SceneElement se : sceneElementsAtCurrentTime) {
                 // TODO remove debug
 //                System.out.println(se.getSceneName());
@@ -1277,9 +1281,9 @@ public class Window3DController {
             }
             // TODO remove debug
             final Instant now2 = Instant.now();
-//            System.out.println("time to get scene element data: "
-//                    + (now2.toEpochMilli() - now.toEpochMilli())
-//                    + "ms");
+            System.out.println("time to get scene element data: "
+                    + (now2.toEpochMilli() - now.toEpochMilli())
+                    + "ms");
             // End scene element mesh loading/building
         }
 

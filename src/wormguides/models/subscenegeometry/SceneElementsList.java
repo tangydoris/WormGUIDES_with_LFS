@@ -18,6 +18,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.subscenegeometry;
 
 import java.io.BufferedReader;
@@ -38,6 +42,7 @@ import javafx.scene.control.TreeItem;
 
 import acetree.LineageData;
 import wormguides.MainApp;
+import wormguides.loaders.GeometryLoader;
 
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.Integer.parseInt;
@@ -111,15 +116,19 @@ public class SceneElementsList {
 
             String line;
             String name;
+            String lineageName;
             String resourceLocation;
             int startTime;
             int endTime;
+            List<String> cellNames = new ArrayList<>();
+            StringTokenizer cellNamesTokenizer;
             TreeItem<StructureTreeNode> currentCategoryNode = root;
             // process each line
             while ((line = reader.readLine()) != null) {
                 final String[] tokens = line.split(",", NUM_OF_CSV_FIELDS);
                 name = tokens[DESCRIPTION_INDEX];
                 if (isCategoryLine(tokens)) {
+                    // add cetegory to tree
                     if (name.equalsIgnoreCase(currentCategoryNode.getValue().getNodeText())) {
                         // the ending of a category
                         currentCategoryNode = currentCategoryNode.getParent();
@@ -131,48 +140,55 @@ public class SceneElementsList {
                         currentCategoryNode = newTreeNode;
                     }
                 } else {
-                    // build scene element
-                    // vector of cell names
-                    final List<String> cellNames = new ArrayList<>();
-                    final StringTokenizer st = new StringTokenizer(tokens[1]);
-                    while (st.hasMoreTokens()) {
-                        cellNames.add(st.nextToken());
-                    }
+                    // add structure (leaf node) to tree
+                    // build scene element if resource exists, structure is not added if not
 
                     try {
                         resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
                         startTime = parseInt(tokens[START_TIME_INDEX]);
                         endTime = parseInt(tokens[END_TIME_INDEX]);
+                        if (GeometryLoader.doesResourceExist(resourceLocation, startTime, endTime)) {
 
-                        // TODO don't just use start and end times specified in the config file
-                        String lineageName = name;
-                        if (name.contains("(")) {
-                            lineageName = name.substring(0, name.indexOf("(")).trim();
-                        }
-                        if (lineageData.isCellName(lineageName)) {
-                            startTime = lineageData.getFirstOccurrenceOf(lineageName);
-                            endTime = lineageData.getLastOccurrenceOf(lineageName);
-                        }
+                            // vector of cell names
+                            cellNames.clear();
+                            cellNamesTokenizer = new StringTokenizer(tokens[CELLS_INDEX]);
+                            while (cellNamesTokenizer.hasMoreTokens()) {
+                                cellNames.add(cellNamesTokenizer.nextToken());
+                            }
 
-                        // this is extremely slow with the experimental shapes:
-                        // check to see if resource exists in the shape files archive
-                        // only create a scene element if it does
-                        final SceneElement element = new SceneElement(
-                                name,
-                                cellNames,
-                                tokens[MARKER_INDEX],
-                                tokens[IMAGING_SOURCE_INDEX],
-                                resourceLocation,
-                                startTime,
-                                endTime,
-                                tokens[COMMENTS_INDEX]);
-                        addSceneElement(element);
-                        if (!element.getComments().isEmpty()) {
-                            nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
+                            lineageName = name;
+                            if (name.contains("(")) {
+                                lineageName = name.substring(0, name.indexOf("(")).trim();
+                            }
+                            if (lineageData.isCellName(lineageName)) {
+                                int effectiveStartTime = lineageData.getFirstOccurrenceOf(lineageName);
+                                int effectiveEndTime = lineageData.getLastOccurrenceOf(lineageName);
+                                // use the later one of the config start time and the effective lineage start time
+                                startTime = effectiveStartTime > startTime ? effectiveStartTime : startTime;
+                                // use the earlier one of the config start time and the effective lineage start time
+                                endTime = effectiveEndTime < endTime ? effectiveEndTime : endTime;
+                            }
+
+                            // this is extremely slow with the experimental shapes:
+                            // check to see if resource exists in the shape files archive
+                            // only create a scene element if it does
+                            final SceneElement element = new SceneElement(
+                                    name,
+                                    cellNames,
+                                    tokens[MARKER_INDEX],
+                                    tokens[IMAGING_SOURCE_INDEX],
+                                    resourceLocation,
+                                    startTime,
+                                    endTime,
+                                    tokens[COMMENTS_INDEX]);
+                            addSceneElement(element);
+                            if (!element.getComments().isEmpty()) {
+                                nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
+                            }
+                            // insert structure into tree
+                            currentCategoryNode.getChildren()
+                                    .add(new TreeItem<>(new StructureTreeNode(false, element.getSceneName())));
                         }
-                        // insert structure into tree
-                        currentCategoryNode.getChildren()
-                                .add(new TreeItem<>(new StructureTreeNode(false, element.getSceneName())));
                     } catch (NumberFormatException e) {
                         System.out.println("error in reading scene element time for line " + line);
                     }
