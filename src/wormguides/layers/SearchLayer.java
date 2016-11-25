@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.layers;
 
 import java.util.ArrayList;
@@ -53,8 +57,8 @@ import static search.SearchType.DESCRIPTION;
 import static search.SearchType.FUNCTIONAL;
 import static search.SearchType.GENE;
 import static search.SearchType.LINEAGE;
-import static search.SearchType.MULTICELLULAR_CELL_BASED;
-import static search.SearchType.STRUCTURE_SCENE_NAME_BASED;
+import static search.SearchType.MULTICELLULAR_STRUCTURE_BY_CELLS;
+import static search.SearchType.STRUCTURE_BY_SCENE_NAME;
 import static search.SearchUtil.getAncestorsList;
 import static search.SearchUtil.getCellsInMulticellularStructure;
 import static search.SearchUtil.getCellsWithConnectivity;
@@ -248,7 +252,7 @@ public class SearchLayer {
         connectomeRadioButton.setUserData(CONNECTOME);
 
         multicellRadioButton.setToggleGroup(searchTypeToggleGroup);
-        multicellRadioButton.setUserData(MULTICELLULAR_CELL_BASED);
+        multicellRadioButton.setUserData(MULTICELLULAR_STRUCTURE_BY_CELLS);
 
         searchTypeToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             // if toggle was previously on 'gene' then cancel whatever wormbase search was issued
@@ -437,7 +441,7 @@ public class SearchLayer {
      * @return the multicellular structure rule added
      */
     public Rule addStructureRuleBySceneName(final String searched, final Color color) {
-        return addColorRule(STRUCTURE_SCENE_NAME_BASED, searched, color, new ArrayList<>());
+        return addColorRule(STRUCTURE_BY_SCENE_NAME, searched, color, new ArrayList<>());
     }
 
     /**
@@ -559,7 +563,7 @@ public class SearchLayer {
                     }
                     break;
 
-                case MULTICELLULAR_CELL_BASED:
+                case MULTICELLULAR_STRUCTURE_BY_CELLS:
                     cells = getCellsInMulticellularStructure(searched);
                     break;
 

@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.colorrule;
 
 import java.io.IOException;
@@ -45,7 +49,7 @@ import static javafx.scene.layout.Priority.SOMETIMES;
 import static javafx.scene.paint.Color.LIGHTGREY;
 import static javafx.stage.Modality.NONE;
 
-import static search.SearchType.STRUCTURE_SCENE_NAME_BASED;
+import static search.SearchType.STRUCTURE_BY_SCENE_NAME;
 import static wormguides.models.LineageTree.isAncestor;
 import static wormguides.models.LineageTree.isDescendant;
 import static wormguides.models.colorrule.SearchOption.ANCESTOR;
@@ -94,7 +98,7 @@ public class Rule {
     private List<String> cells;
     /**
      * True if the list of cells has been set, false otherwise. The cells list of a structure rule based on a scene
-     * name (with the search type {@link SearchType#STRUCTURE_SCENE_NAME_BASED}) is never set.
+     * name (with the search type {@link SearchType#STRUCTURE_BY_SCENE_NAME}) is never set.
      */
     private boolean cellsSet;
 
@@ -326,7 +330,7 @@ public class Rule {
      * @return true if the rule should color a multicellular structure, false otherwise.
      */
     public boolean isStructureRuleBySceneName() {
-        return searchType == STRUCTURE_SCENE_NAME_BASED;
+        return searchType == STRUCTURE_BY_SCENE_NAME;
     }
 
     /**
@@ -523,7 +527,7 @@ public class Rule {
         if (isStructureRuleBySceneName()) {
             final String structureName = text.substring(1, text.lastIndexOf("'"));
             return visible
-                    && searchType == STRUCTURE_SCENE_NAME_BASED
+                    && searchType == STRUCTURE_BY_SCENE_NAME
                     && structureName.equalsIgnoreCase(name.trim());
         }
         return false;
@@ -531,9 +535,10 @@ public class Rule {
 
     /**
      * @param name
-     *         lineage name of a cell body
+     *         lineage name of the cell to check
      *
-     * @return true if the rule is visible and applies to cell body with specified name, false otherwise
+     * @return true if the rule is visible, applies to a cell body, and applies to the cell with the input name, false
+     * otherwise
      */
     public boolean appliesToCellBody(final String name) {
         if (!visible || !options.contains(CELL_BODY)) {
@@ -578,7 +583,7 @@ public class Rule {
                 editStage.hide();
                 // because the multicellular name based rule is not a check option, we need to override this function
                 // to avoid overwriting the multicellular search option
-                if (searchType != STRUCTURE_SCENE_NAME_BASED) {
+                if (searchType != STRUCTURE_BY_SCENE_NAME) {
                     setOptions(editController.getOptions());
                 }
                 label.setText(toStringFull());

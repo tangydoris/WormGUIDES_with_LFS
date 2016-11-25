@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.util;
 
 import java.util.List;
@@ -170,7 +174,7 @@ public class URLGenerator {
                     case FUNCTIONAL:
                         builder.append("-n");
                         break;
-                    case MULTICELLULAR_CELL_BASED:
+                    case MULTICELLULAR_STRUCTURE_BY_CELLS:
                         builder.append("-m");
                         break;
                     case GENE:
@@ -255,10 +259,10 @@ public class URLGenerator {
                 case NEIGHBOR:
                     builder.append("-b");
                     break;
-                case MULTICELLULAR_CELL_BASED:
+                case MULTICELLULAR_STRUCTURE_BY_CELLS:
                     builder.append("-m");
                     break;
-                case STRUCTURE_SCENE_NAME_BASED:
+                case STRUCTURE_BY_SCENE_NAME:
                     builder.append("-M");
                     break;
                 default:

@@ -2,14 +2,6 @@
  * Bao Lab 2016
  */
 
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
 package wormguides.loaders;
 
 import java.io.BufferedReader;
@@ -54,7 +46,8 @@ public class GeometryLoader {
         final String objFileName = requireNonNull(resourceName).substring(resourceName.lastIndexOf("/") + 1);
         final URL url = MainApp.class.getResource(ARCHIVE_PATH);
 
-        try (final ZipFile zipFile = new ZipFile(url.getFile())) {
+        try {
+            final ZipFile zipFile = new ZipFile(url.getFile());
             ZipEntry entry = zipFile.getEntry(objFileName + ".obj");
             // check for obj file with no time specified
             if (entry != null) {
@@ -94,7 +87,8 @@ public class GeometryLoader {
             final List<double[]> coords = new ArrayList<>();
             final List<int[]> faces = new ArrayList<>();
 
-            try (final ZipFile zipFile = new ZipFile(url.getFile())) {
+            try {
+                final ZipFile zipFile = new ZipFile(url.getFile());
                 final ZipEntry entry = zipFile.getEntry(objFileName);
 
                 if (entry != null) {

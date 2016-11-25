@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package search;
 
 /**
@@ -29,10 +33,10 @@ public enum SearchType {
     CONNECTOME("Connectome"),
 
     /** Search for cells contained in specified multicellular structure(s) */
-    MULTICELLULAR_CELL_BASED("Multicellular Structure Cells"),
+    MULTICELLULAR_STRUCTURE_BY_CELLS("Multicellular Structure Cells"),
 
     /** Search structure(s) with a specified scene name */
-    STRUCTURE_SCENE_NAME_BASED("Structure Scene Name"),
+    STRUCTURE_BY_SCENE_NAME("Structure Scene Name"),
 
     /** Search for the neighboring cells of the cell with a specified lineage name */
     NEIGHBOR("Neighbor");
