@@ -4,7 +4,6 @@
 
 package wormguides.models;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,7 @@ import java.util.Map;
 import javafx.scene.control.TreeItem;
 
 import static java.lang.Integer.parseInt;
+import static java.util.Arrays.asList;
 
 /**
  * Tree containing the lineage of the underlying embryo.
@@ -23,9 +23,9 @@ public class LineageTree {
 
     private static boolean isSulstonMode;
 
-    private List<String> treeBaseNames;
+    private final String[] allCellNames;
 
-    private String[] allCellNames;
+    private List<String> treeBaseNames;
 
     private TreeItem<String> root;
     private TreeItem<String> ab;
@@ -45,7 +45,7 @@ public class LineageTree {
         if (isSulstonMode) {
             root = new TreeItem<>("P0");
             // names of the cell added to tree upon initialization
-            treeBaseNames = Arrays.asList(
+            treeBaseNames = asList(
                     "p0",
                     "ab",
                     "aba",
@@ -123,6 +123,23 @@ public class LineageTree {
     }
 
     /**
+     * Adds tree nodes for all cells in 'allCellNames'
+     */
+    private void addAllCells() {
+        for (String name : allCellNames) {
+            if (isSulstonMode) {
+                if (treeBaseNames.contains(name.toLowerCase())) {
+                    continue;
+                }
+            }
+            if (name.toLowerCase().startsWith("nuc")) {
+                continue;
+            }
+            addCell(name);
+        }
+    }
+
+    /**
      * @param name
      *         the name to check
      *
@@ -144,7 +161,7 @@ public class LineageTree {
      *
      * @return true if 'ancestor' is the ancestor of 'descendant', false otherwise
      */
-    public static boolean isAncestor(String ancestor, String descendant) {
+    public static boolean isAncestor(final String ancestor, final String descendant) {
         return isDescendant(descendant, ancestor);
     }
 
@@ -215,23 +232,6 @@ public class LineageTree {
 
     public TreeItem<String> getRoot() {
         return root;
-    }
-
-    /**
-     * Adds tree nodes for all cells in 'allCellNames'
-     */
-    private void addAllCells() {
-        for (String name : allCellNames) {
-            if (isSulstonMode) {
-                if (treeBaseNames.contains(name.toLowerCase())) {
-                    continue;
-                }
-            }
-            if (name.toLowerCase().startsWith("nuc")) {
-                continue;
-            }
-            addCell(name);
-        }
     }
 
     /**
