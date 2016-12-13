@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.layers;
 
 import java.io.File;
@@ -9,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
@@ -20,7 +25,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -51,6 +55,11 @@ import static java.lang.Integer.MIN_VALUE;
 import static java.util.Objects.requireNonNull;
 
 import static javafx.collections.FXCollections.observableArrayList;
+import static javafx.geometry.Insets.EMPTY;
+import static javafx.geometry.Orientation.HORIZONTAL;
+import static javafx.scene.paint.Color.BLACK;
+import static javafx.scene.paint.Color.GREY;
+import static javafx.scene.paint.Color.WHITE;
 import static javafx.scene.text.FontSmoothingType.LCD;
 import static javafx.stage.Modality.NONE;
 
@@ -113,6 +122,7 @@ public class StoriesLayer {
             final Stage parentStage,
             final SearchLayer searchLayer,
             final SceneElementsList elementsList,
+            final ListView<Story> storiesListView,
             final ObservableList<Rule> rulesList,
             final StringProperty activeCellNameProperty,
             final StringProperty activeStoryProperty,
@@ -167,7 +177,6 @@ public class StoriesLayer {
         stories = observableArrayList(story -> new Observable[]{
                 story.getChangedProperty(),
                 story.getActiveProperty()});
-        // TODO look into this...
         stories.addListener(new ListChangeListener<Story>() {
             @Override
             public void onChanged(Change<? extends Story> c) {
@@ -219,6 +228,66 @@ public class StoriesLayer {
 
         // makes lim-4 story on default embryo, template otherwise
         setActiveStory(stories.get(0));
+
+        requireNonNull(storiesListView);
+        storiesListView.setItems(stories);
+        storiesListView.setCellFactory(getStoryCellFactory());
+        storiesListView.widthProperty().addListener(getListViewWidthListener());
+    }
+
+    /**
+     * @return the callback that is the renderer for a {@link Story} item. It graphically renders an active story
+     * with black text and an inactive one with grey text. For an active story, its notes are also rendered beneath
+     * the story title and description.
+     */
+    private Callback<ListView<Story>, ListCell<Story>> getStoryCellFactory() {
+        return new Callback<ListView<Story>, ListCell<Story>>() {
+            @Override
+            public ListCell<Story> call(ListView<Story> param) {
+                final ListCell<Story> cell = new ListCell<Story>() {
+                    @Override
+                    protected void updateItem(Story story, boolean empty) {
+                        super.updateItem(story, empty);
+                        if (!empty) {
+                            // Create story graphic
+                            final StoryListCellGraphic storyGraphic = new StoryListCellGraphic(story, width);
+                            // Add list view for notes inside story graphic
+                            if (story.isActive()) {
+                                for (Note note : story.getNotes()) {
+                                    NoteListCellGraphic noteGraphic = new NoteListCellGraphic(note);
+                                    storyGraphic.getChildren().add(noteGraphic);
+
+                                }
+                            }
+                            final Separator s = new Separator(HORIZONTAL);
+                            s.setFocusTraversable(false);
+                            s.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
+                            storyGraphic.getChildren().add(s);
+                            setGraphic(storyGraphic);
+                        } else {
+                            setGraphic(null);
+                        }
+                        setStyle("-fx-background-color: transparent;");
+                        setPadding(EMPTY);
+                    }
+                };
+                return cell;
+            }
+        };
+    }
+
+    /**
+     * Used for sizing the widths each story item in the list view (May not be
+     * used/ is deprecated)
+     *
+     * @return A {@link ChangeListener} that listens to the change in the
+     * 'Stories' tab {@link ListView} viewport
+     */
+    private ChangeListener<Number> getListViewWidthListener() {
+        return (observable, oldValue, newValue) -> {
+            // subtract off list view border and/or padding
+            width = observable.getValue().doubleValue() - 2;
+        };
     }
 
     /**
@@ -553,7 +622,7 @@ public class StoriesLayer {
      *
      * @return the comments of the note whose tag name is specified by the input parameter
      */
-    public String getNoteComments(String tagName) {
+    public String getNoteComments(final String tagName) {
         String comments = "";
         for (Story story : stories) {
             if (!story.getNoteComment(tagName).isEmpty()) {
@@ -564,9 +633,11 @@ public class StoriesLayer {
         return comments;
     }
 
-    public ArrayList<Note> getNotesWithEntity() {
+    public List<Note> getNotesWithEntity() {
         ArrayList<Note> notes = new ArrayList<>();
-        stories.stream().filter(Story::isActive).forEachOrdered(story -> notes.addAll(story.getNotesWithEntity()));
+        stories.stream()
+                .filter(Story::isActive)
+                .forEachOrdered(story -> notes.addAll(story.getNotesWithEntity()));
         return notes;
     }
 
@@ -577,28 +648,26 @@ public class StoriesLayer {
      * @return all notes that can exist at the at input time. This includes notes attached to an entity if entity is
      * present at input time. These notes are later filtered out.
      */
-    public ArrayList<Note> getNotesAtTime(int time) {
-        ArrayList<Note> notes = new ArrayList<>();
-
+    public List<Note> getNotesAtTime(final int time) {
+        final List<Note> notes = new ArrayList<>();
         stories.stream()
                 .filter(Story::isActive)
                 .forEachOrdered(story -> notes.addAll(story.getPossibleNotesAtTime(time)));
 
         if (!notes.isEmpty()) {
-            Iterator<Note> iter = notes.iterator();
+            final Iterator<Note> iter = notes.iterator();
             Note note;
             while (iter.hasNext()) {
                 note = iter.next();
-
                 int effectiveStart = getEffectiveStartTime(note);
                 int effectiveEnd = getEffectiveEndTime(note);
-                if (effectiveStart != MIN_VALUE && effectiveEnd != MIN_VALUE
+                if (effectiveStart != MIN_VALUE
+                        && effectiveEnd != MIN_VALUE
                         && (time < effectiveStart || effectiveEnd < time)) {
                     iter.remove();
                 }
             }
         }
-
         return notes;
     }
 
@@ -607,20 +676,6 @@ public class StoriesLayer {
      */
     public ObservableList<Story> getStories() {
         return stories;
-    }
-
-    /**
-     * Used for sizing the widths each story item in the list view (May not be
-     * used/ is deprecated)
-     *
-     * @return A {@link ChangeListener} that listens to the change in the
-     * 'Stories' tab {@link ListView} viewport
-     */
-    public ChangeListener<Number> getListViewWidthListener() {
-        return (observable, oldValue, newValue) -> {
-            // subtract off list view border and/or padding
-            width = observable.getValue().doubleValue() - 2;
-        };
     }
 
     /**
@@ -662,9 +717,7 @@ public class StoriesLayer {
                 editStage.initModality(NONE);
                 editStage.setResizable(true);
 
-                editStage.setOnCloseRequest(event -> {
-                    rebuildSubsceneFlag.set(true);
-                });
+                editStage.setOnCloseRequest(event -> rebuildSubsceneFlag.set(true));
 
                 editController.getNoteCreatedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue) {
@@ -695,52 +748,6 @@ public class StoriesLayer {
 
         editStage.show();
         editStage.toFront();
-    }
-
-    /**
-     * @return the callback that is the renderer for a {@link Story} item. It graphically renders an active story
-     * with black text and an inactive one with grey text. For an active story, its notes are also rendered beneath
-     * the story title and description.
-     */
-    public Callback<ListView<Story>, ListCell<Story>> getStoryCellFactory() {
-        return new Callback<ListView<Story>, ListCell<Story>>() {
-            @Override
-            public ListCell<Story> call(ListView<Story> param) {
-                ListCell<Story> cell = new ListCell<Story>() {
-                    @Override
-                    protected void updateItem(Story story, boolean empty) {
-                        super.updateItem(story, empty);
-
-                        if (!empty) {
-                            // Create story graphic
-                            StoryListCellGraphic storyGraphic = new StoryListCellGraphic(story, width);
-
-                            // Add list view for notes inside story graphic
-                            if (story.isActive()) {
-                                for (Note note : story.getNotes()) {
-                                    NoteListCellGraphic noteGraphic = new NoteListCellGraphic(note);
-                                    storyGraphic.getChildren().add(noteGraphic);
-
-                                }
-                            }
-
-                            Separator s = new Separator(Orientation.HORIZONTAL);
-                            s.setFocusTraversable(false);
-                            s.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
-                            storyGraphic.getChildren().add(s);
-
-                            setGraphic(storyGraphic);
-                        } else {
-                            setGraphic(null);
-                        }
-
-                        setStyle("-fx-background-color: transparent;");
-                        setPadding(Insets.EMPTY);
-                    }
-                };
-                return cell;
-            }
-        };
     }
 
     /**
@@ -804,7 +811,7 @@ public class StoriesLayer {
         public StoryListCellGraphic(Story story, double width) {
             super();
 
-            setPadding(Insets.EMPTY);
+            setPadding(EMPTY);
 
             setPrefWidth(width);
             setMaxWidth(width);
@@ -854,9 +861,9 @@ public class StoriesLayer {
 
         public void makeDisabled(boolean disabled) {
             if (!disabled) {
-                colorTexts(Color.BLACK, title, description);
+                colorTexts(BLACK, title, description);
             } else {
-                colorTexts(Color.GREY, title, description);
+                colorTexts(GREY, title, description);
             }
         }
     }
@@ -976,11 +983,10 @@ public class StoriesLayer {
             if (highlight) {
                 setStyle("-fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-selection-bar; "
                         + "-fx-background: -fx-accent;");
-                colorTexts(Color.WHITE, expandIcon, title, contents);
-
+                colorTexts(WHITE, expandIcon, title, contents);
             } else {
                 setStyle("-fx-background-color: white;");
-                colorTexts(Color.BLACK, expandIcon, title, contents);
+                colorTexts(BLACK, expandIcon, title, contents);
             }
         }
 

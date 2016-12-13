@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.view.infowindow;
 
 import java.util.ArrayList;
@@ -659,9 +663,7 @@ public class InfoWindowDOM {
                 linksUL.addChild(li);
             }
         }
-        /*
-         * TODO cytoshow stub
-		 */
+        // TODO cytoshow stub
         // HTMLNode liSTUB = new HTMLNode("li", "", "", "Cytoshow: [cytoshow
         // link to this cell in EM data]");
         // linksUL.addChild(liSTUB);

@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.colorrule;
 
 import java.io.IOException;
@@ -18,7 +22,6 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -32,7 +35,6 @@ import wormguides.MainApp;
 import wormguides.controllers.RuleEditorController;
 import wormguides.layers.SearchLayer;
 import wormguides.loaders.ImageLoader;
-import wormguides.util.AppFont;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
@@ -40,17 +42,21 @@ import static java.util.stream.Collectors.toList;
 
 import static javafx.application.Platform.runLater;
 import static javafx.scene.control.ContentDisplay.GRAPHIC_ONLY;
+import static javafx.scene.control.OverrunStyle.ELLIPSIS;
 import static javafx.scene.layout.HBox.setHgrow;
 import static javafx.scene.layout.Priority.ALWAYS;
+import static javafx.scene.layout.Priority.SOMETIMES;
+import static javafx.scene.paint.Color.LIGHTGREY;
 import static javafx.stage.Modality.NONE;
 
+import static search.SearchType.STRUCTURE_BY_SCENE_NAME;
 import static wormguides.models.LineageTree.isAncestor;
 import static wormguides.models.LineageTree.isDescendant;
 import static wormguides.models.colorrule.SearchOption.ANCESTOR;
 import static wormguides.models.colorrule.SearchOption.CELL_BODY;
 import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
 import static wormguides.models.colorrule.SearchOption.DESCENDANT;
-import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
+import static wormguides.util.AppFont.getFont;
 
 /**
  * This class is the color rule that determines the coloring/striping of cell, cell bodies, and multicellular
@@ -83,7 +89,6 @@ public class Rule {
     private Stage editStage;
 
     private String text;
-    private String textLowerCase;
 
     private List<SearchOption> options;
     private BooleanProperty ruleChanged;
@@ -91,6 +96,10 @@ public class Rule {
     private Color color;
 
     private List<String> cells;
+    /**
+     * True if the list of cells has been set, false otherwise. The cells list of a structure rule based on a scene
+     * name (with the search type {@link SearchType#STRUCTURE_BY_SCENE_NAME}) is never set.
+     */
     private boolean cellsSet;
 
     private RuleEditorController editController;
@@ -169,31 +178,26 @@ public class Rule {
         submitHandler = new SubmitHandler();
 
         cells = new ArrayList<>();
-        // if the cells list from SearchLayer is set for this rule, cellsSet is true
-        // is false before the list is set
         cellsSet = false;
 
         hbox.setSpacing(3);
         hbox.setPadding(new Insets(3));
         hbox.setPrefWidth(275);
-        hbox.setMinWidth(275);
-        hbox.setMaxWidth(275);
         hbox.setMinWidth(hbox.getPrefWidth());
-        hbox.setMaxWidth(hbox.getPrefWidth());
 
-        label.setFont(AppFont.getFont());
+        label.setFont(getFont());
         label.setPrefHeight(UI_SIDE_LENGTH);
         label.setMaxHeight(UI_SIDE_LENGTH);
         label.setMinHeight(UI_SIDE_LENGTH);
-        label.textOverrunProperty().set(OverrunStyle.ELLIPSIS);
-        label.setFont(AppFont.getFont());
+        setHgrow(label, ALWAYS);
+        label.textOverrunProperty().set(ELLIPSIS);
 
         final Region r = new Region();
-        setHgrow(r, ALWAYS);
+        setHgrow(r, SOMETIMES);
 
         colorRectangle.setHeight(UI_SIDE_LENGTH);
         colorRectangle.setWidth(UI_SIDE_LENGTH);
-        colorRectangle.setStroke(Color.LIGHTGREY);
+        colorRectangle.setStroke(LIGHTGREY);
         setColorButton(color);
 
         editBtn.setPrefSize(UI_SIDE_LENGTH, UI_SIDE_LENGTH);
@@ -229,7 +233,7 @@ public class Rule {
         deleteBtn.setGraphic(ImageLoader.getCloseIcon());
 
         toolTip.setText(toStringFull());
-        toolTip.setFont(AppFont.getFont());
+        toolTip.setFont(getFont());
         label.setTooltip(toolTip);
 
         hbox.getChildren().addAll(label, r, colorRectangle, editBtn, visibleBtn, deleteBtn);
@@ -305,9 +309,10 @@ public class Rule {
             editController.setAncestorsTicked(isAncestorSelected());
             editController.setDescendantsTicked(isDescendantSelected());
 
+            final String textLowerCase = text.toLowerCase();
             if (textLowerCase.contains("functional") || textLowerCase.contains("description")) {
                 editController.disableDescendantOption();
-            } else if (isMulticellularStructureRule()) {
+            } else if (isStructureRuleBySceneName()) {
                 editController.disableOptionsForStructureRule();
             }
 
@@ -322,11 +327,10 @@ public class Rule {
     }
 
     /**
-     * @return TRUE if the rule should color a multicellular structure, FALSE
-     * otherwise.
+     * @return true if the rule should color a multicellular structure, false otherwise.
      */
-    public boolean isMulticellularStructureRule() {
-        return options.contains(MULTICELLULAR_NAME_BASED);
+    public boolean isStructureRuleBySceneName() {
+        return searchType == STRUCTURE_BY_SCENE_NAME;
     }
 
     /**
@@ -396,13 +400,11 @@ public class Rule {
      */
     public void setSearchedText(String name) {
         text = name;
-        textLowerCase = name.toLowerCase();
-
         label.setText(toStringFull());
     }
 
     public String getSearchedTextLowerCase() {
-        return textLowerCase;
+        return text.toLowerCase();
     }
 
     public Color getColor() {
@@ -521,18 +523,22 @@ public class Rule {
      * @return true if the rule is visible and it applies to multicellcular structure with specified name, false
      * otherwise
      */
-    public boolean appliesToMulticellularStructure(final String name) {
-        return visible
-                && options.contains(MULTICELLULAR_NAME_BASED)
-                && text.equalsIgnoreCase(name);
-
+    public boolean appliesToStructureWithSceneName(final String name) {
+        if (isStructureRuleBySceneName()) {
+            final String structureName = text.substring(1, text.lastIndexOf("'"));
+            return visible
+                    && searchType == STRUCTURE_BY_SCENE_NAME
+                    && structureName.equalsIgnoreCase(name.trim());
+        }
+        return false;
     }
 
     /**
      * @param name
-     *         lineage name of a cell body
+     *         lineage name of the cell to check
      *
-     * @return true if the rule is visible and applies to cell body with specified name, false otherwise
+     * @return true if the rule is visible, applies to a cell body, and applies to the cell with the input name, false
+     * otherwise
      */
     public boolean appliesToCellBody(final String name) {
         if (!visible || !options.contains(CELL_BODY)) {
@@ -553,10 +559,6 @@ public class Rule {
     }
 
     /**
-     * Retrieves the search type of the rule. If the rule has the option {@link
-     * SearchOption#MULTICELLULAR_NAME_BASED}, the return value is null and the rule is a rule specific to
-     * multicellular structures (meaning the rule is defined by its name instead of by its cells).
-     *
      * @return the search type of the rule
      */
     public SearchType getSearchType() {
@@ -581,7 +583,7 @@ public class Rule {
                 editStage.hide();
                 // because the multicellular name based rule is not a check option, we need to override this function
                 // to avoid overwriting the multicellular search option
-                if (!options.contains(MULTICELLULAR_NAME_BASED)) {
+                if (searchType != STRUCTURE_BY_SCENE_NAME) {
                     setOptions(editController.getOptions());
                 }
                 label.setText(toStringFull());

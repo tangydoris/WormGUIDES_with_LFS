@@ -2,11 +2,16 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package search;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import acetree.LineageData;
@@ -212,12 +217,17 @@ public class SearchUtil {
             }
         }
         // search in comments if name does not already apply
-        if (!appliesToName) {
-            boolean appliesToComment = true;
-            final String comment = sceneElementsList.getNameToCommentsMap()
+        return appliesToName || appliesToStructureWithComment(structureName, terms);
+    }
+
+    private static boolean appliesToStructureWithComment(final String structureName, final String[] searchTerms) {
+        boolean appliesToComment = true;
+        final Map<String, String> commentsMap = sceneElementsList.getNameToCommentsMap();
+        if (commentsMap.containsKey(structureName)) {
+            final String comment = commentsMap
                     .get(structureName)
                     .toLowerCase();
-            for (String term : terms) {
+            for (String term : searchTerms) {
                 if (!comment.contains(term)) {
                     appliesToComment = false;
                     break;
@@ -225,10 +235,8 @@ public class SearchUtil {
             }
             // search does not apply to scene name, return whether it applies to the comment
             return appliesToComment;
-        } else {
-            // search applies to scene name
-            return true;
         }
+        return false;
     }
 
     /**
@@ -473,7 +481,7 @@ public class SearchUtil {
     public static int getFirstOccurenceOf(final String cellName) {
         if (lineageData != null && lineageData.isCellName(cellName)) {
             return lineageData.getFirstOccurrenceOf(cellName);
-        } else if (sceneElementsList != null && sceneElementsList.isSceneElementName(cellName)) {
+        } else if (sceneElementsList != null && sceneElementsList.isStructureSceneName(cellName)) {
             return sceneElementsList.getFirstOccurrenceOf(cellName);
         }
         return -1;
@@ -488,7 +496,7 @@ public class SearchUtil {
     public static int getLastOccurenceOf(final String cellName) {
         if (lineageData != null && lineageData.isCellName(cellName)) {
             return lineageData.getLastOccurrenceOf(cellName);
-        } else if (sceneElementsList != null && sceneElementsList.isSceneElementName(cellName)) {
+        } else if (sceneElementsList != null && sceneElementsList.isStructureSceneName(cellName)) {
             return sceneElementsList.getLastOccurrenceOf(cellName);
         }
         return -1;

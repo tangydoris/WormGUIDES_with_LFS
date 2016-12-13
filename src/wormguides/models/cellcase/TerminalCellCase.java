@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.cellcase;
 
 import java.net.URL;
@@ -111,10 +115,7 @@ public class TerminalCellCase extends CellCase {
         addLink(addWormWiringLink());
 
 
-		/*
-         * TODO
-		 * cytoshow stub
-		 */
+		// TODO cytoshow stub
         //links.add("Cytoshow: [cytoshow link to this cell in EM data]");
     }
 
@@ -443,10 +444,10 @@ public class TerminalCellCase extends CellCase {
         return homologues;
     }
 
-    /* TODO */
     private String addWormWiringLink() {
         if (functionalName != null) {
             String cell = functionalName;
+            // TODO fix something in this function (not sure what..)
             //check if N2U, n2y or n930 image series
 //			boolean N2U = true;
 //			boolean N2Y = false;

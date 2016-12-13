@@ -11,12 +11,23 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import javafx.scene.control.TreeItem;
+
+import acetree.LineageData;
+import wormguides.MainApp;
+
 import static java.lang.Integer.MIN_VALUE;
+import static java.lang.Integer.parseInt;
+import static java.util.Collections.sort;
+
+import static wormguides.loaders.GeometryLoader.doesResourceExist;
 
 /**
  * Record of {@link SceneElement}s over the life of the embryo
@@ -26,78 +37,170 @@ public class SceneElementsList {
     private final String CELL_CONFIG_FILE_NAME = "CellShapesConfig.csv";
     private final String ASTERISK = "*";
 
+    private final int NUM_OF_CSV_FIELDS = 8;
+    private final int DESCRIPTION_INDEX = 0;
+    private final int CELLS_INDEX = 1;
+    private final int MARKER_INDEX = 2;
+    private final int IMAGING_SOURCE_INDEX = 3;
+    private final int RESOURCE_LOCATION_INDEX = 4;
+    private final int START_TIME_INDEX = 5;
+    private final int END_TIME_INDEX = 6;
+    private final int COMMENTS_INDEX = 7;
+
     private final List<SceneElement> elementsList;
+    private final TreeItem<StructureTreeNode> root;
+
     private final Map<String, List<String>> nameCellsMap;
     private final Map<String, String> nameCommentsMap;
 
-    // this will eventually be constructed using a .txt file that contains the
-    // Scene Element information for the embryo
-    public SceneElementsList() {
+    public SceneElementsList(final LineageData lineageData) {
         elementsList = new ArrayList<>();
+        root = new TreeItem<>(new StructureTreeNode(true, "root"));
         nameCellsMap = new HashMap<>();
         nameCommentsMap = new HashMap<>();
-        buildListFromConfig();
+        buildListFromConfig(lineageData);
     }
 
-    public boolean isSceneElementName(final String name) {
+    private void buildListFromConfig(final LineageData lineageData) {
+        final URL url = MainApp.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
+        if (url != null) {
+            try {
+                final InputStream stream = url.openStream();
+                processStream(stream, lineageData);
+                processCells();
+                stream.close();
+            } catch (IOException e) {
+                System.out.println("Config file '" + CELL_CONFIG_FILE_NAME + "' was not found.");
+            }
+        }
+    }
+
+    /**
+     * @param name
+     *         the name to check
+     *
+     * @return true if the name is the scene name of a structure, false otherwise
+     */
+    public boolean isStructureSceneName(String name) {
+        name = name.trim().toLowerCase();
         for (SceneElement se : elementsList) {
-            if (se.getSceneName().equalsIgnoreCase(name)) {
+            if (se.getSceneName().toLowerCase().equals(name)) {
                 return true;
             }
         }
         return false;
     }
 
-    private void buildListFromConfig() {
-        final URL url = SceneElementsList.class.getResource("/wormguides/models/shapes_file/" + CELL_CONFIG_FILE_NAME);
-        if (url != null) {
-            try (InputStream stream = url.openStream()) {
-                processStreamString(stream);
-                processCells();
-            } catch (IOException e) {
-                System.out.println("The config file '" + CELL_CONFIG_FILE_NAME + "' wasn't found on the system.");
-            }
-        }
-    }
-
-    private void processStreamString(final InputStream stream) {
-        try (InputStreamReader streamReader = new InputStreamReader(stream);
-             BufferedReader reader = new BufferedReader(streamReader)) {
+    private void processStream(final InputStream stream, final LineageData lineageData) {
+        try {
+            final InputStreamReader streamReader = new InputStreamReader(stream);
+            final BufferedReader reader = new BufferedReader(streamReader);
 
             // skip csv file heading
             reader.readLine();
 
             String line;
+            String name;
+            String lineageName;
+            String resourceLocation;
+            int startTime;
+            int endTime;
+            List<String> cellNames = new ArrayList<>();
+            StringTokenizer cellNamesTokenizer;
+            TreeItem<StructureTreeNode> currentCategoryNode = root;
             // process each line
             while ((line = reader.readLine()) != null) {
-                String[] splits = line.split(",", 8);
+                final String[] tokens = line.split(",", NUM_OF_CSV_FIELDS);
+                name = tokens[DESCRIPTION_INDEX];
+                if (isCategoryLine(tokens)) {
+                    // add cetegory to tree
+                    if (name.equalsIgnoreCase(currentCategoryNode.getValue().getNodeText())) {
+                        // the ending of a category
+                        currentCategoryNode = currentCategoryNode.getParent();
+                    } else {
+                        final TreeItem<StructureTreeNode> newTreeNode = new TreeItem<>(new StructureTreeNode(
+                                true,
+                                name));
+                        currentCategoryNode.getChildren().add(newTreeNode);
+                        currentCategoryNode = newTreeNode;
+                    }
+                } else {
+                    // add structure (leaf node) to tree
+                    // build scene element if resource exists, structure is not added if not
 
-                // BUIILD SCENE ELEMENT
-                // vector of cell names
-                ArrayList<String> cellNames = new ArrayList<>();
-                StringTokenizer st = new StringTokenizer(splits[1]);
-                while (st.hasMoreTokens()) {
-                    cellNames.add(st.nextToken());
-                }
+                    try {
+                        resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
+                        startTime = parseInt(tokens[START_TIME_INDEX]);
+                        endTime = parseInt(tokens[END_TIME_INDEX]);
 
-                try {
-                    SceneElement se = new SceneElement(// objEntries,
-                            splits[0], cellNames, splits[2], splits[3], splits[4], Integer.parseInt(splits[5]),
-                            Integer.parseInt(splits[6]), splits[7]);
+                        if (doesResourceExist(resourceLocation, startTime, endTime)) {
+                            // vector of cell names
+                            cellNames = new ArrayList<>();
+                            cellNamesTokenizer = new StringTokenizer(tokens[CELLS_INDEX]);
+                            while (cellNamesTokenizer.hasMoreTokens()) {
+                                cellNames.add(cellNamesTokenizer.nextToken());
+                            }
 
-                    // add scene element to list
-                    elementsList.add(se);
-                    addComments(se);
+                            lineageName = name;
+                            if (name.contains("(")) {
+                                lineageName = name.substring(0, name.indexOf("(")).trim();
+                            }
+                            if (lineageData.isCellName(lineageName)) {
+                                int effectiveStartTime = lineageData.getFirstOccurrenceOf(lineageName);
+                                int effectiveEndTime = lineageData.getLastOccurrenceOf(lineageName);
+                                // use the later one of the config start time and the effective lineage start time
+                                startTime = effectiveStartTime > startTime ? effectiveStartTime : startTime;
+                                // use the earlier one of the config start time and the effective lineage start time
+                                endTime = effectiveEndTime < endTime ? effectiveEndTime : endTime;
+                            }
 
-                } catch (NumberFormatException e) {
-                    System.out.println("error in reading scene element time for line " + line);
+                            // this is extremely slow with the experimental shapes:
+                            // check to see if resource exists in the shape files archive
+                            // only create a scene element if it does
+                            final SceneElement element = new SceneElement(
+                                    name,
+                                    cellNames,
+                                    tokens[MARKER_INDEX],
+                                    tokens[IMAGING_SOURCE_INDEX],
+                                    resourceLocation,
+                                    startTime,
+                                    endTime,
+                                    tokens[COMMENTS_INDEX]);
+                            addSceneElement(element);
+                            if (!element.getComments().isEmpty()) {
+                                nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
+                            }
+                            // insert structure into tree
+                            currentCategoryNode.getChildren().add(
+                                    new TreeItem<>(new StructureTreeNode(false, element.getSceneName())));
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("error in reading scene element time for line " + line);
+                    }
                 }
             }
-
-            reader.close();
+            streamReader.close();
         } catch (IOException e) {
             System.out.println("Invalid file: '" + CELL_CONFIG_FILE_NAME);
         }
+    }
+
+    /**
+     * @param tokens
+     *         tokens read from one line of the CSV config file
+     *
+     * @return true if the line is a category header/footer, false otherwise
+     */
+    private boolean isCategoryLine(final String[] tokens) {
+        if (tokens.length == NUM_OF_CSV_FIELDS && !tokens[DESCRIPTION_INDEX].isEmpty()) {
+            boolean isCategoryLine = true;
+            // check that all other fields are empty
+            for (int i = 1; i < NUM_OF_CSV_FIELDS; i++) {
+                isCategoryLine &= tokens[i].isEmpty();
+            }
+            return isCategoryLine;
+        }
+        return false;
     }
 
     /*
@@ -105,10 +208,6 @@ public class SceneElementsList {
      * which reference other scene elements' cell list
      */
     private void processCells() {
-        if (elementsList == null) {
-            return;
-        }
-
         for (SceneElement se : elementsList) {
             List<String> cells = se.getAllCells();
             for (int i = 0; i < cells.size(); i++) {
@@ -167,22 +266,21 @@ public class SceneElementsList {
         return time + 1;
     }
 
-    private void addComments(SceneElement element) {
-        if (element != null && element.isMulticellular()) {
-            nameCommentsMap.put(element.getSceneName().toLowerCase(), element.getComments());
-        }
-    }
-
+    /**
+     * Adds a scene element to the data store.
+     *
+     * @param element
+     *         the scene element to add
+     */
     public void addSceneElement(final SceneElement element) {
         if (element != null) {
             elementsList.add(element);
         }
-        addComments(element);
     }
 
     public String[] getSceneElementNamesAtTime(final int time) {
         // Add lineage names of all structures at time
-        List<String> list = new ArrayList<>();
+        final List<String> list = new ArrayList<>();
         elementsList.stream().filter(se -> se.existsAtTime(time)).forEachOrdered(se -> {
             if (se.isMulticellular()) {
                 list.add(se.getSceneName());
@@ -200,29 +298,23 @@ public class SceneElementsList {
         return sceneElements;
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("Scene elements list:\n");
-        for (SceneElement se : elementsList) {
-            sb.append(se.getSceneName()).append("\n");
-        }
-        return sb.toString();
+    public List<String> getAllSceneNames() {
+        final Set<String> namesSet = new HashSet<>();
+        elementsList.stream()
+                .forEachOrdered(se -> namesSet.add(se.getSceneName()));
+        final List<String> namesSorted = new ArrayList<>(namesSet);
+        sort(namesSorted);
+        return namesSorted;
     }
 
     public List<String> getAllMulticellSceneNames() {
-        final List<String> names = new ArrayList<>();
+        final Set<String> namesSet = new HashSet<>();
         elementsList.stream()
-                .filter(se -> se.isMulticellular() && !names.contains(se.getSceneName()))
-                .forEachOrdered(se -> names.add(se.getSceneName()));
-        return names;
-    }
-
-    public List<SceneElement> getMulticellSceneElements() {
-        final List<SceneElement> elements = new ArrayList<>();
-        elementsList.stream()
-                .filter(se -> se.isMulticellular() && !elements.contains(se))
-                .forEachOrdered(elements::add);
-        return elements;
+                .filter(SceneElement::isMulticellular)
+                .forEachOrdered(se -> namesSet.add(se.getSceneName()));
+        final List<String> namesSorted = new ArrayList<>(namesSet);
+        sort(namesSorted);
+        return namesSorted;
     }
 
     public boolean isMulticellStructureName(String name) {
@@ -253,5 +345,21 @@ public class SceneElementsList {
 
     public List<SceneElement> getElementsList() {
         return elementsList;
+    }
+
+    /**
+     * @return the root of the hierarchy structures tree
+     */
+    public TreeItem<StructureTreeNode> getTreeRoot() {
+        return root;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Scene elements list:\n");
+        for (SceneElement se : elementsList) {
+            sb.append(se.getSceneName()).append("\n");
+        }
+        return sb.toString();
     }
 }

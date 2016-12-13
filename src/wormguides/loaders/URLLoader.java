@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.loaders;
 
 import java.util.ArrayList;
@@ -26,14 +30,13 @@ import static search.SearchType.CONNECTOME;
 import static search.SearchType.DESCRIPTION;
 import static search.SearchType.FUNCTIONAL;
 import static search.SearchType.LINEAGE;
-import static search.SearchType.MULTICELLULAR_CELL_BASED;
+import static search.SearchType.MULTICELLULAR_STRUCTURE_BY_CELLS;
 import static search.SearchType.NEIGHBOR;
 import static search.SearchUtil.isGeneFormat;
 import static wormguides.models.colorrule.SearchOption.ANCESTOR;
 import static wormguides.models.colorrule.SearchOption.CELL_BODY;
 import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
 import static wormguides.models.colorrule.SearchOption.DESCENDANT;
-import static wormguides.models.colorrule.SearchOption.MULTICELLULAR_NAME_BASED;
 
 public class URLLoader {
 
@@ -119,9 +122,13 @@ public class URLLoader {
 
     /**
      * Parses a list of rules and adds each to the application's active rules list
-     * @param ruleStrings the string representations of rules
-     * @param rulesList the observable rules list
-     * @param searchLayer the search layer to add color rules
+     *
+     * @param ruleStrings
+     *         the string representations of rules
+     * @param rulesList
+     *         the observable rules list
+     * @param searchLayer
+     *         the search layer to add color rules
      */
     private static void parseRules(
             final List<String> ruleStrings,
@@ -129,19 +136,16 @@ public class URLLoader {
             final SearchLayer searchLayer) {
         rulesList.clear();
 
-        List<String> types;
+        final List<String> types = new ArrayList<>();
+        final List<SearchOption> options = new ArrayList<>();
         StringBuilder sb;
         boolean noTypeSpecified;
-        boolean isMulticellStructureRule;
-        List<SearchOption> options;
         String colorString;
         String name;
         for (String ruleString : ruleStrings) {
-            types = new ArrayList<>();
+            types.clear();
             sb = new StringBuilder(ruleString);
-            noTypeSpecified = true;
-            isMulticellStructureRule = false;
-
+            noTypeSpecified = false;
             // determine if rule is a cell/cellbody rule, or a multicelllar structure rule
             try {
                 // multicellular structure rules have a null SearchType
@@ -162,9 +166,13 @@ public class URLLoader {
                 if (sb.indexOf("-g") > -1) {
                     types.add("-g");
                 }
-                // multicell
+                // multicellular structure cell-based
                 if (sb.indexOf("-m") > -1) {
                     types.add("-m");
+                }
+                // structure name-based
+                if (sb.indexOf("-M") > -1) {
+                    types.add("-M");
                 }
                 // connectome
                 if (sb.indexOf("-c") > -1) {
@@ -175,12 +183,14 @@ public class URLLoader {
                     types.add("-b");
                 }
 
+                // remove type arguments from url string
                 if (!types.isEmpty()) {
-                    noTypeSpecified = false;
                     for (String arg : types) {
                         int i = sb.indexOf(arg);
                         sb.replace(i, i + 2, "");
                     }
+                } else {
+                    noTypeSpecified = true;
                 }
 
                 colorString = "";
@@ -190,89 +200,78 @@ public class URLLoader {
                     colorString = sb.substring(sb.indexOf("+%23ff") + 6);
                 }
 
-                options = new ArrayList<>();
-                if (noTypeSpecified && sb.indexOf("-M") > -1) {
-                    isMulticellStructureRule = true;
-                    options.add(MULTICELLULAR_NAME_BASED);
-                    int i = sb.indexOf("-M");
-                    sb.replace(i, i + 2, "");
-                } else {
-                    int i;
-                    if (sb.indexOf("%3C") > -1) {
-                        options.add(ANCESTOR);
-                        i = sb.indexOf("%3C");
-                        sb.replace(i, i + 3, "");
-                    } else if (sb.indexOf(">") > -1) {
-                        options.add(ANCESTOR);
-                        i = sb.indexOf(">");
-                        sb.replace(i, i + 1, "");
-                    }
-                    if (sb.indexOf("$") > -1) {
-                        options.add(CELL_NUCLEUS);
-                        i = sb.indexOf("$");
-                        sb.replace(i, i + 1, "");
-                    }
-                    if (ruleString.contains("%3E")) {
-                        options.add(DESCENDANT);
-                        i = sb.indexOf("%3E");
-                        sb.replace(i, i + 3, "");
-                    }
-                    if (sb.indexOf("<") > -1) {
-                        options.add(DESCENDANT);
-                        i = sb.indexOf("<");
-                        sb.replace(i, i + 1, "");
-                    }
-                    if (sb.indexOf("@") > -1) {
-                        options.add(CELL_BODY);
-                        i = sb.indexOf("@");
-                        sb.replace(i, i + 1, "");
-                    }
+                options.clear();
+                int i;
+                if (sb.indexOf("%3C") > -1) {
+                    options.add(ANCESTOR);
+                    i = sb.indexOf("%3C");
+                    sb.replace(i, i + 3, "");
+                } else if (sb.indexOf(">") > -1) {
+                    options.add(ANCESTOR);
+                    i = sb.indexOf(">");
+                    sb.replace(i, i + 1, "");
+                }
+                if (sb.indexOf("$") > -1) {
+                    options.add(CELL_NUCLEUS);
+                    i = sb.indexOf("$");
+                    sb.replace(i, i + 1, "");
+                }
+                if (ruleString.contains("%3E")) {
+                    options.add(DESCENDANT);
+                    i = sb.indexOf("%3E");
+                    sb.replace(i, i + 3, "");
+                }
+                if (sb.indexOf("<") > -1) {
+                    options.add(DESCENDANT);
+                    i = sb.indexOf("<");
+                    sb.replace(i, i + 1, "");
+                }
+                if (sb.indexOf("@") > -1) {
+                    options.add(CELL_BODY);
+                    i = sb.indexOf("@");
+                    sb.replace(i, i + 1, "");
                 }
 
                 // extract name from what's left of rule
                 name = sb.substring(0, sb.indexOf("+"));
                 // add regular ColorRule
-                if (!isMulticellStructureRule) {
-                    if (types.contains("-s")) {
-                        searchLayer.addColorRule(LINEAGE, name, web(colorString), options);
-                    }
-                    if (types.contains("-n")) {
-                        searchLayer.addColorRule(FUNCTIONAL, name, web(colorString), options);
-                    }
-                    if (types.contains("-d")) {
-                        searchLayer.addColorRule(DESCRIPTION, name, web(colorString), options);
-                    }
-                    if (types.contains("-g")) {
-                        searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
-                    }
-                    if (types.contains("-m")) {
-                        searchLayer.addColorRule(
-                                MULTICELLULAR_CELL_BASED,
-                                name,
-                                web(colorString),
-                                options);
-                    }
-                    if (types.contains("-c")) {
-                        searchLayer.addColorRule(CONNECTOME, name, web(colorString), options);
-                    }
-                    if (types.contains("-b")) {
-                        searchLayer.addColorRule(NEIGHBOR, name, web(colorString), options);
-                    }
-                    // if no type present, default is systematic
-                    if (noTypeSpecified) {
-                        if (isGeneFormat(name)) {
-                            searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
-                        } else {
-                            searchLayer.addColorRule(LINEAGE, name, web(colorString), options);
-                        }
-                    }
-
-                } else {
-                    // add multicellular structure rule
-                    name = name.replace("=", " ");
-                    searchLayer.addMulticellularStructureRule(name, web(colorString));
+                if (types.contains("-s")) {
+                    searchLayer.addColorRule(LINEAGE, name, web(colorString), options);
+                }
+                if (types.contains("-n")) {
+                    searchLayer.addColorRule(FUNCTIONAL, name, web(colorString), options);
+                }
+                if (types.contains("-d")) {
+                    searchLayer.addColorRule(DESCRIPTION, name, web(colorString), options);
+                }
+                if (types.contains("-g")) {
+                    searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
+                }
+                if (types.contains("-m")) {
+                    searchLayer.addColorRule(
+                            MULTICELLULAR_STRUCTURE_BY_CELLS,
+                            name,
+                            web(colorString),
+                            options);
+                }
+                if (types.contains("-M")) {
+                    searchLayer.addStructureRuleBySceneName(name.replace("=", " "), web(colorString));
+                }
+                if (types.contains("-c")) {
+                    searchLayer.addColorRule(CONNECTOME, name, web(colorString), options);
+                }
+                if (types.contains("-b")) {
+                    searchLayer.addColorRule(NEIGHBOR, name, web(colorString), options);
                 }
 
+                // if no type present, default is systematic or gene
+                if (noTypeSpecified) {
+                    if (isGeneFormat(name)) {
+                        searchLayer.addGeneColorRuleFromUrl(name, web(colorString), options);
+                    } else {
+                        searchLayer.addColorRule(LINEAGE, name, web(colorString), options);
+                    }
+                }
             } catch (StringIndexOutOfBoundsException e) {
                 System.out.println("Invalid color rule format");
                 e.printStackTrace();

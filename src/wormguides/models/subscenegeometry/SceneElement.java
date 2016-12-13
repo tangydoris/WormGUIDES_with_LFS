@@ -2,6 +2,14 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.models.subscenegeometry;
 
 import java.util.ArrayList;
@@ -11,31 +19,56 @@ import java.util.List;
 import javafx.scene.shape.MeshView;
 
 import static java.lang.Character.isLetter;
+import static java.util.Objects.requireNonNull;
 
 import static wormguides.loaders.GeometryLoader.loadOBJ;
 
-/*
- * A SceneElement represents a cell body structure (uni or multicellular)
+/**
+ * A structure in the scene, whether it is uni or multicellular. This can also be an entity with a mesh rendering (that
+ * contains no cells) attached to a {@link wormguides.stories.Note}.
  */
-
 public class SceneElement {
 
-    private final String OBJ_EXT = ".obj";
-    private String sceneName; // descriptor or display of object
-    private List<String> cellNames; // cell names at time point i.e. cells
-    // involved in this scene
-    private String markerName; // used when neuron is separated from marker
-    private String embryoName; // used when based on specific embryo
-    private String imagingSource; // meta data
-    private String resourceLocation; // directory that contains the .obj files
-    // for this scene element. URL, JAR,
-    // path, web server
+    /** Descriptor or display of object */
+    private String sceneName;
+    /** Cells contained by this structure */
+    private List<String> cellNames;
+    /** Used when neuron is separated from marker */
+    private String markerName;
+    /** Used when based on specific embryo */
+    private String embryoName;
+    /** Metadata */
+    private String imagingSource;
+    /** Path to the .obj file for this structure */
+    private String resourceLocation;
     private int startTime;
     private int endTime;
     private String comments;
     private boolean completeResourceFlag;
-    private int x, y, z; // coordinates used when element belongs to a note
 
+    /** Coordinates used when element belongs to a note */
+    private int x, y, z;
+
+    /**
+     * Constructor
+     *
+     * @param sceneName
+     *         the scene name
+     * @param cellNames
+     *         the cells contained in the structure
+     * @param markerName
+     *         the marker name
+     * @param imagingSource
+     *         the imagine source
+     * @param resourceLocation
+     *         resource specifying the .obj file location
+     * @param startTime
+     *         the first time point in which this structure appears
+     * @param endTime
+     *         the last time point in which this structure appears
+     * @param comments
+     *         the structure comments
+     */
     public SceneElement(
             final String sceneName,
             final List<String> cellNames,
@@ -46,30 +79,37 @@ public class SceneElement {
             final int endTime,
             final String comments) {
 
-        this.sceneName = sceneName;
-        this.cellNames = cellNames;
-        this.markerName = markerName;
+        this.sceneName = requireNonNull(sceneName);
+        this.cellNames = requireNonNull(cellNames);
+        this.markerName = requireNonNull(markerName);
         this.embryoName = ""; // will fill this field in later?
-        this.imagingSource = imagingSource;
-        this.resourceLocation = resourceLocation;
+        this.imagingSource = requireNonNull(imagingSource);
+        this.resourceLocation = requireNonNull(resourceLocation);
+        completeResourceFlag = isResourceComplete();
+
         this.startTime = startTime;
         this.endTime = endTime;
-        this.comments = comments;
-        this.completeResourceFlag = isResourceComplete();
+        this.comments = requireNonNull(comments);
 
-        // make sure there is proper capitalization in cell names
-        // specificially "Ab" instead of "AB"
-        List<String> editedNames = new ArrayList<>();
-        Iterator<String> iter = cellNames.iterator();
+        // make sure that lineage names that start with "AB" has the proper casing
+        final List<String> editedNames = new ArrayList<>();
+        final Iterator<String> iter = cellNames.iterator();
+        final String lineagePrefix = "ab";
         String name;
+        String namePrefix;
         while (iter.hasNext()) {
             name = iter.next();
-            if (name.startsWith("Ab")) {
-                iter.remove();
-                editedNames.add("AB" + name.substring(2));
+            if (name.length() > 2) {
+                namePrefix = name.substring(0, 2);
+                if (namePrefix.startsWith(lineagePrefix)) {
+                    iter.remove();
+                    editedNames.add("AB" + name.substring(2));
+                }
             }
         }
         cellNames.addAll(editedNames);
+
+
     }
 
     // Geometry used for notes in wormguides.stories
@@ -82,6 +122,7 @@ public class SceneElement {
             final int startTime,
             final int endTime,
             final String comments) {
+
         this.sceneName = sceneName;
         this.cellNames = new ArrayList<>();
         this.cellNames.add(cellName);
@@ -99,7 +140,7 @@ public class SceneElement {
         boolean complete = true;
         if (resourceLocation != null) {
             int idx = resourceLocation.lastIndexOf(".");
-            if (idx != -1) {
+            if (idx > -1) {
                 // substring after "."
                 String extCheck = resourceLocation.substring(++idx);
                 for (int i = 0; i < extCheck.length(); i++) {
@@ -120,7 +161,7 @@ public class SceneElement {
             return loadOBJ(resourceLocation);
         }
         // append time and ext to resource location
-        return loadOBJ(resourceLocation + "_t" + time + OBJ_EXT);
+        return loadOBJ(resourceLocation + "_t" + time);
     }
 
     public void setNewCellNames(List<String> cells) {

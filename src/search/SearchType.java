@@ -2,6 +2,10 @@
  * Bao Lab 2016
  */
 
+/*
+ * Bao Lab 2016
+ */
+
 package search;
 
 /**
@@ -10,28 +14,31 @@ package search;
  */
 public enum SearchType {
 
-    /** Systematic search for the cells with the lineage name specified in the search field */
+    /** Search for cells with a specified lineage name */
     LINEAGE("Lineage"),
 
-    /** SearchLayer for cells with the functional name specified in the search field */
+    /** Search for cells with the functional name with a specified prefix */
     FUNCTIONAL("Functional"),
 
-    /** SearchLayer for cells with the PartsList description specified in the search field */
+    /** Search for cells with a specified {@link partslist.PartsList} description */
     DESCRIPTION("\"PartsList\" Description"),
 
-    /** SearchLayer for cells with the gene expression expression specified in the search field */
+    /** Search for cells with a specified gene expression using WormBase */
     GENE("Gene"),
 
     /**
-     * SearchLayer for cells with the ticked wiring(s) (pre-synaptic, post-synaptic, electrical, or neuromuscular) to the
-     * cell whose lineage name is specified in the search field.
+     * Search for cells with wirings (pre-synaptic, post-synaptic, electrical, or neuromuscular) to the
+     * cell with a specified lineage name
      */
     CONNECTOME("Connectome"),
 
-    /** SearchLayer for cells specified by the searched multicellular structure(s) */
-    MULTICELLULAR_CELL_BASED("Multicellular Structure"),
+    /** Search for cells contained in specified multicellular structure(s) */
+    MULTICELLULAR_STRUCTURE_BY_CELLS("Multicellular Structure Cells"),
 
-    /** SearchLayer for the neighboring cells with the cell whose lineage name is specified in the search field */
+    /** Search structure(s) with a specified scene name */
+    STRUCTURE_BY_SCENE_NAME("Structure Scene Name"),
+
+    /** Search for the neighboring cells of the cell with a specified lineage name */
     NEIGHBOR("Neighbor");
 
     private final String description;
@@ -46,6 +53,6 @@ public enum SearchType {
 
 	@Override
 	public String toString() {
-		return getDescription();
-	}
+        return getDescription();
+    }
 }
