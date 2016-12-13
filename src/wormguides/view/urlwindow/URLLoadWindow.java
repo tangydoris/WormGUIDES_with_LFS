@@ -20,11 +20,11 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import wormguides.loaders.ImageLoader;
-import wormguides.util.AppFont;
+
+import static wormguides.util.AppFont.getFont;
 
 public class URLLoadWindow extends AnchorPane {
 
@@ -46,12 +46,12 @@ public class URLLoadWindow extends AnchorPane {
         AnchorPane.setBottomAnchor(vBox, 10.0);
 
         label = new Label("Paste URL here:");
-        label.setFont(AppFont.getFont());
+        label.setFont(getFont());
 
         HBox fieldHBox = new HBox(10);
         field = new TextField();
         field.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
-        field.setFont(AppFont.getFont());
+        field.setFont(getFont());
         HBox.setHgrow(field, Priority.ALWAYS);
         Tooltip tt = new Tooltip("paste");
         Button pasteBtn = new Button();
@@ -78,24 +78,24 @@ public class URLLoadWindow extends AnchorPane {
         fieldHBox.getChildren().addAll(field, pasteBtn);
 
         loadBtn = new Button("Load");
+        loadBtn.setFont(getFont());
         loadBtn.setPrefWidth(70);
         loadBtn.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
         clearBtn = new Button("Clear");
+        clearBtn.setFont(getFont());
         clearBtn.setPrefWidth(70);
         clearBtn.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
         clearBtn.setOnAction(arg0 -> field.clear());
         cancelBtn = new Button("Cancel");
+        cancelBtn.setFont(getFont());
         cancelBtn.setPrefWidth(70);
         cancelBtn.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
-
-        Region r = new Region();
-        r.setPrefHeight(5);
 
         HBox hBox = new HBox(10);
         hBox.setAlignment(Pos.CENTER);
         hBox.getChildren().addAll(loadBtn, clearBtn, cancelBtn);
 
-        vBox.getChildren().addAll(label, fieldHBox, r, hBox);
+        vBox.getChildren().addAll(label, fieldHBox, hBox);
         getChildren().add(vBox);
     }
 

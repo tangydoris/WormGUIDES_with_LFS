@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import wormguides.MainApp;
+
 /**
  * Syntax rules for config file:
  * <p>
@@ -36,8 +38,7 @@ public class ProductionInfoLoader {
      * @return the 2D array
      */
     public static List<List<String>> buildProductionInfo() {
-        final URL url = ProductionInfoLoader.class
-                .getResource("/wormguides/models/production_info_file/Production_Info.csv");
+        final URL url = MainApp.class.getResource("/wormguides/models/production_info_file/Production_Info.csv");
 
         final List<List<String>> productionInfo = new ArrayList<>();
         final List<String> cells = new ArrayList<>();

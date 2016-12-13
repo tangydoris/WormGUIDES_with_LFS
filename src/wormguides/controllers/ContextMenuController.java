@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -31,19 +30,20 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import connectome.Connectome;
-import partslist.PartsList;
 import wormguides.layers.SearchLayer;
-import wormguides.models.CasesLists;
-import wormguides.models.ProductionInfo;
-import wormguides.models.Rule;
-import wormguides.models.TerminalCellCase;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.cellcase.TerminalCellCase;
+import wormguides.models.colorrule.Rule;
+import wormguides.resources.ProductionInfo;
 
 import static java.util.Objects.requireNonNull;
 
+import static javafx.application.Platform.runLater;
 import static javafx.scene.paint.Color.WHITE;
 
+import static partslist.PartsList.getFunctionalNameByLineageName;
 import static search.SearchType.GENE;
-import static wormguides.models.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
 
 /**
  * This class is the controller for the context menu that shows up on right click on a 3D entity. The menu can be
@@ -150,7 +150,7 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                             if (isCancelled()) {
                                 break;
                             }
-                            Platform.runLater(() -> {
+                            runLater(() -> {
                                 String loading = "Loading";
                                 int num = count % modulus;
                                 switch (num) {
@@ -166,7 +166,6 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                                     default:
                                         break;
                                 }
-
                                 loadingMenuItem.setText(loading);
                             });
                             try {
@@ -196,8 +195,7 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                                 System.out.println("null cell cases");
                                 return null; // error check
                             }
-
-                            String funcName = PartsList.getFunctionalNameByLineageName(cellName);
+                            String funcName = getFunctionalNameByLineageName(cellName);
                             String searchName = cellName;
                             boolean isTerminalCase = false;
                             if (funcName != null) {
@@ -212,23 +210,19 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                                             connectome.queryConnectivity(searchName, false, true, false, false, false),
                                             connectome.queryConnectivity(searchName, false, false, true, false, false),
                                             connectome.queryConnectivity(searchName, false, false, false, true, false),
-                                            ContextMenuController.this.productionInfo.getNuclearInfo(),
-                                            ContextMenuController.this.productionInfo
-
-                                                    .getCellShapeData(cellName));
+                                            productionInfo.getNuclearInfo(),
+                                            productionInfo.getCellShapeData(cellName));
                                 }
                                 return cases.getCellCase(cellName).getExpressesWORMBASE();
                             }
-
                             if (!cases.containsCellCase(searchName)) {
                                 cases.makeNonTerminalCase(
                                         searchName,
-                                        ContextMenuController.this.productionInfo.getNuclearInfo(),
-                                        ContextMenuController.this.productionInfo.getCellShapeData(cellName));
+                                        productionInfo.getNuclearInfo(),
+                                        productionInfo.getCellShapeData(cellName));
                             }
                             return cases.getCellCase(searchName).getExpressesWORMBASE();
                         }
-
                         return null;
                     }
                 };
@@ -239,23 +233,21 @@ public class ContextMenuController extends AnchorPane implements Initializable {
         expressesQueryService.setOnSucceeded(event -> {
             loadingService.cancel();
             resetLoadingMenuItem();
-            List<String> results = expressesQueryService.getValue();
+            final List<String> results = expressesQueryService.getValue();
             if (results != null) {
                 for (String result : results) {
-                    MenuItem item = new MenuItem(result);
-
+                    final MenuItem item = new MenuItem(result);
                     item.setOnAction(event12 -> {
                         final Rule rule = searchLayer.addColorRule(GENE, result, DEFAULT_COLOR, CELL_NUCLEUS);
                         rule.showEditStage(this.parentStage);
                     });
-
                     expressesMenu.getItems().add(item);
                 }
             }
         });
 
         expressesQueryService.setOnScheduled(event -> {
-            Platform.runLater(() -> expressesMenu.getItems().addAll(loadingMenuItem));
+            runLater(() -> expressesMenu.getItems().addAll(loadingMenuItem));
             loadingService.restart();
         });
 
@@ -407,7 +399,7 @@ public class ContextMenuController extends AnchorPane implements Initializable {
 
         cellName = name;
 
-        String funcName = PartsList.getFunctionalNameByLineageName(name);
+        String funcName = getFunctionalNameByLineageName(name);
         if (funcName != null) {
             name = name + " (" + funcName + ")";
         }
@@ -493,7 +485,7 @@ public class ContextMenuController extends AnchorPane implements Initializable {
      */
     private void resetLoadingMenuItem() {
         if (loadingMenuItem != null) {
-            Platform.runLater(() -> {
+            runLater(() -> {
                 if (wiredToMenu != null && wiredToMenu.getItems().contains(loadingMenuItem)) {
                     wiredToMenu.getItems().remove(loadingMenuItem);
                 } else if (expressesMenu != null && expressesMenu.getItems().contains(loadingMenuItem)) {

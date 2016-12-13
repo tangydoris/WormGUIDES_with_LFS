@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import acetree.LineageData;
-import wormguides.models.ProductionInfo;
+import wormguides.resources.ProductionInfo;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.parseInt;

@@ -16,7 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import wormguides.controllers.RootLayoutController;
-import wormguides.models.NucleiMgrAdapterResource;
+import wormguides.resources.NucleiMgrAdapterResource;
 
 import static java.time.Duration.between;
 import static java.time.Instant.now;

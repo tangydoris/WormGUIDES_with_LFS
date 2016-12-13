@@ -69,11 +69,11 @@ import wormguides.layers.SearchLayer;
 import wormguides.layers.StoriesLayer;
 import wormguides.layers.StructuresLayer;
 import wormguides.loaders.ImageLoader;
-import wormguides.models.CasesLists;
 import wormguides.models.LineageTree;
-import wormguides.models.ProductionInfo;
-import wormguides.models.Rule;
-import wormguides.models.SceneElementsList;
+import wormguides.models.cellcase.CasesLists;
+import wormguides.models.colorrule.Rule;
+import wormguides.models.subscenegeometry.SceneElementsList;
+import wormguides.resources.ProductionInfo;
 import wormguides.stories.Story;
 import wormguides.util.ColorHash;
 import wormguides.util.StringListCellFactory;
@@ -288,7 +288,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private StringProperty selectedNameProperty;
     private StringProperty selectedNameLabeledProperty;
     private StringProperty activeStoryProperty;
-    private BooleanProperty updatedGeneResultsFlag;
+    private BooleanProperty geneResultsUpdatedFlag;
     private BooleanProperty usingInternalRulesFlag;
     private BooleanProperty bringUpInfoFlag;
     private BooleanProperty playingMovieFlag;
@@ -307,6 +307,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
 
     // Other shared variables
     private ObservableList<Rule> rulesList;
+    private ObservableList<String> searchResultsList;
     private int startTime;
     private int endTime;
     private int movieTimeOffset;
@@ -316,7 +317,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private ColorHash colorHash;
     private SubScene subscene;
     private Group rootEntitiesGroup;
-    private ObservableList<String> searchResultsList;
 
     @FXML
     public void menuLoadStory() {
@@ -370,6 +370,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                     contextMenuStage,
                     contextMenuController,
                     selectedNameLabeledProperty,
+                    rebuildSubsceneFlag,
                     defaultEmbryoFlag);
             sulstonTreeStage.setScene(new Scene(sp));
             sulstonTreeStage.setTitle("LineageTree");
@@ -431,7 +432,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                                 translateXProperty,
                                 translateYProperty,
                                 zoomProperty,
-                                othersOpacityProperty);
+                                othersOpacityProperty,
+                                rebuildSubsceneFlag);
                     }
                 } else {
                     urlLoadStage.hide();
@@ -446,7 +448,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                             translateXProperty,
                             translateYProperty,
                             zoomProperty,
-                            othersOpacityProperty);
+                            othersOpacityProperty,
+                            rebuildSubsceneFlag);
                 }
             });
             urlLoadWindow.getCancelButton().setOnAction(event -> urlLoadStage.hide());
@@ -711,7 +714,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 selectedNameLabeledProperty,
                 cellClickedFlag,
                 playingMovieFlag,
-                updatedGeneResultsFlag,
+                geneResultsUpdatedFlag,
                 rebuildSubsceneFlag,
                 rulesList,
                 colorHash,
@@ -730,7 +733,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
         timeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             final int value = newValue.intValue();
             if (value != oldValue.intValue()) {
-                timeProperty.set(newValue.intValue());
+                timeProperty.set(value);
+                rebuildSubsceneFlag.set(true);
             }
         });
 
@@ -866,20 +870,20 @@ public class RootLayoutController extends BorderPane implements Initializable {
     private void setLabels() {
         timeProperty.addListener((observable, oldValue, newValue) -> {
             if (defaultEmbryoFlag) {
-                timeLabel.setText("~" + (timeProperty.get() + movieTimeOffset) + " min p.f.c.");
+                timeLabel.setText("~" + (newValue.intValue() + movieTimeOffset) + " min p.f.c.");
             } else {
-                timeLabel.setText("~" + (timeProperty.get()) + " min");
+                timeLabel.setText("~" + newValue.intValue() + " min");
             }
         });
         timeLabel.setText("~" + (timeProperty.get() + movieTimeOffset) + " min p.f.c.");
         timeLabel.toFront();
 
         totalNucleiProperty.addListener((observable, oldValue, newValue) -> {
-            String suffix = " Nuclei";
             if (newValue.intValue() == 1) {
-                suffix = " Nucleus";
+                totalNucleiLabel.setText(newValue.intValue() + " Nucleus");
+            } else {
+                totalNucleiLabel.setText(newValue.intValue() + " Nuclei");
             }
-            totalNucleiLabel.setText(newValue.intValue() + suffix);
         });
         totalNucleiLabel.setText(totalNucleiProperty.get() + " Nuclei");
         totalNucleiLabel.toFront();
@@ -919,6 +923,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         cellNucleusCheckBox.setSelected(true);
         searchLayer = new SearchLayer(
                 rulesList,
+                searchResultsList,
                 searchField,
                 sysRadioBtn,
                 funRadioBtn,
@@ -936,17 +941,16 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 ancestorCheckBox,
                 descendantCheckBox,
                 colorPicker,
-                addSearchBtn);
-        searchLayer.addDefaultColorRules();
-        searchResultsUpdateService = searchLayer.getResultsUpdateService();
-        searchResultsList = searchLayer.getSearchResultsList();
+                addSearchBtn,
+                geneResultsUpdatedFlag,
+                rebuildSubsceneFlag);
         searchResultsListView.setItems(searchResultsList);
+        searchLayer.addDefaultInternalColorRules();
+        searchResultsUpdateService = searchLayer.getResultsUpdateService();
     }
 
     private void initDisplayLayer() {
-        rulesList = observableArrayList();
-        usingInternalRulesFlag = new SimpleBooleanProperty(true);
-        displayLayer = new DisplayLayer(rulesList, usingInternalRulesFlag);
+        displayLayer = new DisplayLayer(rulesList, usingInternalRulesFlag, rebuildSubsceneFlag);
         rulesListView.setItems(rulesList);
         rulesListView.setCellFactory(displayLayer.getRuleCellFactory());
     }
@@ -960,11 +964,9 @@ public class RootLayoutController extends BorderPane implements Initializable {
                     allCellNames.remove(i--);
                 }
             }
-
             //sort the lineage names that remain
             sort(allCellNames);
         }
-
         final LineageTree lineageTree = new LineageTree(
                 allCellNames.toArray(new String[allCellNames.size()]),
                 lineageData.isSulstonMode());
@@ -979,7 +981,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 structuresSearchListView,
                 allStructuresListView,
                 addStructureRuleBtn,
-                structureRuleColorPicker);
+                structureRuleColorPicker,
+                rebuildSubsceneFlag);
         structuresLayer.addSelectedNameListener((observable, oldValue, newValue) -> {
             if (!newValue.isEmpty()) {
                 selectedNameProperty.set(newValue);
@@ -1010,6 +1013,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 newStoryButton,
                 deleteStoryButton,
                 editNoteButton,
+                startTime,
+                endTime,
                 movieTimeOffset,
                 defaultEmbryoFlag);
 
@@ -1120,6 +1125,8 @@ public class RootLayoutController extends BorderPane implements Initializable {
         // takes about 6ms
         CellDeaths.init();
 
+        initSharedVariables();
+
         // takes about 3ms
         initDisplayLayer();
 
@@ -1137,8 +1144,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
         sceneElementsList = new SceneElementsList();
         connectome = new Connectome();
 
-        initSharedVariables();
-
         initSearchLayer();
         searchLayer.initDatabases(lineageData, sceneElementsList, connectome, casesLists, productionInfo);
 
@@ -1150,7 +1155,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
         addListeners();
 
         setIcons();
-        setLabels();
 
         sizeSubscene();
         sizeInfoPane();
@@ -1158,9 +1162,12 @@ public class RootLayoutController extends BorderPane implements Initializable {
         viewTreeAction();
 
         initWindow3DController();
+
+        setLabels();
     }
 
     private void initSharedVariables() {
+        // TODO
         timeProperty = new SimpleIntegerProperty(startTime);
         totalNucleiProperty = new SimpleIntegerProperty(0);
 
@@ -1176,14 +1183,14 @@ public class RootLayoutController extends BorderPane implements Initializable {
         selectedNameLabeledProperty = new SimpleStringProperty("");
         activeStoryProperty = new SimpleStringProperty("");
 
-        cellClickedFlag = new SimpleBooleanProperty();
-        updatedGeneResultsFlag = new SimpleBooleanProperty();
-        rebuildSubsceneFlag = new SimpleBooleanProperty();
-        usingInternalRulesFlag = new SimpleBooleanProperty();
-        bringUpInfoFlag = new SimpleBooleanProperty();
-        playingMovieFlag = new SimpleBooleanProperty();
-        capturingVideoFlag = new SimpleBooleanProperty();
-        bringUpInfoFlag = new SimpleBooleanProperty();
+        cellClickedFlag = new SimpleBooleanProperty(false);
+        geneResultsUpdatedFlag = new SimpleBooleanProperty(false);
+
+        rebuildSubsceneFlag = new SimpleBooleanProperty(false);
+        usingInternalRulesFlag = new SimpleBooleanProperty(true);
+        bringUpInfoFlag = new SimpleBooleanProperty(false);
+        playingMovieFlag = new SimpleBooleanProperty(false);
+        capturingVideoFlag = new SimpleBooleanProperty(false);
 
         colorHash = new ColorHash();
         rootEntitiesGroup = new Group();
@@ -1194,6 +1201,9 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 true,
                 BALANCED);
         subscene.setFill(web(FILL_COLOR_HEX));
+
+        rulesList = observableArrayList();
+        searchResultsList = observableArrayList();
     }
 
     private void initContextMenuStage() {
