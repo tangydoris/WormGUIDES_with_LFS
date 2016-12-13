@@ -69,9 +69,9 @@ public class StoriesLayer {
     private final String TEMPLATE_STORY_NAME = "Template to Make Your Own Story";
     private final String TEMPLATE_STORY_DESCRIPTION = "Shows all segmented neurons without further annotation.";
 
-    private final double defaultViewArg = 0;
-    private final double defaultViewScale = 100;
-    private final double defaultOthersOpacity = 50;
+//    private final double defaultViewArg = 0;
+//    private final double defaultViewScale = 100;
+//    private final double defaultOthersOpacity = 50;
 
     private final Stage parentStage;
 
