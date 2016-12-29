@@ -1988,10 +1988,6 @@ public class Window3DController {
 							break;
 						}
 					}
-				} else if (sceneElement.isNoCellStructure()) {
-					if (sceneElement.getSceneName().startsWith(searchField.getText())) {
-						isMeshSearchedFlags[i] = true;
-					}
 				} else {
 					isMeshSearchedFlags[i] = localSearchResults.contains(meshNames[i]);
 				}
@@ -2003,6 +1999,16 @@ public class Window3DController {
 //				if (sceneElement.isMulticellular()) {
 //					isMeshSearchedFlags[i] = false;
 //				}
+				
+				
+				/* It probably never makes sense to include this because structures with no cells shouldn't be
+				 * highlighted via a cells search but in case it's ever needed, here's the condition
+				 */
+//				else if (sceneElement.isNoCellStructure()) {
+//					if (sceneElement.getSceneName().startsWith(searchField.getText())) {
+//						isMeshSearchedFlags[i] = true;
+//					}
+//				} 
 				
 			}
 		}
