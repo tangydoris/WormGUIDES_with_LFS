@@ -108,8 +108,6 @@ public class SceneElement {
             }
         }
         cellNames.addAll(editedNames);
-
-
     }
 
     // Geometry used for notes in wormguides.stories

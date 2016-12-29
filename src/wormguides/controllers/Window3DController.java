@@ -1461,7 +1461,7 @@ public class Window3DController {
 
 					// in search mode
 					if (isInSearchMode) {
-						// TODO highlighting is correct now, but I note that lim4_nerve_ring is paraellel with AB lineage name in meshNames and sceneElements
+						// TODO highlighting is correct now, but I note that lim4_nerve_ring is parallel with an AB lineage name in meshNames and sceneElements respectively
 						if (cellBodyTicked && !sceneElement.isMulticellular() && isMeshSearchedFlags[i]) {
 							meshView.setMaterial(colorHash.getHighlightMaterial());
 						} else {
@@ -1470,16 +1470,29 @@ public class Window3DController {
 					} else {
 						// in regular viewing mode
 						final List<String> structureCells = sceneElement.getAllCells();
+						final List<Color> colors = new ArrayList<>();
 
-						// note meshes have no cells and default to white
+						// 12/28/2016 meshes with no cells default to others opacity here because only structure rules can color them
 						if (structureCells.isEmpty()) {
-							meshView.setMaterial(new PhongMaterial(WHITE));
-							meshView.setCullFace(NONE);
+							
+							// check if any rules apply to this no-cell structure
+							boolean ruleApplies = false;
+							for (Rule rule : rulesList) {
+								if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
+									ruleApplies = true;
+									colors.add(rule.getColor());
+								}
+							}
+							
+							// if no rules for this structure, set to others opacity
+							if (!ruleApplies) {
+								meshView.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
+							}
 						} else {
 							// process rules that apply to it
-							final List<Color> colors = new ArrayList<>();
 							for (Rule rule : rulesList) {
-								/* cell nuc, cell body rules should not tag multicellular structures that contain themselves
+								/* 
+								 * cell nuc, cell body rules should not tag multicellular structures that contain themselves
 								 * so as to avoid ambiguity. To color multicellular structures, users must add explicit
 								 * structures rules
 								 */
@@ -1488,9 +1501,9 @@ public class Window3DController {
 									colors.add(rule.getColor());
 								} else if (!(structureCells.size() > 1) && rule.appliesToCellBody(structureCells.get(0))) {
 									colors.add(rule.getColor());
-								} 
+								}
 								
-								// commented out 12/28 --> this condition will color a mutlicellular structure if a single cell in struct has a rule
+								// commented out 12/28/2016 --> this condition will color a mutlicellular structure if a single cell in struct has a rule
 //								else {
 //									colors.addAll(structureCells
 //											.stream()
@@ -1499,13 +1512,13 @@ public class Window3DController {
 //											.collect(toList()));
 //								}
 							}
-							sort(colors, colorComparator);
-							// if any rules applied
-							if (!colors.isEmpty()) {
-								meshView.setMaterial(colorHash.getMaterial(colors));
-							} else {
-								meshView.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
-							}
+						}
+						sort(colors, colorComparator);
+						// if any rules applied
+						if (!colors.isEmpty()) {
+							meshView.setMaterial(colorHash.getMaterial(colors));
+						} else {
+							meshView.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
 						}
 					}
 
@@ -1523,7 +1536,6 @@ public class Window3DController {
 						// make label disappear
 						removeTransientLabel();
 					});
-
 					list.add(meshView);
 				}
 			}
@@ -1961,7 +1973,7 @@ public class Window3DController {
 			for (int i = 0; i < meshNames.length; i++) {
 				sceneElement = sceneElementsAtCurrentTime.get(i);
 				
-				// commented out 12/28 --> multicellular search on Find Cells tab shouldn't highlight the multicellular structures themselves
+				// commented out 12/28/2016 --> multicellular search on Find Cells tab shouldn't highlight the multicellular structures themselves
 //				if (sceneElement.isMulticellular()) {
 //					isMeshSearchedFlags[i] = true;
 //					for (String cell : sceneElement.getAllCells()) {
@@ -1972,7 +1984,7 @@ public class Window3DController {
 //					}
 //				}
 				
-				// Find Cells search should never highlight multicellular structures --> 12/28
+				// Find Cells search should never highlight multicellular structures --> 12/28/2016
 				if (sceneElement.isMulticellular()) {
 					isMeshSearchedFlags[i] = false;
 				} else {
