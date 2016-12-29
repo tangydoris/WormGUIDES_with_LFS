@@ -1462,7 +1462,7 @@ public class Window3DController {
 					// in search mode
 					if (isInSearchMode) {
 						// TODO highlighting is correct now, but I note that lim4_nerve_ring is parallel with an AB lineage name in meshNames and sceneElements respectively
-						if (cellBodyTicked && !sceneElement.isMulticellular() && isMeshSearchedFlags[i]) {
+						if (cellBodyTicked && isMeshSearchedFlags[i]) {
 							meshView.setMaterial(colorHash.getHighlightMaterial());
 						} else {
 							meshView.setMaterial(colorHash.getTranslucentMaterial());
@@ -1974,23 +1974,36 @@ public class Window3DController {
 			for (int i = 0; i < meshNames.length; i++) {
 				sceneElement = sceneElementsAtCurrentTime.get(i);
 				
-				// commented out 12/28/2016 --> multicellular search on Find Cells tab shouldn't highlight the multicellular structures themselves
-//				if (sceneElement.isMulticellular()) {
-//					isMeshSearchedFlags[i] = true;
-//					for (String cell : sceneElement.getAllCells()) {
-//						if (!localSearchResults.contains(cell)) {
-//							isMeshSearchedFlags[i] = false;
-//							break;
-//						}
-//					}
-//				}
-				
-				// Find Cells search should never highlight multicellular structures --> 12/28/2016
+				// ** NOT IN THIS VERSION
+				/*
+				 * commented out 12/28/2016 --> multicellular search on Find Cells tab shouldn't highlight the multicellular structures themselves
+				 */
 				if (sceneElement.isMulticellular()) {
+					System.out.println(sceneElement.getSceneName() + " is multicell and setting to true");
 					isMeshSearchedFlags[i] = false;
+					for (String cell : sceneElement.getAllCells()) {
+						if (localSearchResults.contains(cell)) {
+							isMeshSearchedFlags[i] = true;
+							System.out.println("true");
+							break;
+						}
+					}
+				} else if (sceneElement.isNoCellStructure()) {
+					if (sceneElement.getSceneName().startsWith(searchField.getText())) {
+						isMeshSearchedFlags[i] = true;
+					}
 				} else {
 					isMeshSearchedFlags[i] = localSearchResults.contains(meshNames[i]);
 				}
+				
+				/* Find Cells search should never highlight multicellular structures --> 12/28/2016
+				 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
+				 * SO HIGHLIGHTING BEHAVES THE SAME
+				 */
+//				if (sceneElement.isMulticellular()) {
+//					isMeshSearchedFlags[i] = false;
+//				}
+				
 			}
 		}
 	}
