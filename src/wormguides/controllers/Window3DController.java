@@ -76,7 +76,7 @@ import javafx.scene.transform.Translate;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
-
+import search.SearchType;
 import acetree.LineageData;
 import com.sun.javafx.scene.CameraHelper;
 import connectome.Connectome;
@@ -689,12 +689,12 @@ public class Window3DController {
 		this.searchResultsList = requireNonNull(searchResultsList);
 	}
 
-	private void initializeWithCannonicalOrientation() {
-		// set default cannonical orientations
-		rotateXAngleProperty.set(CANNONICAL_ORIENTATION_X);
-		rotateYAngleProperty.set(CANNONICAL_ORIENTATION_Y);
-		rotateZAngleProperty.set(CANNONICAL_ORIENTATION_Z);
-	}
+//	private void initializeWithCannonicalOrientation() {
+//		// set default cannonical orientations
+//		rotateXAngleProperty.set(CANNONICAL_ORIENTATION_X);
+//		rotateYAngleProperty.set(CANNONICAL_ORIENTATION_Y);
+//		rotateZAngleProperty.set(CANNONICAL_ORIENTATION_Z);
+//	}
 
 	private Group createOrientationIndicator() {
 		indicatorRotation = new Rotate();
@@ -948,7 +948,6 @@ public class Window3DController {
 						removeLabelFor(name);
 					} else {
 						if (!allLabels.contains(name)) {
-							System.out.println("adding a label wooo"); /* TODO */
 							allLabels.add(name);
 							currentLabels.add(name);
 							final Shape3D entity = getEntityWithName(name);
@@ -1277,7 +1276,6 @@ public class Window3DController {
 		currentLabels.clear();
 
 		for (String label : allLabels) {
-
 			if (defaultEmbryoFlag) {
 				for (SceneElement currentSceneElement : currentSceneElements) {
 					if (!currentLabels.contains(label)
@@ -1301,10 +1299,8 @@ public class Window3DController {
 		// Notes are indexed starting from 1 (or 1+offset shown to user)
 		if (storiesLayer != null) {
 			currentNotes.clear();
-
 			currentNoteMeshMap.clear();
 			currentGraphicNoteMap.clear();
-
 			entitySpriteMap.clear();
 			billboardFrontEntityMap.clear();
 
@@ -1467,7 +1463,7 @@ public class Window3DController {
 					if (isInSearchMode) {
 						// TODO fix incorrect cell body highlighting in search
 						if (cellBodyTicked && isMeshSearchedFlags[i]) {
-							//                            System.out.println("highlighting " + meshNames[i]);
+							// System.out.println("highlighting " + meshNames[i]);
 							meshView.setMaterial(colorHash.getHighlightMaterial());
 						} else {
 							meshView.setMaterial(colorHash.getTranslucentMaterial());
@@ -1485,9 +1481,18 @@ public class Window3DController {
 							// process rules that apply to it
 							final List<Color> colors = new ArrayList<>();
 							for (Rule rule : rulesList) {
+								/* cell nuc, cell body rules should not tag multicellular structures that contain themselves
+								 * so as to avoid ambiguity. To color multicellular structures, users must add explicit
+								 * structures rules
+								 */
+								// this is the check for whether this is an explicit structure rule
 								if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
 									colors.add(rule.getColor());
-								} else {
+								} 
+//								else if (!(structureCells.size() > 1) && rule.appliesToCellBody(structureCells.get(0))) {
+//									colors.add(rule.getColor());
+//								} 
+								else {
 									colors.addAll(structureCells
 											.stream()
 											.filter(rule::appliesToCellBody)
