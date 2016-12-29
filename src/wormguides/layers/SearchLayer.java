@@ -427,13 +427,32 @@ public class SearchLayer {
         addColorRule(FUNCTIONAL, "da4", web("0xe6b34d"), CELL_NUCLEUS);
         addColorRule(FUNCTIONAL, "da5", web("0xe6b34d"), CELL_NUCLEUS);
         
-        // added because mutlicellular structures are not colored via individual cell rules in this version
-        addStructureRuleBySceneName("lim4_bundle_left");
-        addStructureRuleBySceneName("lim4_bundle_left");
-        addStructureRuleBySceneName("lim4_bundle_right");
-        addStructureRuleBySceneName("lim4_bundle_right");
-        addStructureRuleBySceneName("lim4_nerve_ring");
-        addStructureRuleBySceneName("lim4_nerve_ring");
+        // 12/28/2016 --> added because mutlicellular structures are not colored via individual cell rules in this version
+        // TODO
+        /*
+         * I'm unclear as to how the rules here are percolated to the actual rules this that's displayed. I know that the 
+         * blank story does URL parsing to set the 4 default rules, but this is less known to me. I added these rules below
+         * and saw no difference and to test whether or not it was code that I had written today to cause the problem, I added
+         * a second rule to those above. I added another rule for siav with the same syntax and gave it a different color ond
+         * it didn't result in another siav rule in the display panel so if you remember how these rules listed above actually
+         * end up being active rules, we need those applied to these rules below to have the same default view in this version
+         * 
+         * For the blank story template to look the same as it was before, we need to add explicit structure rules that have the
+         * colors of the original view because in this version, only structure rules can color multicellular structures. I know
+         * that the 4 default rules under the story that it is initialized with are made via that URL string so if you could add
+         * the explicit structures rules that would be great. I figured that would be faster than me figuring out the syntax of
+         * the URLs and trying to make them myself because I have very little knowledge of how those work currently.
+         */
+        addStructureRuleBySceneName("lim4_bundle_left", web("0xe6ccff"));
+        addStructureRuleBySceneName("lim4_bundle_left", web("0x99b3ff"));
+        addStructureRuleBySceneName("lim4_bundle_right", web("0xe6ccff"));
+        addStructureRuleBySceneName("lim4_bundle_right", web("0x99b3ff"));
+        addStructureRuleBySceneName("lim4_nerve_ring", web("0xff9966"));
+        addStructureRuleBySceneName("lim4_nerve_ring", web("0xffe6b4"));
+        addStructureRuleBySceneName("Amphid Commissure Right", DARKSEAGREEN);
+        addStructureRuleBySceneName("Amphid Commissure Right", web("0x663366"));
+        addStructureRuleBySceneName("Amphid Commissure Left", DARKSEAGREEN);
+        addStructureRuleBySceneName("Amphid Commissure Left", web("0x663366"));
     }
 
     /**
