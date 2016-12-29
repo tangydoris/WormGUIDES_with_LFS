@@ -426,6 +426,14 @@ public class SearchLayer {
         addColorRule(FUNCTIONAL, "da3", web("0xe6b34d"), CELL_NUCLEUS);
         addColorRule(FUNCTIONAL, "da4", web("0xe6b34d"), CELL_NUCLEUS);
         addColorRule(FUNCTIONAL, "da5", web("0xe6b34d"), CELL_NUCLEUS);
+        
+        // added because mutlicellular structures are not colored via individual cell rules in this version
+        addStructureRuleBySceneName("lim4_bundle_left");
+        addStructureRuleBySceneName("lim4_bundle_left");
+        addStructureRuleBySceneName("lim4_bundle_right");
+        addStructureRuleBySceneName("lim4_bundle_right");
+        addStructureRuleBySceneName("lim4_nerve_ring");
+        addStructureRuleBySceneName("lim4_nerve_ring");
     }
 
     /**
