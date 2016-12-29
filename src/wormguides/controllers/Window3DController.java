@@ -1499,18 +1499,19 @@ public class Window3DController {
 								// this is the check for whether this is an explicit structure rule
 								if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
 									colors.add(rule.getColor());
-								} else if (!(structureCells.size() > 1) && rule.appliesToCellBody(structureCells.get(0))) {
-									colors.add(rule.getColor());
-								}
+								} 
+//								else if (!(structureCells.size() > 1) && rule.appliesToCellBody(structureCells.get(0))) {
+//									colors.add(rule.getColor());
+//								}
 								
 								// commented out 12/28/2016 --> this condition will color a mutlicellular structure if a single cell in struct has a rule
-//								else {
-//									colors.addAll(structureCells
-//											.stream()
-//											.filter(rule::appliesToCellBody)
-//											.map(name -> rule.getColor())
-//											.collect(toList()));
-//								}
+								else {
+									colors.addAll(structureCells
+											.stream()
+											.filter(rule::appliesToCellBody)
+											.map(name -> rule.getColor())
+											.collect(toList()));
+								}
 							}
 						}
 						sort(colors, colorComparator);
