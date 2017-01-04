@@ -108,8 +108,6 @@ public class SceneElement {
             }
         }
         cellNames.addAll(editedNames);
-
-
     }
 
     // Geometry used for notes in wormguides.stories
@@ -227,6 +225,10 @@ public class SceneElement {
 
     public boolean isMulticellular() {
         return cellNames.size() > 1;
+    }
+    
+    public boolean isNoCellStructure() {
+    	return cellNames.size() == 0;
     }
 
     public boolean existsAtTime(int time) {

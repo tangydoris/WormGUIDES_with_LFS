@@ -282,7 +282,7 @@ public class SceneElementsList {
         // Add lineage names of all structures at time
         final List<String> list = new ArrayList<>();
         elementsList.stream().filter(se -> se.existsAtTime(time)).forEachOrdered(se -> {
-            if (se.isMulticellular()) {
+            if (se.isMulticellular() || se.getAllCells().size() == 0) {
                 list.add(se.getSceneName());
             } else {
                 list.add(se.getAllCells().get(0));

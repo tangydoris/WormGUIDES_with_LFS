@@ -155,7 +155,10 @@ public class ColorHash {
      */
     public double getMaterialOpacity(final Material material) {
         if (material != null) {
-            return opacityHash.get(material);
+        	Double opac = opacityHash.get(material);
+        	if (opac != null) {
+        		return opacityHash.get(material);
+        	}
         }
         return 0.0;
     }

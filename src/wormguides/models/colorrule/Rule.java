@@ -544,6 +544,7 @@ public class Rule {
         if (!visible || !options.contains(CELL_BODY)) {
             return false;
         }
+        
         for (String cell : cells) {
             if (cell.equalsIgnoreCase(name)) {
                 return true;
@@ -581,6 +582,7 @@ public class Rule {
             if (editController != null) {
                 setColor(editController.getColor());
                 editStage.hide();
+                
                 // because the multicellular name based rule is not a check option, we need to override this function
                 // to avoid overwriting the multicellular search option
                 if (searchType != STRUCTURE_BY_SCENE_NAME) {
