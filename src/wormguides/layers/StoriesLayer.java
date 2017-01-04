@@ -20,12 +20,10 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -49,7 +47,6 @@ import wormguides.models.colorrule.Rule;
 import wormguides.models.subscenegeometry.SceneElementsList;
 import wormguides.stories.Note;
 import wormguides.stories.Story;
-import wormguides.util.AppFont;
 
 import static java.lang.Integer.MIN_VALUE;
 import static java.util.Objects.requireNonNull;
@@ -57,6 +54,7 @@ import static java.util.Objects.requireNonNull;
 import static javafx.collections.FXCollections.observableArrayList;
 import static javafx.geometry.Insets.EMPTY;
 import static javafx.geometry.Orientation.HORIZONTAL;
+import static javafx.geometry.Pos.CENTER_LEFT;
 import static javafx.scene.paint.Color.BLACK;
 import static javafx.scene.paint.Color.GREY;
 import static javafx.scene.paint.Color.WHITE;
@@ -67,6 +65,8 @@ import static wormguides.loaders.URLLoader.process;
 import static wormguides.stories.StoriesLoader.loadConfigFile;
 import static wormguides.stories.StoryFileUtil.loadFromCSVFile;
 import static wormguides.stories.StoryFileUtil.saveToCSVFile;
+import static wormguides.util.AppFont.getBolderFont;
+import static wormguides.util.AppFont.getFont;
 import static wormguides.util.URLGenerator.generateInternal;
 
 /**
@@ -78,10 +78,6 @@ public class StoriesLayer {
     private final String NEW_STORY_DESCRIPTION = "New story description here";
     private final String TEMPLATE_STORY_NAME = "Template to Make Your Own Story";
     private final String TEMPLATE_STORY_DESCRIPTION = "Shows all segmented neurons without further annotation.";
-
-//    private final double defaultViewArg = 0;
-//    private final double defaultViewScale = 100;
-//    private final double defaultOthersOpacity = 50;
 
     private final Stage parentStage;
 
@@ -177,12 +173,9 @@ public class StoriesLayer {
         stories = observableArrayList(story -> new Observable[]{
                 story.getChangedProperty(),
                 story.getActiveProperty()});
-        stories.addListener(new ListChangeListener<Story>() {
-            @Override
-            public void onChanged(Change<? extends Story> c) {
-                while (c.next()) {
-                    // need this listener to detect change for some reason leave this empty
-                }
+        stories.addListener((ListChangeListener<Story>) c -> {
+            while (c.next()) {
+                // need this listener to detect change for some reason leave this empty
             }
         });
 
@@ -232,7 +225,14 @@ public class StoriesLayer {
         requireNonNull(storiesListView);
         storiesListView.setItems(stories);
         storiesListView.setCellFactory(getStoryCellFactory());
-        storiesListView.widthProperty().addListener(getListViewWidthListener());
+        storiesListView.widthProperty().addListener(
+                (observable, oldValue, newValue) -> width = newValue.doubleValue() - 20);
+        storiesListView.setOnScrollStarted(event -> {
+            // ignore horizontal scrolls
+            if (event != null && event.getDeltaX() != 0) {
+                event.consume();
+            }
+        });
     }
 
     /**
@@ -249,20 +249,19 @@ public class StoriesLayer {
                     protected void updateItem(Story story, boolean empty) {
                         super.updateItem(story, empty);
                         if (!empty) {
-                            // Create story graphic
+                            // create story graphic
                             final StoryListCellGraphic storyGraphic = new StoryListCellGraphic(story, width);
-                            // Add list view for notes inside story graphic
+                            // add list view for notes inside story graphic
                             if (story.isActive()) {
                                 for (Note note : story.getNotes()) {
-                                    NoteListCellGraphic noteGraphic = new NoteListCellGraphic(note);
-                                    storyGraphic.getChildren().add(noteGraphic);
-
+                                    storyGraphic.getChildren().add(new NoteListCellGraphic(note, width));
                                 }
                             }
                             final Separator s = new Separator(HORIZONTAL);
                             s.setFocusTraversable(false);
                             s.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
                             storyGraphic.getChildren().add(s);
+
                             setGraphic(storyGraphic);
                         } else {
                             setGraphic(null);
@@ -273,20 +272,6 @@ public class StoriesLayer {
                 };
                 return cell;
             }
-        };
-    }
-
-    /**
-     * Used for sizing the widths each story item in the list view (May not be
-     * used/ is deprecated)
-     *
-     * @return A {@link ChangeListener} that listens to the change in the
-     * 'Stories' tab {@link ListView} viewport
-     */
-    private ChangeListener<Number> getListViewWidthListener() {
-        return (observable, oldValue, newValue) -> {
-            // subtract off list view border and/or padding
-            width = observable.getValue().doubleValue() - 2;
         };
     }
 
@@ -796,19 +781,16 @@ public class StoriesLayer {
     }
 
     /**
-     * This private class is the graphical representation of a {@link Story}
-     * item and a subclass of the JavaFX class {@link VBox}. It makes an
-     * inactive story become active when the title/description is clicked, and
-     * makes an active story become inactive when it is clicked. This graphical
-     * item is rendered in the {@link ListCell} of the {@link ListView} in the
-     * 'Stories' tab.
+     * Graphical representation of a {@link Story}. It makes an inactive story become active when the title/description
+     * is clicked, and makes an active story become inactive when it is clicked. This graphical item is rendered in
+     * the {@link ListCell} of the {@link ListView} in the 'Stories' tab.
      */
     private class StoryListCellGraphic extends VBox {
 
         private Text title;
         private Text description;
 
-        public StoryListCellGraphic(Story story, double width) {
+        public StoryListCellGraphic(final Story story, final double width) {
             super();
 
             setPadding(EMPTY);
@@ -817,18 +799,18 @@ public class StoriesLayer {
             setMaxWidth(width);
             setMinWidth(width);
 
-            VBox container = new VBox(3);
+            VBox container = new VBox(5);
             container.setPickOnBounds(false);
             container.setPadding(new Insets(5));
 
             title = new Text(story.getName());
-            title.setFont(AppFont.getBolderFont());
+            title.setFont(getBolderFont());
             title.setWrappingWidth(width - 15);
             title.setFontSmoothingType(LCD);
 
             description = new Text(story.getDescription());
-            description.setFont(AppFont.getFont());
-            description.setWrappingWidth(width - 15);
+            description.setFont(getFont());
+            description.setWrappingWidth(width - 30);
             description.setFontSmoothingType(LCD);
 
             container.getChildren().addAll(title, description);
@@ -846,8 +828,14 @@ public class StoriesLayer {
 
             story.getActiveProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue) {
+                    // if story is active
                     makeDisabled(false);
+                    // disable any active notes in the newly active story to get rid of old highlighting
+                    for (Note note : story.getNotes()) {
+                        note.setActive(false);
+                    }
                 } else {
+                    // is story is inactive
                     makeDisabled(true);
                 }
             });
@@ -887,21 +875,21 @@ public class StoriesLayer {
         private Text contents;
 
         // Input note is the note to which this graphic belongs to
-        public NoteListCellGraphic(Note note) {
+        public NoteListCellGraphic(final Note note, final double width) {
             super();
 
-            note.getParent();
+            setPrefWidth(width);
+            setMaxWidth(USE_PREF_SIZE);
+            setMinWidth(USE_PREF_SIZE);
+
             setPadding(new Insets(3));
 
-            // title heading graphics
-            HBox titleContainer = new HBox(0);
-            titleContainer.setPrefWidth(width);
-            titleContainer.setMaxWidth(width);
-            titleContainer.setMinWidth(width);
+            // note heading (its title) graphics
+            final HBox titleContainer = new HBox(0);
 
             expandIcon = new Text("▶");
             expandIcon.setPickOnBounds(true);
-            expandIcon.setFont(AppFont.getBolderFont());
+            expandIcon.setFont(getFont());
             expandIcon.setFontSmoothingType(LCD);
             expandIcon.toFront();
             expandIcon.setOnMouseClicked(event -> {
@@ -909,32 +897,32 @@ public class StoriesLayer {
                 expandNote(note.isListExpanded());
             });
 
-            Region r1 = new Region();
+            final Region r1 = new Region();
             r1.setPrefWidth(5);
             r1.setMinWidth(USE_PREF_SIZE);
             r1.setMaxWidth(USE_PREF_SIZE);
 
             title = new Text(note.getTagName());
-            title.setWrappingWidth(width - 50 - r1.prefWidth(-1) - expandIcon.prefWidth(-1));
-            title.setFont(AppFont.getBolderFont());
+            title.setWrappingWidth(width - 30 - r1.prefWidth(-1) - expandIcon.prefWidth(-1));
+            title.setFont(getBolderFont());
             title.setFontSmoothingType(LCD);
 
             titleContainer.getChildren().addAll(expandIcon, r1, title);
-            titleContainer.setAlignment(Pos.CENTER_LEFT);
+            titleContainer.setAlignment(CENTER_LEFT);
 
             getChildren().add(titleContainer);
 
-            // contents graphics
+            // note contents graphics
             contentsContainer = new HBox(0);
 
-            Region r2 = new Region();
-            r2.setPrefWidth(15);
+            final Region r2 = new Region();
+            r2.setPrefWidth(r1.prefWidth(-1) + expandIcon.prefWidth(-1));
             r2.setMinWidth(USE_PREF_SIZE);
             r2.setMaxWidth(USE_PREF_SIZE);
 
             contents = new Text(note.getTagContents());
-            contents.setWrappingWidth(width - 15 - r2.prefWidth(-1));
-            contents.setFont(AppFont.getFont());
+            contents.setWrappingWidth(width - 30 - r2.prefWidth(-1));
+            contents.setFont(getFont());
             contents.setFontSmoothingType(LCD);
 
             contentsContainer.getChildren().addAll(r2, contents);

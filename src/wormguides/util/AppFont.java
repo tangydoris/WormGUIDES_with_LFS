@@ -12,13 +12,13 @@ import static javafx.scene.text.FontWeight.EXTRA_BOLD;
 import static javafx.scene.text.FontWeight.SEMI_BOLD;
 
 /**
- * Fonts that are used throughout the application
+ * Different fonts used throughout the application
  */
 public class AppFont {
 
     private static final String SYSTEM = "System";
 
-    private static final Font FONT = new Font(14);
+    private static final Font FONT = font(14);
 
     private static final Font BOLD_FONT = font(SYSTEM, SEMI_BOLD, 14);
 
