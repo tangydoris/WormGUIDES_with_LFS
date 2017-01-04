@@ -2,18 +2,6 @@
  * Bao Lab 2016
  */
 
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
@@ -99,7 +87,6 @@ import wormguides.util.subscenesaving.JpegImagesToMovie;
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
-import static java.util.Collections.sort;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -120,7 +107,6 @@ import static javafx.scene.input.MouseEvent.MOUSE_RELEASED;
 import static javafx.scene.paint.Color.RED;
 import static javafx.scene.paint.Color.WHITE;
 import static javafx.scene.paint.Color.web;
-import static javafx.scene.shape.CullFace.NONE;
 import static javafx.scene.text.FontSmoothingType.LCD;
 import static javafx.scene.transform.Rotate.X_AXIS;
 import static javafx.scene.transform.Rotate.Y_AXIS;
@@ -200,6 +186,7 @@ public class Window3DController {
     private final int LABEL_SPRITE_Y_OFFSET = 5;
     /** Default transparency of 'other' entities on startup */
     private final double DEFAULT_OTHERS_OPACITY = 0.25;
+    private final double VISIBILITY_CUTOFF = 0.05;
 
     // rotation stuff
     private final Rotate rotateX;
@@ -1272,7 +1259,6 @@ public class Window3DController {
         currentLabels.clear();
 
         for (String label : allLabels) {
-
             if (defaultEmbryoFlag) {
                 for (SceneElement currentSceneElement : currentSceneElements) {
                     if (!currentLabels.contains(label)
@@ -1296,10 +1282,8 @@ public class Window3DController {
         // Notes are indexed starting from 1 (or 1+offset shown to user)
         if (storiesLayer != null) {
             currentNotes.clear();
-
             currentNoteMeshMap.clear();
             currentGraphicNoteMap.clear();
-
             entitySpriteMap.clear();
             billboardFrontEntityMap.clear();
 
@@ -1392,7 +1376,7 @@ public class Window3DController {
             addSceneElementGeometries(entities);
         }
 
-        sort(entities, opacityComparator);
+        entities.sort(opacityComparator);
         rootEntitiesGroup.getChildren().addAll(entities);
 
         // add notes
@@ -1460,29 +1444,56 @@ public class Window3DController {
 
                     // in search mode
                     if (isInSearchMode) {
-                        // TODO fix incorrect cell body highlighting in search
+                        // TODO highlighting is correct now, but I note that lim4_nerve_ring is parallel with an AB
+                        // lineage name in meshNames and sceneElements respectively
                         if (cellBodyTicked && isMeshSearchedFlags[i]) {
-//                            System.out.println("highlighting " + meshNames[i]);
                             meshView.setMaterial(colorHash.getHighlightMaterial());
                         } else {
                             meshView.setMaterial(colorHash.getTranslucentMaterial());
                         }
-
                     } else {
                         // in regular viewing mode
                         final List<String> structureCells = sceneElement.getAllCells();
+                        final List<Color> colors = new ArrayList<>();
 
-                        // note meshes have no cells and default to white
+                        // 12/28/2016 meshes with no cells default to others opacity here because only structure
+                        // rules can color them
                         if (structureCells.isEmpty()) {
-                            meshView.setMaterial(new PhongMaterial(WHITE));
-                            meshView.setCullFace(NONE);
-                        } else {
-                            // process rules that apply to it
-                            final List<Color> colors = new ArrayList<>();
+
+                            // check if any rules apply to this no-cell structure
+                            boolean ruleApplies = false;
                             for (Rule rule : rulesList) {
                                 if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
+                                    ruleApplies = true;
                                     colors.add(rule.getColor());
-                                } else {
+                                }
+                            }
+
+                            // if no rules for this structure, set to others opacity
+                            if (!ruleApplies) {
+                                meshView.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
+                            }
+                        } else {
+                            // process rules that apply to it
+                            for (Rule rule : rulesList) {
+                                /*
+                                 * cell nuc, cell body rules should not tag multicellular structures that contain
+								 * themselves
+								 * so as to avoid ambiguity. To color multicellular structures, users must add explicit
+								 * structures rules
+								 */
+                                // this is the check for whether this is an explicit structure rule
+                                if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
+                                    colors.add(rule.getColor());
+                                }
+//								else if (!(structureCells.size() > 1) && rule.appliesToCellBody(structureCells.get(0)
+// )) {
+//									colors.add(rule.getColor());
+//								}
+
+                                // commented out 12/28/2016 --> this condition will color a mutlicellular structure
+                                // if a single cell in struct has a rule
+                                else {
                                     colors.addAll(structureCells
                                             .stream()
                                             .filter(rule::appliesToCellBody)
@@ -1490,13 +1501,13 @@ public class Window3DController {
                                             .collect(toList()));
                                 }
                             }
-                            sort(colors, colorComparator);
-                            // if any rules applied
-                            if (!colors.isEmpty()) {
-                                meshView.setMaterial(colorHash.getMaterial(colors));
-                            } else {
-                                meshView.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
-                            }
+                        }
+                        colors.sort(colorComparator);
+                        // if any rules applied
+                        if (!colors.isEmpty()) {
+                            meshView.setMaterial(colorHash.getMaterial(colors));
+                        } else {
+                            meshView.setMaterial(colorHash.getOthersMaterial(othersOpacityProperty.get()));
                         }
                     }
 
@@ -1514,7 +1525,6 @@ public class Window3DController {
                         // make label disappear
                         removeTransientLabel();
                     });
-
                     list.add(meshView);
                 }
             }
@@ -1951,17 +1961,42 @@ public class Window3DController {
             SceneElement sceneElement;
             for (int i = 0; i < meshNames.length; i++) {
                 sceneElement = sceneElementsAtCurrentTime.get(i);
+
+                // ** NOT IN THIS VERSION
+                /*
+                 * commented out 12/28/2016 --> multicellular search on Find Cells tab shouldn't highlight the
+				 * multicellular structures themselves
+				 */
                 if (sceneElement.isMulticellular()) {
-                    isMeshSearchedFlags[i] = true;
+                    isMeshSearchedFlags[i] = false;
                     for (String cell : sceneElement.getAllCells()) {
-                        if (!localSearchResults.contains(cell)) {
-                            isMeshSearchedFlags[i] = false;
+                        if (localSearchResults.contains(cell)) {
+                            isMeshSearchedFlags[i] = true;
                             break;
                         }
                     }
                 } else {
                     isMeshSearchedFlags[i] = localSearchResults.contains(meshNames[i]);
                 }
+
+				/* Find Cells search should never highlight multicellular structures --> 12/28/2016
+				 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
+				 * SO HIGHLIGHTING BEHAVES THE SAME
+				 */
+//				if (sceneElement.isMulticellular()) {
+//					isMeshSearchedFlags[i] = false;
+//				}
+
+
+				/* It probably never makes sense to include this because structures with no cells shouldn't be
+				 * highlighted via a cells search but in case it's ever needed, here's the condition
+				 */
+//				else if (sceneElement.isNoCellStructure()) {
+//					if (sceneElement.getSceneName().startsWith(searchField.getText())) {
+//						isMeshSearchedFlags[i] = true;
+//					}
+//				}
+
             }
         }
     }
@@ -2184,7 +2219,7 @@ public class Window3DController {
             hideContextPopups();
             double z = zoomProperty.get();
             /*
-             * Workaround to avoid JavaFX bug --> stop zoomProperty at 0
+			 * Workaround to avoid JavaFX bug --> stop zoomProperty at 0
 			 * As of July 8, 2016
 			 * Noted by: Braden Katzman
 			 *

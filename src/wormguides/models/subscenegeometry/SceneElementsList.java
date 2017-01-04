@@ -2,34 +2,6 @@
  * Bao Lab 2016
  */
 
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
 package wormguides.models.subscenegeometry;
 
 import java.io.BufferedReader;
@@ -54,8 +26,6 @@ import wormguides.MainApp;
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.util.Collections.sort;
-
-import static wormguides.loaders.GeometryLoader.doesResourceExist;
 
 /**
  * Record of {@link SceneElement}s over the life of the embryo
@@ -161,7 +131,7 @@ public class SceneElementsList {
                         startTime = parseInt(tokens[START_TIME_INDEX]);
                         endTime = parseInt(tokens[END_TIME_INDEX]);
 
-                        if (doesResourceExist(resourceLocation, startTime, endTime)) {
+//                        if (doesResourceExist(resourceLocation, startTime, endTime)) {
                             // vector of cell names
                             cellNames = new ArrayList<>();
                             cellNamesTokenizer = new StringTokenizer(tokens[CELLS_INDEX]);
@@ -201,7 +171,7 @@ public class SceneElementsList {
                             // insert structure into tree
                             currentCategoryNode.getChildren().add(
                                     new TreeItem<>(new StructureTreeNode(false, element.getSceneName())));
-                        }
+//                        }
                     } catch (NumberFormatException e) {
                         System.out.println("error in reading scene element time for line " + line);
                     }
@@ -310,7 +280,7 @@ public class SceneElementsList {
         // Add lineage names of all structures at time
         final List<String> list = new ArrayList<>();
         elementsList.stream().filter(se -> se.existsAtTime(time)).forEachOrdered(se -> {
-            if (se.isMulticellular()) {
+            if (se.isMulticellular() || se.getAllCells().size() == 0) {
                 list.add(se.getSceneName());
             } else {
                 list.add(se.getAllCells().get(0));

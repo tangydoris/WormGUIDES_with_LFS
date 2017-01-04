@@ -93,7 +93,7 @@ public class GeometryLoader {
 
             try {
                 final ZipFile zipFile = new ZipFile(url.getFile());
-                final ZipEntry entry = zipFile.getEntry(objFileName);
+                final ZipEntry entry = zipFile.getEntry(objFileName + ".obj");
 
                 if (entry != null) {
                     final InputStream inputStream = zipFile.getInputStream(entry);

@@ -29,8 +29,6 @@ import static wormguides.loaders.GeometryLoader.loadOBJ;
  */
 public class SceneElement {
 
-    private final String OBJ_EXT = ".obj";
-
     /** Descriptor or display of object */
     private String sceneName;
     /** Cells contained by this structure */
@@ -110,8 +108,6 @@ public class SceneElement {
             }
         }
         cellNames.addAll(editedNames);
-
-
     }
 
     // Geometry used for notes in wormguides.stories
@@ -163,7 +159,7 @@ public class SceneElement {
             return loadOBJ(resourceLocation);
         }
         // append time and ext to resource location
-        return loadOBJ(resourceLocation + "_t" + time + OBJ_EXT);
+        return loadOBJ(resourceLocation + "_t" + time);
     }
 
     public void setNewCellNames(List<String> cells) {
@@ -229,6 +225,10 @@ public class SceneElement {
 
     public boolean isMulticellular() {
         return cellNames.size() > 1;
+    }
+    
+    public boolean isNoCellStructure() {
+    	return cellNames.size() == 0;
     }
 
     public boolean existsAtTime(int time) {

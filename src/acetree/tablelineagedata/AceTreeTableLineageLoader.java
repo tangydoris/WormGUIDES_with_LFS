@@ -25,7 +25,7 @@ import static java.lang.Math.round;
  * This class instantiates a {@link TableLineageData} and creates a lineage using Frame objects defined as an private
  * inner class.
  */
-public class AceTreeLineageTableLoader {
+public class AceTreeTableLineageLoader {
 
     private static final String ENTRY_PREFIX = "/acetree/nucleifiles/";
 
@@ -74,7 +74,7 @@ public class AceTreeLineageTableLoader {
             URL url;
             for (int i = 1; i <= productionInfo.getTotalTimePoints(); i++) {
                 if (i < 10) {
-                    url = AceTreeLineageTableLoader.class.getResource(ENTRY_PREFIX + T + TWO_ZERO_PAD + i + ENTRY_EXT);
+                    url = AceTreeTableLineageLoader.class.getResource(ENTRY_PREFIX + T + TWO_ZERO_PAD + i + ENTRY_EXT);
                     if (url != null) {
                         process(tableLineageData, i, url.openStream());
                     } else {
@@ -86,7 +86,7 @@ public class AceTreeLineageTableLoader {
                                 + ENTRY_EXT);
                     }
                 } else if (i >= 10 && i < 100) {
-                    url = AceTreeLineageTableLoader.class.getResource(ENTRY_PREFIX + T + ONE_ZERO_PAD + i + ENTRY_EXT);
+                    url = AceTreeTableLineageLoader.class.getResource(ENTRY_PREFIX + T + ONE_ZERO_PAD + i + ENTRY_EXT);
                     if (url != null) {
                         process(tableLineageData, i, url.openStream());
                     } else {
@@ -98,7 +98,7 @@ public class AceTreeLineageTableLoader {
                                 + ENTRY_EXT);
                     }
                 } else if (i >= 100) {
-                    url = AceTreeLineageTableLoader.class.getResource(ENTRY_PREFIX + T + i + ENTRY_EXT);
+                    url = AceTreeTableLineageLoader.class.getResource(ENTRY_PREFIX + T + i + ENTRY_EXT);
                     if (url != null) {
                         process(tableLineageData, i, url.openStream());
                     } else {
