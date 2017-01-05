@@ -2,10 +2,6 @@
  * Bao Lab 2017
  */
 
-/*
- * Bao Lab 2017
- */
-
 package wormguides.util;
 
 import java.util.List;
@@ -210,9 +206,7 @@ public class URLGenerator {
             }
 
             // color
-            String color = rule.getColor().toString();
-            color = color.substring(color.indexOf("x") + 1, color.length() - 2);
-            builder.append("+#ff").append(color);
+            builder.append("+").append(rule.getColor().toString());
         }
         return builder.toString();
     }
@@ -287,11 +281,8 @@ public class URLGenerator {
             }
 
             // color
-            color = rule.getColor().toString();
-            color = color.substring(color.indexOf("x") + 1, color.length() - 2);
-            builder.append("+#ff").append(color);
+            builder.append("+").append(rule.getColor().toString());
         }
-
         return builder.toString();
     }
 
