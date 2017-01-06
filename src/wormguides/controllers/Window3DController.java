@@ -1,7 +1,3 @@
-/*
- * Bao Lab 2016
- */
-
 
 
 package wormguides.controllers;
@@ -89,7 +85,6 @@ import wormguides.util.subscenesaving.JpegImagesToMovie;
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
-import static java.util.Collections.sort;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -129,19 +124,16 @@ import static wormguides.util.AppFont.getSpriteAndOverlayFont;
 
 /**
  * The controller for the 3D subscene inside the rootEntitiesGroup layout. This class contains the subscene itself, and
- * places it
- * into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also responsible for refreshing
- * the scene
- * on timeProperty, search, wormguides.stories, notes, and rules change. This class contains observable properties that
- * are
- * passed to other classes so that a subscene refresh can be trigger from that other class.
+ * places it into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also responsible
+ * for refreshing the scene on timeProperty, search, wormguides.stories, notes, and rules change. This class contains
+ * observable properties that are passed to other classes so that a subscene refresh can be trigger from that other
+ * class.
  * <p>
  * An "entity" in the subscene is either a cell, cell body, or multicellular structure. These are graphically
  * represented by the Shape3Ds Sphere and MeshView available in JavaFX. {@link Sphere}s represent cells, and
  * {@link MeshView}s represent cell bodies and multicellular structures. Notes and labels are rendered as
  * {@link Text}s. This class queries the {@link LineageData} and {@link SceneElementsList} for a certain timeProperty
- * and
- * renders the entities, notes, story, and labels present in that timeProperty point.
+ * and renders the entities, notes, story, and labels present in that timeProperty point.
  * <p>
  * For the coloring of entities, an observable list of {@link Rule}s is queried to see which ones apply to a
  * particular entity, then queries the {@link ColorHash} for the {@link Material} to use for the entity.
@@ -258,12 +250,10 @@ public class Window3DController {
     // orientation indicator
     private final Cylinder orientationIndicator;
     // rotation
-    private final double[] keyValuesRotate = {0, 45, 50, 70, 100, 100, 145};
-    private final double[] keyFramesRotate = {1, 20, 150, 200, 320, 340, 400};
+    private final double[] keyValuesRotate = {75, 1, 1, 75};
+    private final double[] keyFramesRotate = {1, 16, 321, 359};
 //    private final double[] keyValuesRotate = {0, 45, 100, 100, 145};
 //    private final double[] keyFramesRotate = {1, 20, 320, 340, 400};
-    
-    
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
     private final ProductionInfo productionInfo;
@@ -683,7 +673,7 @@ public class Window3DController {
     }
 
 //	private void initializeWithCannonicalOrientation() {
-//		// set default cannonical orientations
+//		// set default canonical orientations
 //		rotateXAngleProperty.set(CANNONICAL_ORIENTATION_X);
 //		rotateYAngleProperty.set(CANNONICAL_ORIENTATION_Y);
 //		rotateZAngleProperty.set(CANNONICAL_ORIENTATION_Z);
@@ -735,7 +725,7 @@ public class Window3DController {
         
         return orientationIndicator;
     }
-    
+
     // Orientation set up under old model --> commented out 1/5/2016
 //    private Group createOrientationIndicator() {
 //        indicatorRotation = new Rotate();
@@ -1299,13 +1289,11 @@ public class Window3DController {
                 final MeshView mesh = se.buildGeometry(requestedTime - 1);
                 if (mesh != null) {
                     mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
+                    // TODO fix
                     mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
-
                     // add rendered mesh to meshes list
                     currentSceneElementMeshes.add(mesh);
-
-                    // add scene element to rendered scene element reference for
-                    // on click responsiveness
+                    // add scene element to rendered scene element reference for on-click responsiveness
                     currentSceneElements.add(se);
                 }
             }
@@ -1434,7 +1422,7 @@ public class Window3DController {
             addSceneElementGeometries(entities);
         }
 
-        sort(entities, opacityComparator);
+        entities.sort(opacityComparator);
         rootEntitiesGroup.getChildren().addAll(entities);
 
         // add notes
@@ -1502,7 +1490,7 @@ public class Window3DController {
 
                     // in search mode
                     if (isInSearchMode) {
-                        // TODO highlighting is correct now, but I note that lim4_nerve_ring is parallel with an AB
+                        // note: in highlighting, lim4_nerve_ring is parallel with an AB
                         // lineage name in meshNames and sceneElements respectively
                         if (cellBodyTicked && isMeshSearchedFlags[i]) {
                             meshView.setMaterial(colorHash.getHighlightMaterial());
@@ -1560,7 +1548,7 @@ public class Window3DController {
                                 }
                             }
                         }
-                        sort(colors, colorComparator);
+                        colors.sort(colorComparator);
                         // if any rules applied
                         if (!colors.isEmpty()) {
                             meshView.setMaterial(colorHash.getMaterial(colors));
@@ -2038,22 +2026,22 @@ public class Window3DController {
                 }
 
 				/* Find Cells search should never highlight multicellular structures --> 12/28/2016
-				 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
+                 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
 				 * SO HIGHLIGHTING BEHAVES THE SAME
 				 */
 //				if (sceneElement.isMulticellular()) {
 //					isMeshSearchedFlags[i] = false;
 //				}
-				
-				
+
+
 				/* It probably never makes sense to include this because structures with no cells shouldn't be
-				 * highlighted via a cells search but in case it's ever needed, here's the condition
+                 * highlighted via a cells search but in case it's ever needed, here's the condition
 				 */
 //				else if (sceneElement.isNoCellStructure()) {
 //					if (sceneElement.getSceneName().startsWith(searchField.getText())) {
 //						isMeshSearchedFlags[i] = true;
 //					}
-//				} 
+//				}
 
             }
         }
@@ -2277,7 +2265,7 @@ public class Window3DController {
             hideContextPopups();
             double z = zoomProperty.get();
             /*
-			 * Workaround to avoid JavaFX bug --> stop zoomProperty at 0
+             * Workaround to avoid JavaFX bug --> stop zoomProperty at 0
 			 * As of July 8, 2016
 			 * Noted by: Braden Katzman
 			 *
@@ -2404,7 +2392,6 @@ public class Window3DController {
                 @Override
                 protected Void call() throws Exception {
                     runLater(() -> {
-                        // TODO cell bodies not updating correctly
                         refreshScene();
                         getSceneData();
                         addEntitiesToScene();
