@@ -2,17 +2,7 @@
  * Bao Lab 2016
  */
 
-/*
- * Bao Lab 2016
- */
 
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
 
 package wormguides.controllers;
 
@@ -268,8 +258,12 @@ public class Window3DController {
     // orientation indicator
     private final Cylinder orientationIndicator;
     // rotation
-    private final double[] keyValuesRotate = {0, 45, 100, 100, 145};
-    private final double[] keyFramesRotate = {1, 20, 320, 340, 400};
+    private final double[] keyValuesRotate = {0, 45, 50, 70, 100, 100, 145};
+    private final double[] keyFramesRotate = {1, 20, 150, 200, 320, 340, 400};
+//    private final double[] keyValuesRotate = {0, 45, 100, 100, 145};
+//    private final double[] keyFramesRotate = {1, 20, 320, 340, 400};
+    
+    
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
     private final ProductionInfo productionInfo;
@@ -695,6 +689,7 @@ public class Window3DController {
 //		rotateZAngleProperty.set(CANNONICAL_ORIENTATION_Z);
 //	}
 
+    // orientation for new model as of 1/5/2016
     private Group createOrientationIndicator() {
         indicatorRotation = new Rotate();
         // top level group
@@ -704,34 +699,81 @@ public class Window3DController {
         Group middleTransformGroup = new Group();
 
         // set up the orientation indicator in bottom right corner
-        Text t = makeNoteBillboardText("P     A");
+        Text t = makeNoteBillboardText("A     P");
         t.setTranslateX(-10);
         middleTransformGroup.getChildren().add(t);
 
-        t = makeNoteBillboardText("D     V");
+        t = makeNoteBillboardText("R     L");
         t.setTranslateX(-42);
         t.setTranslateY(32);
         t.setRotate(90);
         middleTransformGroup.getChildren().add(t);
 
-        t = makeNoteBillboardText("L    R");
+        t = makeNoteBillboardText("V    D");
         t.setTranslateX(5);
         t.setTranslateZ(10);
         t.getTransforms().add(new Rotate(90, new Point3D(0, 1, 0)));
         middleTransformGroup.getChildren().add(t);
 
         // rotation to match lateral orientation in image
-        middleTransformGroup.getTransforms().add(new Rotate(-30, 0, 0));
+        middleTransformGroup.getTransforms().add(new Rotate(30, 0, 0));
 
         // xy relocates z shrinks apparent by moving away from camera? improves resolution?
         middleTransformGroup.getTransforms().add(new Scale(3, 3, 3));
 
+        // set the location of the indicator in the bottom right corner of the screen
         orientationIndicator.getTransforms().add(new Translate(270, 200, 800));
+        
+        // add rotation variables
         orientationIndicator.getTransforms().addAll(rotateZ, rotateY, rotateX);
+        
+        // add the directional symbols to the group
         orientationIndicator.getChildren().add(middleTransformGroup);
+        
+        // add rotation
         middleTransformGroup.getTransforms().add(indicatorRotation);
+        
         return orientationIndicator;
     }
+    
+    // Orientation set up under old model --> commented out 1/5/2016
+//    private Group createOrientationIndicator() {
+//        indicatorRotation = new Rotate();
+//        // top level group
+//        // had rotation to make it match main rotation
+//        Group orientationIndicator = new Group();
+//        // has rotation to make it match biological orientation
+//        Group middleTransformGroup = new Group();
+//
+//        // set up the orientation indicator in bottom right corner
+//        Text t = makeNoteBillboardText("P     A");
+//        t.setTranslateX(-10);
+//        middleTransformGroup.getChildren().add(t);
+//
+//        t = makeNoteBillboardText("D     V");
+//        t.setTranslateX(-42);
+//        t.setTranslateY(32);
+//        t.setRotate(90);
+//        middleTransformGroup.getChildren().add(t);
+//
+//        t = makeNoteBillboardText("L    R");
+//        t.setTranslateX(5);
+//        t.setTranslateZ(10);
+//        t.getTransforms().add(new Rotate(90, new Point3D(0, 1, 0)));
+//        middleTransformGroup.getChildren().add(t);
+//
+//        // rotation to match lateral orientation in image
+//        middleTransformGroup.getTransforms().add(new Rotate(-30, 0, 0));
+//
+//        // xy relocates z shrinks apparent by moving away from camera? improves resolution?
+//        middleTransformGroup.getTransforms().add(new Scale(3, 3, 3));
+//
+//        orientationIndicator.getTransforms().add(new Translate(270, 200, 800));
+//        orientationIndicator.getTransforms().addAll(rotateZ, rotateY, rotateX);
+//        orientationIndicator.getChildren().add(middleTransformGroup);
+//        middleTransformGroup.getTransforms().add(indicatorRotation);
+//        return orientationIndicator;
+//    }
 
     private double computeInterpolatedValue(int timevalue, double[] keyFrames, double[] keyValues) {
         if (timevalue <= keyFrames[0]) {
