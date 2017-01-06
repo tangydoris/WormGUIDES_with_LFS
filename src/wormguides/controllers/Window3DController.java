@@ -99,7 +99,6 @@ import wormguides.util.subscenesaving.JpegImagesToMovie;
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
-import static java.util.Collections.sort;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -1071,8 +1070,7 @@ public class Window3DController {
         contextMenuController.setName(name);
         contextMenuController.setColorButtonText(isStructure);
 
-        String funcName = getFunctionalNameByLineageName(name);
-        if (funcName == null) {
+        if (getFunctionalNameByLineageName(name) == null) {
             contextMenuController.disableTerminalCaseFunctions(true);
         } else {
             contextMenuController.disableTerminalCaseFunctions(false);
@@ -1392,7 +1390,7 @@ public class Window3DController {
             addSceneElementGeometries(entities);
         }
 
-        sort(entities, opacityComparator);
+        entities.sort(opacityComparator);
         rootEntitiesGroup.getChildren().addAll(entities);
 
         // add notes
@@ -1460,7 +1458,7 @@ public class Window3DController {
 
                     // in search mode
                     if (isInSearchMode) {
-                        // TODO highlighting is correct now, but I note that lim4_nerve_ring is parallel with an AB
+                        // note: in highlighting lim4_nerve_ring is parallel with an AB
                         // lineage name in meshNames and sceneElements respectively
                         if (cellBodyTicked && isMeshSearchedFlags[i]) {
                             meshView.setMaterial(colorHash.getHighlightMaterial());
@@ -1518,7 +1516,7 @@ public class Window3DController {
                                 }
                             }
                         }
-                        sort(colors, colorComparator);
+                        colors.sort(colorComparator);
                         // if any rules applied
                         if (!colors.isEmpty()) {
                             meshView.setMaterial(colorHash.getMaterial(colors));
@@ -2362,7 +2360,6 @@ public class Window3DController {
                 @Override
                 protected Void call() throws Exception {
                     runLater(() -> {
-                        // TODO cell bodies not updating correctly
                         refreshScene();
                         getSceneData();
                         addEntitiesToScene();

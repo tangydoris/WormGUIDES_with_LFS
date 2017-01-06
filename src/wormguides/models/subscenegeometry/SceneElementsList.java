@@ -79,7 +79,7 @@ public class SceneElementsList {
      * @param name
      *         the name to check
      *
-     * @return true if the name is the scene name of a structure, false otherwise
+     * @return true if the name is the scene name, or contained in the scene name, of a structure, false otherwise.
      */
     public boolean isStructureSceneName(String name) {
         name = name.trim().toLowerCase();
@@ -158,7 +158,7 @@ public class SceneElementsList {
                             // check to see if resource exists in the shape files archive
                             // only create a scene element if it does
                             final SceneElement element = new SceneElement(
-                                    name,
+                                    lineageName,
                                     cellNames,
                                     tokens[MARKER_INDEX],
                                     tokens[IMAGING_SOURCE_INDEX],
@@ -300,8 +300,7 @@ public class SceneElementsList {
 
     public List<String> getAllSceneNames() {
         final Set<String> namesSet = new HashSet<>();
-        elementsList.stream()
-                .forEachOrdered(se -> namesSet.add(se.getSceneName()));
+        elementsList.forEach(se -> namesSet.add(se.getSceneName()));
         final List<String> namesSorted = new ArrayList<>(namesSet);
         sort(namesSorted);
         return namesSorted;
