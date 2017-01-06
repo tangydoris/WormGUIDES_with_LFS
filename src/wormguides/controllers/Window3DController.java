@@ -2,8 +2,6 @@
  * Bao Lab 2016
  */
 
-
-
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
@@ -89,7 +87,7 @@ import wormguides.util.subscenesaving.JpegImagesToMovie;
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
-import static java.util.Collections.sort;
+import static java.lang.Thread.sleep;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -128,20 +126,17 @@ import static wormguides.util.AppFont.getBillboardFont;
 import static wormguides.util.AppFont.getSpriteAndOverlayFont;
 
 /**
- * The controller for the 3D subscene inside the rootEntitiesGroup layout. This class contains the subscene itself, and
- * places it
- * into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also responsible for refreshing
- * the scene
- * on timeProperty, search, wormguides.stories, notes, and rules change. This class contains observable properties that
- * are
- * passed to other classes so that a subscene refresh can be trigger from that other class.
+ * The controller for the 3D subscene inside the rootEntitiesGroup layout. This class contains the subscene itself,
+ * and places it into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also
+ * responsible for refreshing the scene on timeProperty, search, wormguides.stories, notes, and rules change. This
+ * class contains observable properties that are passed to other classes so that a subscene refresh can be trigger
+ * from that other class.
  * <p>
  * An "entity" in the subscene is either a cell, cell body, or multicellular structure. These are graphically
  * represented by the Shape3Ds Sphere and MeshView available in JavaFX. {@link Sphere}s represent cells, and
  * {@link MeshView}s represent cell bodies and multicellular structures. Notes and labels are rendered as
  * {@link Text}s. This class queries the {@link LineageData} and {@link SceneElementsList} for a certain timeProperty
- * and
- * renders the entities, notes, story, and labels present in that timeProperty point.
+ * and renders the entities, notes, story, and labels present in that timeProperty point.
  * <p>
  * For the coloring of entities, an observable list of {@link Rule}s is queried to see which ones apply to a
  * particular entity, then queries the {@link ColorHash} for the {@link Material} to use for the entity.
@@ -152,10 +147,10 @@ public class Window3DController {
     private final double CANNONICAL_ORIENTATION_Y = -166.0;
     private final double CANNONICAL_ORIENTATION_Z = 24.0;
     private final String CS = ", ";
-    private final String FILL_COLOR_HEX = "#272727",
-            ACTIVE_LABEL_COLOR_HEX = "#ffff66",
-            SPRITE_COLOR_HEX = "#ffffff",
-            TRANSIENT_LABEL_COLOR_HEX = "#f0f0f0";
+    private final String FILL_COLOR_HEX = "#272727";
+    private final String ACTIVE_LABEL_COLOR_HEX = "#ffff66";
+    private final String SPRITE_COLOR_HEX = "#ffffff";
+    private final String TRANSIENT_LABEL_COLOR_HEX = "#f0f0f0";
     /** The wait timeProperty (in millis) between consecutive timeProperty frames while a movie is playing. */
     private final long WAIT_TIME_MILLI = 200;
     /**
@@ -163,14 +158,14 @@ public class Window3DController {
      * visible.
      */
     private final double INITIAL_ZOOM = 2.75;
-    private final double INITIAL_TRANSLATE_X = -14.0,
-            INITIAL_TRANSLATE_Y = 18.0;
+    private final double INITIAL_TRANSLATE_X = -14.0;
+    private final double INITIAL_TRANSLATE_Y = 18.0;
     private final double CAMERA_INITIAL_DISTANCE = -220;
-    private final double CAMERA_NEAR_CLIP = 1,
-            CAMERA_FAR_CLIP = 2000;
-    private final int X_COR_INDEX = 0,
-            Y_COR_INDEX = 1,
-            Z_COR_INDEX = 2;
+    private final double CAMERA_NEAR_CLIP = 1;
+    private final double CAMERA_FAR_CLIP = 2000;
+    private final int X_COR_INDEX = 0;
+    private final int Y_COR_INDEX = 1;
+    private final int Z_COR_INDEX = 2;
     /** Text size scale used for the rendering of billboard notes. */
     private final double BILLBOARD_SCALE = 0.9;
     /**
@@ -190,6 +185,9 @@ public class Window3DController {
     /** Default transparency of 'other' entities on startup */
     private final double DEFAULT_OTHERS_OPACITY = 0.25;
     private final double VISIBILITY_CUTOFF = 0.05;
+
+    /** Text-wrapping width of a note sprite **/
+    private final int NOTE_SPRITE_TEXT_WIDTH = 220;
 
     // rotation stuff
     private final Rotate rotateX;
@@ -1300,12 +1298,9 @@ public class Window3DController {
                 if (mesh != null) {
                     mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
                     mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
-
                     // add rendered mesh to meshes list
                     currentSceneElementMeshes.add(mesh);
-
-                    // add scene element to rendered scene element reference for
-                    // on click responsiveness
+                    // add scene element to rendered scene element reference for on-click responsiveness
                     currentSceneElements.add(se);
                 }
             }
@@ -1434,7 +1429,7 @@ public class Window3DController {
             addSceneElementGeometries(entities);
         }
 
-        sort(entities, opacityComparator);
+        entities.sort(opacityComparator);
         rootEntitiesGroup.getChildren().addAll(entities);
 
         // add notes
@@ -1502,7 +1497,7 @@ public class Window3DController {
 
                     // in search mode
                     if (isInSearchMode) {
-                        // TODO highlighting is correct now, but I note that lim4_nerve_ring is parallel with an AB
+                        // note: search for lim4_nerve_ring is parallel with an AB
                         // lineage name in meshNames and sceneElements respectively
                         if (cellBodyTicked && isMeshSearchedFlags[i]) {
                             meshView.setMaterial(colorHash.getHighlightMaterial());
@@ -1543,15 +1538,9 @@ public class Window3DController {
                                 // this is the check for whether this is an explicit structure rule
                                 if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
                                     colors.add(rule.getColor());
-                                }
-//								else if (!(structureCells.size() > 1) && rule.appliesToCellBody(structureCells.get(0)
-// )) {
-//									colors.add(rule.getColor());
-//								}
-
-                                // commented out 12/28/2016 --> this condition will color a mutlicellular structure
-                                // if a single cell in struct has a rule
-                                else {
+                                } else {
+                                    // commented out 12/28/2016 --> this condition will color a mutlicellular structure
+                                    // if a single cell in struct has a rule
                                     colors.addAll(structureCells
                                             .stream()
                                             .filter(rule::appliesToCellBody)
@@ -1560,7 +1549,7 @@ public class Window3DController {
                                 }
                             }
                         }
-                        sort(colors, colorComparator);
+                        colors.sort(colorComparator);
                         // if any rules applied
                         if (!colors.isEmpty()) {
                             meshView.setMaterial(colorHash.getMaterial(colors));
@@ -1748,7 +1737,7 @@ public class Window3DController {
     private void addNoteGeometries(List<Node> list) {
         for (Note note : currentNotes) {
             // map notes to their sphere/mesh view
-            Node text = makeNoteGraphic(note);
+            final Node text = makeNoteGraphic(note);
             currentGraphicNoteMap.put(text, note);
 
             text.setOnMouseEntered(clickableMouseEnteredHandler);
@@ -1762,7 +1751,7 @@ public class Window3DController {
                     box.getChildren().add(text);
                     // add inivisible location marker to scene at location
                     // specified by note
-                    Sphere marker = createLocationMarker(note.getX(), note.getY(), note.getZ());
+                    final Sphere marker = createLocationMarker(note.getX(), note.getY(), note.getZ());
                     rootEntitiesGroup.getChildren().add(marker);
                     entitySpriteMap.put(marker, box);
                     // add vbox to sprites pane
@@ -1922,7 +1911,7 @@ public class Window3DController {
 
     private Text makeNoteSpriteText(String title) {
         Text text = makeNoteOverlayText(title);
-        text.setWrappingWidth(160);
+        text.setWrappingWidth(NOTE_SPRITE_TEXT_WIDTH);
         return text;
     }
 
@@ -2038,13 +2027,13 @@ public class Window3DController {
                 }
 
 				/* Find Cells search should never highlight multicellular structures --> 12/28/2016
-				 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
+                 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
 				 * SO HIGHLIGHTING BEHAVES THE SAME
 				 */
 //				if (sceneElement.isMulticellular()) {
 //					isMeshSearchedFlags[i] = false;
 //				}
-				
+
 				
 				/* It probably never makes sense to include this because structures with no cells shouldn't be
 				 * highlighted via a cells search but in case it's ever needed, here's the condition
@@ -2404,7 +2393,6 @@ public class Window3DController {
                 @Override
                 protected Void call() throws Exception {
                     runLater(() -> {
-                        // TODO cell bodies not updating correctly
                         refreshScene();
                         getSceneData();
                         addEntitiesToScene();
@@ -2432,7 +2420,7 @@ public class Window3DController {
                         }
                         runLater(() -> timeProperty.set(timeProperty.get() + 1));
                         try {
-                            Thread.sleep(WAIT_TIME_MILLI);
+                            sleep(WAIT_TIME_MILLI);
                         } catch (InterruptedException ie) {
                             break;
                         }
