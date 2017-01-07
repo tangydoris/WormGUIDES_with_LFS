@@ -250,8 +250,10 @@ public class Window3DController {
     // orientation indicator
     private final Cylinder orientationIndicator;
     // rotation
-    private final double[] keyValuesRotate = {60, 1, 1, 60};
-    private final double[] keyFramesRotate = {1, 16, 321, 359};
+  private final double[] keyValuesRotate = {90, 30, 30, 90};
+//  private final double[] keyValuesRotate = {60, 1, 1, 60};
+  private final double[] keyFramesRotate = {1, 16, 321, 359};
+
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
     private final ProductionInfo productionInfo;
