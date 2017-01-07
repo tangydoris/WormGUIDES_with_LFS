@@ -250,10 +250,8 @@ public class Window3DController {
     // orientation indicator
     private final Cylinder orientationIndicator;
     // rotation
-    private final double[] keyValuesRotate = {50, 1, 1, 50};
+    private final double[] keyValuesRotate = {60, 1, 1, 60};
     private final double[] keyFramesRotate = {1, 16, 321, 359};
-//    private final double[] keyValuesRotate = {0, 45, 100, 100, 145};
-//    private final double[] keyFramesRotate = {1, 20, 320, 340, 400};
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
     private final ProductionInfo productionInfo;
@@ -704,9 +702,6 @@ public class Window3DController {
         t.setTranslateZ(10);
         t.getTransforms().add(new Rotate(90, new Point3D(0, 1, 0)));
         middleTransformGroup.getChildren().add(t);
-
-        // rotation to match lateral orientation in image
-        middleTransformGroup.getTransforms().add(new Rotate(30, 0, 0));
 
         // xy relocates z shrinks apparent by moving away from camera? improves resolution?
         middleTransformGroup.getTransforms().add(new Scale(3, 3, 3));
