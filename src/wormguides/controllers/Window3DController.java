@@ -1868,13 +1868,13 @@ public class Window3DController {
 
     private Text makeNoteSpriteText(String title) {
         Text text = makeNoteOverlayText(title);
-        text.setWrappingWidth(160);
+        text.setWrappingWidth(220);
         return text;
     }
 
     private Text makeNoteBillboardText(String title) {
         Text text = new Text(title);
-        text.setWrappingWidth(90);
+        text.setWrappingWidth(100);
         text.setFont(getBillboardFont());
         text.setSmooth(false);
         text.setStrokeWidth(2);
