@@ -116,6 +116,8 @@ import static javafx.scene.input.MouseEvent.MOUSE_ENTERED_TARGET;
 import static javafx.scene.input.MouseEvent.MOUSE_MOVED;
 import static javafx.scene.input.MouseEvent.MOUSE_PRESSED;
 import static javafx.scene.input.MouseEvent.MOUSE_RELEASED;
+import static javafx.scene.layout.AnchorPane.setRightAnchor;
+import static javafx.scene.layout.AnchorPane.setTopAnchor;
 import static javafx.scene.paint.Color.RED;
 import static javafx.scene.paint.Color.WHITE;
 import static javafx.scene.paint.Color.web;
@@ -1698,10 +1700,10 @@ public class Window3DController {
      * Inserts note geometries into the subscene.
      *
      * @param list
-     *         the list of nodes that billboards are added to, which are added to to the subscene. Note overlays
-     *         and sprites are added to the pane that contains the subscene.
+     *         the list of nodes that billboards are added to, which are added to to the subscene. Note overlays and
+     *         sprites are added to the pane that contains the subscene.
      */
-    private void addNoteGeometries(List<Node> list) {
+    private void addNoteGeometries(final List<Node> list) {
         for (Note note : currentNotes) {
             // map notes to their sphere/mesh view
             Node text = makeNoteGraphic(note);
@@ -1832,8 +1834,7 @@ public class Window3DController {
                 }
             }
 
-            // add graphic to appropriate place (scene, overlay box, or on top
-            // of scene)
+            // add graphic to appropriate place (scene, overlay box, or on top of scene)
             final Display display = note.getTagDisplay();
             if (display != null) {
                 switch (display) {
@@ -1854,15 +1855,15 @@ public class Window3DController {
     }
 
     private void insertOverlayTitles() {
-        if (storiesLayer != null) {
-            Text infoPaneTitle = makeNoteOverlayText("Story Title:");
-            if (storiesLayer.getActiveStory() != null) {
-                Text storyTitle = makeNoteOverlayText(storiesLayer.getActiveStory().getName());
-                overlayVBox.getChildren().addAll(infoPaneTitle, storyTitle);
-            } else {
-                Text noStoryTitle = makeNoteOverlayText("none");
-                overlayVBox.getChildren().addAll(infoPaneTitle, noStoryTitle);
-            }
+        final Text infoPaneTitle = makeNoteOverlayText("Active Story:");
+        if (storiesLayer.getActiveStory() != null) {
+            overlayVBox.getChildren().addAll(
+                    infoPaneTitle,
+                    makeNoteOverlayText(storiesLayer.getActiveStory().getName()));
+        } else {
+            overlayVBox.getChildren().addAll(
+                    infoPaneTitle,
+                    makeNoteOverlayText("none"));
         }
     }
 
@@ -1902,8 +1903,6 @@ public class Window3DController {
         return sphere;
     }
 
-    // Makes an anchor pane that contains the text to be shown
-    // if isOverlay is true, then the text is larger
     private Text makeNoteGraphic(Note note) {
         String title = note.getTagName();
         if (note.isExpandedInScene()) {
@@ -1911,7 +1910,6 @@ public class Window3DController {
         } else {
             title += "\n[more...]";
         }
-
         Text node = null;
         if (note.getTagDisplay() != null) {
             switch (note.getTagDisplay()) {
@@ -1993,13 +1991,13 @@ public class Window3DController {
                 }
 
 				/* Find Cells search should never highlight multicellular structures --> 12/28/2016
-				 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
+                 * THIS CONDITION IS FOR THE VERSION WHICH DISAMBIGUATES BETWEEN SINGLE CELL AND STRUCTURE RULES
 				 * SO HIGHLIGHTING BEHAVES THE SAME
 				 */
 //				if (sceneElement.isMulticellular()) {
 //					isMeshSearchedFlags[i] = false;
 //				}
-				
+
 				
 				/* It probably never makes sense to include this because structures with no cells shouldn't be
 				 * highlighted via a cells search but in case it's ever needed, here's the condition
@@ -2167,23 +2165,22 @@ public class Window3DController {
      * @param parentPane
      *         The {@link AnchorPane} in which labels and sprites reside
      */
-    public void setNotesPane(AnchorPane parentPane) {
+    public void setNotesPane(final AnchorPane parentPane) {
         if (parentPane != null) {
             spritesPane = parentPane;
-
             overlayVBox = new VBox(5);
-            overlayVBox.setPrefWidth(170);
+            overlayVBox.setPrefWidth(190);
             overlayVBox.setMaxWidth(overlayVBox.getPrefWidth());
             overlayVBox.setMinWidth(overlayVBox.getPrefWidth());
-
-            AnchorPane.setTopAnchor(overlayVBox, 5.0);
-            AnchorPane.setRightAnchor(overlayVBox, 5.0);
-
+            setTopAnchor(overlayVBox, 5.0);
+            setRightAnchor(overlayVBox, 5.0);
             spritesPane.getChildren().add(overlayVBox);
         }
     }
 
-    // Hides cell name label/context menu
+    /**
+     * Hides cell name label/context menu
+     */
     private void hideContextPopups() {
         contextMenuStage.hide();
     }

@@ -43,6 +43,11 @@ import wormguides.stories.Note.Type;
 import wormguides.stories.Story;
 import wormguides.util.StringCellFactory;
 
+import static wormguides.stories.Note.Display.BILLBOARD_FRONT;
+import static wormguides.stories.Note.Display.BLANK;
+import static wormguides.stories.Note.Display.OVERLAY;
+import static wormguides.stories.Note.Display.SPRITE;
+
 public class StoryEditorController extends AnchorPane implements Initializable {
 
     private final String NEW_NOTE_TITLE = "New Note";
@@ -308,13 +313,13 @@ public class StoryEditorController extends AnchorPane implements Initializable {
         rangeTimeRadioBtn.setUserData(Time.RANGE);
 
         // display
-        infoPaneRadioBtn.setUserData(Display.OVERLAY);
-        locationRadioBtn.setUserData(Display.SPRITE);
-        upLeftRadioBtn.setUserData(Display.SPRITE);
-        upRightRadioBtn.setUserData(Display.SPRITE);
-        lowLeftRadioBtn.setUserData(Display.SPRITE);
-        lowRightRadioBtn.setUserData(Display.SPRITE);
-        billboardRadioBtn.setUserData(Display.BILLBOARD_FRONT);
+        infoPaneRadioBtn.setUserData(OVERLAY);
+        locationRadioBtn.setUserData(SPRITE);
+        upLeftRadioBtn.setUserData(SPRITE);
+        upRightRadioBtn.setUserData(SPRITE);
+        lowLeftRadioBtn.setUserData(SPRITE);
+        lowRightRadioBtn.setUserData(SPRITE);
+        billboardRadioBtn.setUserData(BILLBOARD_FRONT);
     }
 
     private void assertFXMLNodes() {
@@ -692,22 +697,22 @@ public class StoryEditorController extends AnchorPane implements Initializable {
                     switch ((Display) newValue.getUserData()) {
 
                         case OVERLAY:
-                            setActiveNoteDisplay(Display.OVERLAY);
+                            setActiveNoteDisplay(OVERLAY);
                             break;
 
                         case SPRITE:
-                            setActiveNoteDisplay(Display.SPRITE);
+                            setActiveNoteDisplay(SPRITE);
                             break;
 
                         case BILLBOARD_FRONT:
-                            setActiveNoteDisplay(Display.BILLBOARD_FRONT);
+                            setActiveNoteDisplay(BILLBOARD_FRONT);
                             break;
 
                         default:
                             break;
                     }
                 } else {
-                    setActiveNoteDisplay(Display.BLANK);
+                    setActiveNoteDisplay(BLANK);
                 }
             }
         }
@@ -723,19 +728,19 @@ public class StoryEditorController extends AnchorPane implements Initializable {
                         case CELL:
                             setActiveNoteAttachmentType(Type.CELL);
                             setActiveNoteCellName(activeCellProperty.get());
-                            setActiveNoteDisplay(Display.SPRITE);
+                            setActiveNoteDisplay(SPRITE);
                             updateDisplay();
                             break;
 
                         case BLANK:
                             setActiveNoteAttachmentType(Type.BLANK);
-                            setActiveNoteDisplay(Display.OVERLAY);
+                            setActiveNoteDisplay(OVERLAY);
                             updateDisplay();
                             break;
 
                         case STRUCTURE:
                             setActiveNoteAttachmentType(Type.STRUCTURE);
-                            setActiveNoteDisplay(Display.SPRITE);
+                            setActiveNoteDisplay(SPRITE);
                             updateDisplay();
                             break;
 
