@@ -130,6 +130,7 @@ public class URLLoader {
             final List<String> ruleStrings,
             final ObservableList<Rule> rulesList,
             final SearchLayer searchLayer) {
+
         rulesList.clear();
 
         final List<String> types = new ArrayList<>();
@@ -191,10 +192,12 @@ public class URLLoader {
 
                 String colorHex = "";
                 double alpha = 1.0;
-                if (sb.indexOf("+0x") > -1) {
-                    wholeColorString = sb.substring(sb.indexOf("+0x") + 1);
-                    colorHex = wholeColorString.substring(0, 8);
-                    String alphaHex = wholeColorString.substring(8);
+                if (sb.indexOf("+#") > -1) {
+                    // ff112233
+                    wholeColorString = sb.substring(sb.indexOf("+#") + 2);
+                    // whole color string format: alpha, red, green, blue
+                    colorHex = wholeColorString.substring(2, 8);
+                    String alphaHex = wholeColorString.substring(0, 2);
                     alpha = (parseInt(alphaHex, 16) + 1) / 256.0;
                 }
 
@@ -277,8 +280,6 @@ public class URLLoader {
                 e.printStackTrace();
             }
         }
-
-        // after all rules have been added, see if any gene rules need to have their
     }
 
     private static void parseViewArgs(

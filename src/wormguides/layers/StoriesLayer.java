@@ -278,10 +278,10 @@ public class StoriesLayer {
         stories.add(new Story(
                 TEMPLATE_STORY_NAME,
                 TEMPLATE_STORY_DESCRIPTION,
-                "http://scene.wormguides.org/wormguides/testurlscript?/set/ash-n$@+0x8"
-                        + "fbc8fff/rib-n$@+0x663366ff/avg-n$@+0xb41919ff/dd-n@+0x4a24c1ff/da-"
-                        + "n@+0xc56002ff/dd-n$+0xb30a95ff/da-n$+0xe6b34dff/rivl-n@+0xffb366ff/"
-                        + "rivr-n@+0xffe6b3ff/sibd-n@+0xe6ccffff/siav-n@+0x8099ffff/view/"
+                "http://scene.wormguides.org/wormguides/testurlscript?/set/ash-n$@+#ff8"
+                        + "fbc8f/rib-n$@+#ff663366/avg-n$@+#ffb41919/dd-n@+#ff4a24c1/da-"
+                        + "n@+#ffc56002/dd-n$+#ffb30a95/da-n$+#ffe6b34d/rivl-n@+#ffffb366/"
+                        + "rivr-n@+#ffffe6b3/sibd-n@+#ffe6ccff/siav-n@+#ff8099ff/view/"
                         + "time=393/rX=51.625/rY=-2.125/rZ=0.0/tX=0.0/tY=0.0/scale=2.25/dim=0.25/browser/"));
     }
 

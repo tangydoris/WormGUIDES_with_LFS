@@ -1,7 +1,3 @@
-/*
- * Bao Lab 2016
- */
-
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
@@ -87,7 +83,6 @@ import wormguides.util.subscenesaving.JpegImagesToMovie;
 import static java.lang.Math.pow;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
-import static java.lang.Thread.sleep;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -126,11 +121,11 @@ import static wormguides.util.AppFont.getBillboardFont;
 import static wormguides.util.AppFont.getSpriteAndOverlayFont;
 
 /**
- * The controller for the 3D subscene inside the rootEntitiesGroup layout. This class contains the subscene itself,
- * and places it into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also
- * responsible for refreshing the scene on timeProperty, search, wormguides.stories, notes, and rules change. This
- * class contains observable properties that are passed to other classes so that a subscene refresh can be trigger
- * from that other class.
+ * The controller for the 3D subscene inside the rootEntitiesGroup layout. This class contains the subscene itself, and
+ * places it into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also responsible
+ * for refreshing the scene on timeProperty, search, wormguides.stories, notes, and rules change. This class contains
+ * observable properties that are passed to other classes so that a subscene refresh can be trigger from that other
+ * class.
  * <p>
  * An "entity" in the subscene is either a cell, cell body, or multicellular structure. These are graphically
  * represented by the Shape3Ds Sphere and MeshView available in JavaFX. {@link Sphere}s represent cells, and
@@ -147,10 +142,10 @@ public class Window3DController {
     private final double CANNONICAL_ORIENTATION_Y = -166.0;
     private final double CANNONICAL_ORIENTATION_Z = 24.0;
     private final String CS = ", ";
-    private final String FILL_COLOR_HEX = "#272727";
-    private final String ACTIVE_LABEL_COLOR_HEX = "#ffff66";
-    private final String SPRITE_COLOR_HEX = "#ffffff";
-    private final String TRANSIENT_LABEL_COLOR_HEX = "#f0f0f0";
+    private final String FILL_COLOR_HEX = "#272727",
+            ACTIVE_LABEL_COLOR_HEX = "#ffff66",
+            SPRITE_COLOR_HEX = "#ffffff",
+            TRANSIENT_LABEL_COLOR_HEX = "#f0f0f0";
     /** The wait timeProperty (in millis) between consecutive timeProperty frames while a movie is playing. */
     private final long WAIT_TIME_MILLI = 200;
     /**
@@ -158,14 +153,14 @@ public class Window3DController {
      * visible.
      */
     private final double INITIAL_ZOOM = 2.75;
-    private final double INITIAL_TRANSLATE_X = -14.0;
-    private final double INITIAL_TRANSLATE_Y = 18.0;
+    private final double INITIAL_TRANSLATE_X = -14.0,
+            INITIAL_TRANSLATE_Y = 18.0;
     private final double CAMERA_INITIAL_DISTANCE = -220;
-    private final double CAMERA_NEAR_CLIP = 1;
-    private final double CAMERA_FAR_CLIP = 2000;
-    private final int X_COR_INDEX = 0;
-    private final int Y_COR_INDEX = 1;
-    private final int Z_COR_INDEX = 2;
+    private final double CAMERA_NEAR_CLIP = 1,
+            CAMERA_FAR_CLIP = 2000;
+    private final int X_COR_INDEX = 0,
+            Y_COR_INDEX = 1,
+            Z_COR_INDEX = 2;
     /** Text size scale used for the rendering of billboard notes. */
     private final double BILLBOARD_SCALE = 0.9;
     /**
@@ -185,9 +180,6 @@ public class Window3DController {
     /** Default transparency of 'other' entities on startup */
     private final double DEFAULT_OTHERS_OPACITY = 0.25;
     private final double VISIBILITY_CUTOFF = 0.05;
-
-    /** Text-wrapping width of a note sprite **/
-    private final int NOTE_SPRITE_TEXT_WIDTH = 220;
 
     // rotation stuff
     private final Rotate rotateX;
@@ -256,12 +248,10 @@ public class Window3DController {
     // orientation indicator
     private final Cylinder orientationIndicator;
     // rotation
-    private final double[] keyValuesRotate = {0, 45, 50, 70, 100, 100, 145};
-    private final double[] keyFramesRotate = {1, 20, 150, 200, 320, 340, 400};
-//    private final double[] keyValuesRotate = {0, 45, 100, 100, 145};
-//    private final double[] keyFramesRotate = {1, 20, 320, 340, 400};
-    
-    
+  private final double[] keyValuesRotate = {90, 30, 30, 90};
+//  private final double[] keyValuesRotate = {60, 1, 1, 60};
+  private final double[] keyFramesRotate = {1, 16, 321, 359};
+
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
     private final ProductionInfo productionInfo;
@@ -681,7 +671,7 @@ public class Window3DController {
     }
 
 //	private void initializeWithCannonicalOrientation() {
-//		// set default cannonical orientations
+//		// set default canonical orientations
 //		rotateXAngleProperty.set(CANNONICAL_ORIENTATION_X);
 //		rotateYAngleProperty.set(CANNONICAL_ORIENTATION_Y);
 //		rotateZAngleProperty.set(CANNONICAL_ORIENTATION_Z);
@@ -713,9 +703,6 @@ public class Window3DController {
         t.getTransforms().add(new Rotate(90, new Point3D(0, 1, 0)));
         middleTransformGroup.getChildren().add(t);
 
-        // rotation to match lateral orientation in image
-        middleTransformGroup.getTransforms().add(new Rotate(30, 0, 0));
-
         // xy relocates z shrinks apparent by moving away from camera? improves resolution?
         middleTransformGroup.getTransforms().add(new Scale(3, 3, 3));
 
@@ -734,45 +721,6 @@ public class Window3DController {
         return orientationIndicator;
     }
     
-    // Orientation set up under old model --> commented out 1/5/2016
-//    private Group createOrientationIndicator() {
-//        indicatorRotation = new Rotate();
-//        // top level group
-//        // had rotation to make it match main rotation
-//        Group orientationIndicator = new Group();
-//        // has rotation to make it match biological orientation
-//        Group middleTransformGroup = new Group();
-//
-//        // set up the orientation indicator in bottom right corner
-//        Text t = makeNoteBillboardText("P     A");
-//        t.setTranslateX(-10);
-//        middleTransformGroup.getChildren().add(t);
-//
-//        t = makeNoteBillboardText("D     V");
-//        t.setTranslateX(-42);
-//        t.setTranslateY(32);
-//        t.setRotate(90);
-//        middleTransformGroup.getChildren().add(t);
-//
-//        t = makeNoteBillboardText("L    R");
-//        t.setTranslateX(5);
-//        t.setTranslateZ(10);
-//        t.getTransforms().add(new Rotate(90, new Point3D(0, 1, 0)));
-//        middleTransformGroup.getChildren().add(t);
-//
-//        // rotation to match lateral orientation in image
-//        middleTransformGroup.getTransforms().add(new Rotate(-30, 0, 0));
-//
-//        // xy relocates z shrinks apparent by moving away from camera? improves resolution?
-//        middleTransformGroup.getTransforms().add(new Scale(3, 3, 3));
-//
-//        orientationIndicator.getTransforms().add(new Translate(270, 200, 800));
-//        orientationIndicator.getTransforms().addAll(rotateZ, rotateY, rotateX);
-//        orientationIndicator.getChildren().add(middleTransformGroup);
-//        middleTransformGroup.getTransforms().add(indicatorRotation);
-//        return orientationIndicator;
-//    }
-
     private double computeInterpolatedValue(int timevalue, double[] keyFrames, double[] keyValues) {
         if (timevalue <= keyFrames[0]) {
             return keyValues[0];
@@ -1297,6 +1245,7 @@ public class Window3DController {
                 final MeshView mesh = se.buildGeometry(requestedTime - 1);
                 if (mesh != null) {
                     mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
+                    // TODO fix
                     mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
                     // add rendered mesh to meshes list
                     currentSceneElementMeshes.add(mesh);
@@ -1497,7 +1446,7 @@ public class Window3DController {
 
                     // in search mode
                     if (isInSearchMode) {
-                        // note: search for lim4_nerve_ring is parallel with an AB
+                        // note: in highlighting, lim4_nerve_ring is parallel with an AB
                         // lineage name in meshNames and sceneElements respectively
                         if (cellBodyTicked && isMeshSearchedFlags[i]) {
                             meshView.setMaterial(colorHash.getHighlightMaterial());
@@ -1538,9 +1487,15 @@ public class Window3DController {
                                 // this is the check for whether this is an explicit structure rule
                                 if (rule.appliesToStructureWithSceneName(sceneElement.getSceneName())) {
                                     colors.add(rule.getColor());
-                                } else {
-                                    // commented out 12/28/2016 --> this condition will color a mutlicellular structure
-                                    // if a single cell in struct has a rule
+                                }
+//								else if (!(structureCells.size() > 1) && rule.appliesToCellBody(structureCells.get(0)
+// )) {
+//									colors.add(rule.getColor());
+//								}
+
+                                // commented out 12/28/2016 --> this condition will color a mutlicellular structure
+                                // if a single cell in struct has a rule
+                                else {
                                     colors.addAll(structureCells
                                             .stream()
                                             .filter(rule::appliesToCellBody)
@@ -1737,7 +1692,7 @@ public class Window3DController {
     private void addNoteGeometries(List<Node> list) {
         for (Note note : currentNotes) {
             // map notes to their sphere/mesh view
-            final Node text = makeNoteGraphic(note);
+            Node text = makeNoteGraphic(note);
             currentGraphicNoteMap.put(text, note);
 
             text.setOnMouseEntered(clickableMouseEnteredHandler);
@@ -1751,7 +1706,7 @@ public class Window3DController {
                     box.getChildren().add(text);
                     // add inivisible location marker to scene at location
                     // specified by note
-                    final Sphere marker = createLocationMarker(note.getX(), note.getY(), note.getZ());
+                    Sphere marker = createLocationMarker(note.getX(), note.getY(), note.getZ());
                     rootEntitiesGroup.getChildren().add(marker);
                     entitySpriteMap.put(marker, box);
                     // add vbox to sprites pane
@@ -1911,13 +1866,13 @@ public class Window3DController {
 
     private Text makeNoteSpriteText(String title) {
         Text text = makeNoteOverlayText(title);
-        text.setWrappingWidth(NOTE_SPRITE_TEXT_WIDTH);
+        text.setWrappingWidth(220);
         return text;
     }
 
     private Text makeNoteBillboardText(String title) {
         Text text = new Text(title);
-        text.setWrappingWidth(90);
+        text.setWrappingWidth(100);
         text.setFont(getBillboardFont());
         text.setSmooth(false);
         text.setStrokeWidth(2);
@@ -2034,15 +1989,15 @@ public class Window3DController {
 //					isMeshSearchedFlags[i] = false;
 //				}
 
-				
+
 				/* It probably never makes sense to include this because structures with no cells shouldn't be
-				 * highlighted via a cells search but in case it's ever needed, here's the condition
+                 * highlighted via a cells search but in case it's ever needed, here's the condition
 				 */
 //				else if (sceneElement.isNoCellStructure()) {
 //					if (sceneElement.getSceneName().startsWith(searchField.getText())) {
 //						isMeshSearchedFlags[i] = true;
 //					}
-//				} 
+//				}
 
             }
         }
@@ -2266,7 +2221,7 @@ public class Window3DController {
             hideContextPopups();
             double z = zoomProperty.get();
             /*
-			 * Workaround to avoid JavaFX bug --> stop zoomProperty at 0
+             * Workaround to avoid JavaFX bug --> stop zoomProperty at 0
 			 * As of July 8, 2016
 			 * Noted by: Braden Katzman
 			 *
@@ -2420,7 +2375,7 @@ public class Window3DController {
                         }
                         runLater(() -> timeProperty.set(timeProperty.get() + 1));
                         try {
-                            sleep(WAIT_TIME_MILLI);
+                            Thread.sleep(WAIT_TIME_MILLI);
                         } catch (InterruptedException ie) {
                             break;
                         }

@@ -158,7 +158,7 @@ public class SceneElementsList {
                             // check to see if resource exists in the shape files archive
                             // only create a scene element if it does
                             final SceneElement element = new SceneElement(
-                                    name,
+                                    lineageName,
                                     cellNames,
                                     tokens[MARKER_INDEX],
                                     tokens[IMAGING_SOURCE_INDEX],
