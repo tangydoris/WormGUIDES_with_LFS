@@ -1206,6 +1206,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
             contextMenuStage = new Stage();
             contextMenuStage.initStyle(UNDECORATED);
 
+            if (connectome == null) { System.out.println("WTF"); }
             contextMenuController = new ContextMenuController(
                     mainStage,
                     contextMenuStage,
