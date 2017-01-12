@@ -675,6 +675,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 mainStage,
                 rootEntitiesGroup,
                 subscene,
+                mainTabPane,
                 modelAnchorPane,
                 lineageData,
                 casesLists,
