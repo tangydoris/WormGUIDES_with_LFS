@@ -675,7 +675,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
                 mainStage,
                 rootEntitiesGroup,
                 subscene,
-                mainTabPane,
                 modelAnchorPane,
                 lineageData,
                 casesLists,
@@ -1078,6 +1077,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         colorAndDisplayTab = colorAndDisplayDragTab;
 
         mainTabPane.getTabs().addAll(storiesTab, colorAndDisplayTab);
+        mainTabPane.toFront();
     }
 
     @Override

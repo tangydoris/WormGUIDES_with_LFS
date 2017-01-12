@@ -42,7 +42,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -209,7 +208,6 @@ public class Window3DController {
     private final LineageData lineageData;
     private final SubScene subscene;
     private final TextField searchField;
-    private final TabPane mainTabPane;
 
     // housekeeping stuff
     private final BooleanProperty rebuildSubsceneFlag;
@@ -332,7 +330,6 @@ public class Window3DController {
             final Stage parentStage,
             final Group rootEntitiesGroup,
             final SubScene subscene,
-            final TabPane mainTabPane,
             final AnchorPane parentPane,
             final LineageData lineageData,
             final CasesLists casesLists,
@@ -386,7 +383,6 @@ public class Window3DController {
             final ObservableList<String> searchResultsList) {
 
         this.parentStage = requireNonNull(parentStage);
-        this.mainTabPane = requireNonNull(mainTabPane);
 
         this.offsetX = offsetX;
         this.offsetY = offsetY;
@@ -1130,7 +1126,6 @@ public class Window3DController {
                 alignTextWithEntity(entityLabelMap.get(entity), entity, true);
             }
         }
-        mainTabPane.toFront();
     }
 
     /**
@@ -1175,8 +1170,6 @@ public class Window3DController {
                     x += hOffset;
                     y += vOffset + LABEL_SPRITE_Y_OFFSET;
                 }
-
-                // TODO fix sprite z-index issue
                 noteOrLabelGraphic.getTransforms().add(new Translate(x, y));
             }
         }
