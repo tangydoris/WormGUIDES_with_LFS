@@ -1,3 +1,5 @@
+
+
 package wormguides.controllers;
 
 import java.awt.image.RenderedImage;
@@ -40,6 +42,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -206,6 +209,8 @@ public class Window3DController {
     private final LineageData lineageData;
     private final SubScene subscene;
     private final TextField searchField;
+    private final TabPane mainTabPane;
+
     // housekeeping stuff
     private final BooleanProperty rebuildSubsceneFlag;
     private final DoubleProperty rotateXAngleProperty;
@@ -220,6 +225,7 @@ public class Window3DController {
     /** End timeProperty of the lineage without movie timeProperty offset */
     private final int endTime;
     private final DoubleProperty zoomProperty;
+
     // subscene click cell selection stuff
     private final IntegerProperty selectedIndex;
     private final StringProperty selectedNameProperty;
@@ -230,9 +236,11 @@ public class Window3DController {
     private final BooleanProperty cellClickedProperty;
     private final ObservableList<String> searchResultsList;
     private final ObservableList<Rule> rulesList;
+
     // Scene Elements stuff
     private final boolean defaultEmbryoFlag;
     private final SceneElementsList sceneElementsList;
+
     // Story elements stuff
     private final StoriesLayer storiesLayer;
     /** Map of current note graphics to their note objects */
@@ -248,9 +256,9 @@ public class Window3DController {
     // orientation indicator
     private final Cylinder orientationIndicator;
     // rotation
-  private final double[] keyValuesRotate = {90, 30, 30, 90};
-//  private final double[] keyValuesRotate = {60, 1, 1, 60};
-  private final double[] keyFramesRotate = {1, 16, 321, 359};
+    private final double[] keyValuesRotate = {90, 30, 30, 90};
+    //  private final double[] keyValuesRotate = {60, 1, 1, 60};
+    private final double[] keyFramesRotate = {1, 16, 321, 359};
 
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
@@ -324,6 +332,7 @@ public class Window3DController {
             final Stage parentStage,
             final Group rootEntitiesGroup,
             final SubScene subscene,
+            final TabPane mainTabPane,
             final AnchorPane parentPane,
             final LineageData lineageData,
             final CasesLists casesLists,
@@ -377,6 +386,7 @@ public class Window3DController {
             final ObservableList<String> searchResultsList) {
 
         this.parentStage = requireNonNull(parentStage);
+        this.mainTabPane = requireNonNull(mainTabPane);
 
         this.offsetX = offsetX;
         this.offsetY = offsetY;
@@ -586,7 +596,7 @@ public class Window3DController {
         // set up the orientation indicator in bottom right corner
         double radius = 5.0;
         double height = 15.0;
-        PhongMaterial material = new PhongMaterial();
+        final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(RED);
         orientationIndicator = new Cylinder(radius, height);
         orientationIndicator.getTransforms().addAll(rotateX, rotateY, rotateZ);
@@ -670,21 +680,20 @@ public class Window3DController {
         this.searchResultsList = requireNonNull(searchResultsList);
     }
 
-//	private void initializeWithCannonicalOrientation() {
-//		// set default canonical orientations
-//		rotateXAngleProperty.set(CANNONICAL_ORIENTATION_X);
-//		rotateYAngleProperty.set(CANNONICAL_ORIENTATION_Y);
-//		rotateZAngleProperty.set(CANNONICAL_ORIENTATION_Z);
-//	}
-
-    // orientation for new model as of 1/5/2016
+    /**
+     * Creates the orientation indicator and transforms
+     * <p>
+     * (for new model as of 1/5/2016)
+     *
+     * @return the group containing the orientation indicator texts
+     */
     private Group createOrientationIndicator() {
         indicatorRotation = new Rotate();
         // top level group
         // had rotation to make it match main rotation
-        Group orientationIndicator = new Group();
+        final Group orientationIndicator = new Group();
         // has rotation to make it match biological orientation
-        Group middleTransformGroup = new Group();
+        final Group middleTransformGroup = new Group();
 
         // set up the orientation indicator in bottom right corner
         Text t = makeNoteBillboardText("A     P");
@@ -707,20 +716,20 @@ public class Window3DController {
         middleTransformGroup.getTransforms().add(new Scale(3, 3, 3));
 
         // set the location of the indicator in the bottom right corner of the screen
-        orientationIndicator.getTransforms().add(new Translate(270, 200, 800));
-        
+        orientationIndicator.getTransforms().add(new Translate(310, 210, 800));
+
         // add rotation variables
         orientationIndicator.getTransforms().addAll(rotateZ, rotateY, rotateX);
-        
+
         // add the directional symbols to the group
         orientationIndicator.getChildren().add(middleTransformGroup);
-        
+
         // add rotation
         middleTransformGroup.getTransforms().add(indicatorRotation);
-        
+
         return orientationIndicator;
     }
-    
+
     private double computeInterpolatedValue(int timevalue, double[] keyFrames, double[] keyValues) {
         if (timevalue <= keyFrames[0]) {
             return keyValues[0];
@@ -1121,6 +1130,7 @@ public class Window3DController {
                 alignTextWithEntity(entityLabelMap.get(entity), entity, true);
             }
         }
+        mainTabPane.toFront();
     }
 
     /**
@@ -1166,22 +1176,8 @@ public class Window3DController {
                     y += vOffset + LABEL_SPRITE_Y_OFFSET;
                 }
 
-                final Bounds paneBounds = spritesPane.localToScreen(spritesPane.getBoundsInLocal());
-                final Bounds graphicBounds = noteOrLabelGraphic.localToScreen(noteOrLabelGraphic.getBoundsInLocal());
-
-                if (graphicBounds != null && paneBounds != null) {
-                    if (x < -OUT_OF_BOUNDS_THRESHOLD
-                            || y < -OUT_OF_BOUNDS_THRESHOLD
-                            || (paneBounds.getMaxY() - y - graphicBounds.getHeight())
-                            < (paneBounds.getMinY() - OUT_OF_BOUNDS_THRESHOLD)
-                            || (x + graphicBounds.getWidth()) > (paneBounds.getMaxX() + OUT_OF_BOUNDS_THRESHOLD)) {
-                        spritesPane.getChildren().remove(noteOrLabelGraphic);
-
-                    } else {
-                        // note graphic is within bounds
-                        noteOrLabelGraphic.getTransforms().add(new Translate(x, y));
-                    }
-                }
+                // TODO fix sprite z-index issue
+                noteOrLabelGraphic.getTransforms().add(new Translate(x, y));
             }
         }
     }
