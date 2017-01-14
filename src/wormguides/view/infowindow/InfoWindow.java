@@ -160,17 +160,14 @@ public class InfoWindow {
                 final Task<Void> task = new Task<Void>() {
                     @Override
                     protected Void call() throws Exception {
-                        // GENERATE CELL TAB ON CLICK
                         final String lineageName = nameToQuery;
 
                         if (!defaultEmbryoFlag
                                 && !lineageData.isSulstonMode()) {
-                            System.out.println("first one");
                             return null;
                         } else if (!defaultEmbryoFlag
                                 && lineageData.isSulstonMode()
                                 && nameToQuery.startsWith("Nuc")) {
-                            System.out.println("second one");
                             return null;
                         }
 
@@ -186,7 +183,7 @@ public class InfoWindow {
                                 } else {
                                     // check default flag for image series info validation
                                     if (defaultEmbryoFlag) {
-                                        String funcName = connectome.checkQueryCell(lineageName).toUpperCase();
+                                        String funcName = connectome.checkQueryCell(lineageName).toLowerCase();
                                         casesLists.makeTerminalCase(
                                                 lineageName,
                                                 funcName,
@@ -221,7 +218,6 @@ public class InfoWindow {
                                                 InfoWindow.this.productionInfo.getNuclearInfo(),
                                                 InfoWindow.this.productionInfo.getCellShapeData(funcName));
                                     } else {
-                                        System.out.println("here");
                                         String funcName = connectome.checkQueryCell(lineageName).toUpperCase();
                                         casesLists.makeTerminalCase(
                                                 lineageName,
@@ -271,7 +267,6 @@ public class InfoWindow {
                                                 InfoWindow.this.productionInfo.getNuclearInfo(),
                                                 InfoWindow.this.productionInfo.getCellShapeData(lineageName));
                                     } else {
-                                        System.out.println("third one");
                                         casesLists.makeNonTerminalCase(
                                                 lineageName,
                                                 new ArrayList<>(),
@@ -328,15 +323,15 @@ public class InfoWindow {
     public void addTab(Object cellCase) {
     	InfoWindowDOM dom;
     	if (cellCase instanceof TerminalCellCase) {
-    		dom = new InfoWindowDOM((TerminalCellCase) cellCase);
+    		dom = new InfoWindowDOM(((TerminalCellCase) cellCase));
     	} else if (cellCase instanceof NonTerminalCellCase) {
-    		dom = new InfoWindowDOM((NonTerminalCellCase) cellCase);
+    		dom = new InfoWindowDOM(((NonTerminalCellCase) cellCase));
     	} else if (cellCase instanceof AmphidSensillaTerm) {
-    		dom = new InfoWindowDOM((AmphidSensillaTerm) cellCase);
+    		dom = new InfoWindowDOM(((AmphidSensillaTerm) cellCase));
     	} else {
     		dom = new InfoWindowDOM();
     	}
-    	
+
         runLater(() -> {
             WebView webview = new WebView();
             webview.getEngine().loadContent(dom.DOMtoString());

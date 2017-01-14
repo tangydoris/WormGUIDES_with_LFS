@@ -101,7 +101,7 @@ public class Connectome {
      * Search function which takes cell and filters results based on filter toggles filter toggles = 4 SynapseTypes
      *
      * @param queryCell
-     *         lineage name of the cell to be searched for
+     *         name of the cell to be searched for (should be functional and lower case)
      * @param isPresynapticTicked
      *         true if the presynaptic search box is ticked, false otherwise
      * @param isPostsynapticTicked

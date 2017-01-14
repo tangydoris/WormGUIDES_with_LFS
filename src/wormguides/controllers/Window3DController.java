@@ -1611,9 +1611,7 @@ public class Window3DController {
     private void removeLabelFor(String name) {
         allLabels.remove(name);
         currentLabels.remove(name);
-
-        Node entity = getEntityWithName(name);
-
+        final Node entity = getEntityWithName(name);
         if (entity != null) {
             removeLabelFrom(entity);
         }
@@ -1679,8 +1677,7 @@ public class Window3DController {
             // mesh view label
             for (int i = 0; i < currentSceneElements.size(); i++) {
                 if (normalizeName(currentSceneElements.get(i).getSceneName()).equalsIgnoreCase(name)
-                        && currentSceneElementMeshes.get(i) != null
-                        && currentSceneElementMeshes.get(i).getBoundsInParent().getMinZ() > 0) {
+                        && currentSceneElementMeshes.get(i) != null) {
                     return currentSceneElementMeshes.get(i);
                 }
             }
