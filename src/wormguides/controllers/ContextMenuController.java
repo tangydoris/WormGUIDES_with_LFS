@@ -102,6 +102,7 @@ public class ContextMenuController extends AnchorPane implements Initializable {
     private ProductionInfo productionInfo;
     private Stage parentStage;
     private BooleanProperty bringUpInfoProperty;
+    private Connectome connectome;
 
     /**
      * Constructur for ContextMenuController
@@ -138,6 +139,8 @@ public class ContextMenuController extends AnchorPane implements Initializable {
         this.productionInfo = requireNonNull(productionInfo);
 
         this.bringUpInfoProperty = requireNonNull(bringUpInfoProperty);
+
+        this.connectome = connectome;
 
         loadingService = new Service<Void>() {
             @Override
@@ -195,8 +198,12 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                                 System.out.println("null cell cases");
                                 return null; // error check
                             }
-                            String funcName = getFunctionalNameByLineageName(cellName);
+
                             String searchName = cellName;
+
+                         // translate the name if necessary
+                            String funcName = connectome.checkQueryCell(cellName).toUpperCase();
+
                             boolean isTerminalCase = false;
                             if (funcName != null) {
                                 isTerminalCase = true;
@@ -205,11 +212,11 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                                 if (!cases.containsCellCase(searchName)) {
                                     cases.makeTerminalCase(
                                             cellName,
-                                            searchName,
-                                            connectome.queryConnectivity(searchName, true, false, false, false, false),
-                                            connectome.queryConnectivity(searchName, false, true, false, false, false),
-                                            connectome.queryConnectivity(searchName, false, false, true, false, false),
-                                            connectome.queryConnectivity(searchName, false, false, false, true, false),
+                                            funcName,
+                                            connectome.queryConnectivity(funcName, true, false, false, false, false),
+                                            connectome.queryConnectivity(funcName, false, true, false, false, false),
+                                            connectome.queryConnectivity(funcName, false, false, true, false, false),
+                                            connectome.queryConnectivity(funcName, false, false, false, true, false),
                                             productionInfo.getNuclearInfo(),
                                             productionInfo.getCellShapeData(cellName));
                                 }
@@ -256,6 +263,12 @@ public class ContextMenuController extends AnchorPane implements Initializable {
             loadingService.cancel();
         });
 
+        /*TODO
+         * figure out what is going on with different rule behavior. should this be same as search layer?
+         * what is the difference between terminal and non terminal?
+         * should lineage of functional name be used based on the type of cell case
+         *
+         */
         wiredToQueryService = new Service<List<List<String>>>() {
             @Override
             protected Task<List<List<String>>> createTask() {
@@ -264,25 +277,30 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                     protected List<List<String>> call() throws Exception {
                         if (cellName != null && !cellName.isEmpty()) {
                             List<List<String>> results = new ArrayList<>();
-                            if (cases.containsCellCase(cellName)) {
-                                TerminalCellCase terminalCase = (TerminalCellCase) cases.getCellCase(cellName);
+
+                            // translate the name if necessary
+                            String funcName = connectome.checkQueryCell(cellName).toLowerCase();
+
+                            if (cases.containsCellCase(funcName)) {
+                                TerminalCellCase terminalCase = (TerminalCellCase) cases.getCellCase(funcName);
                                 results.add(PRE_SYN_INDEX, terminalCase.getPresynapticPartners());
                                 results.add(POST_SYN_INDEX, terminalCase.getPostsynapticPartners());
                                 results.add(ELECTR_INDEX, terminalCase.getElectricalPartners());
                                 results.add(NEURO_INDEX, terminalCase.getNeuromuscularPartners());
                             } else {
+
                                 results.add(
                                         PRE_SYN_INDEX,
-                                        connectome.queryConnectivity(cellName, true, false, false, false, false));
+                                        connectome.queryConnectivity(funcName, true, false, false, false, true));
                                 results.add(
                                         POST_SYN_INDEX,
-                                        connectome.queryConnectivity(cellName, false, true, false, false, false));
+                                        connectome.queryConnectivity(funcName, false, true, false, false, true));
                                 results.add(
                                         ELECTR_INDEX,
-                                        connectome.queryConnectivity(cellName, false, false, true, false, false));
+                                        connectome.queryConnectivity(funcName, false, false, true, false, true));
                                 results.add(
                                         NEURO_INDEX,
-                                        connectome.queryConnectivity(cellName, false, false, false, true, false));
+                                        connectome.queryConnectivity(funcName, false, false, false, true, true));
                             }
                             return results;
                         }
@@ -297,8 +315,10 @@ public class ContextMenuController extends AnchorPane implements Initializable {
             final List<List<String>> results = wiredToQueryService.getValue();
             if (results != null) {
                 colorAll.setOnAction(event1 -> {
-                    final Rule rule = searchLayer.addGiantConnectomeColorRule(
-                            cellName,
+                	// translate the name if necessary
+                    String funcName = connectome.checkQueryCell(cellName).toLowerCase();
+                	final Rule rule = searchLayer.addConnectomeColorRuleFromContextMenu(
+                    		funcName,
                             DEFAULT_COLOR,
                             true,
                             true,
@@ -520,6 +540,8 @@ public class ContextMenuController extends AnchorPane implements Initializable {
 
         menu.getItems().clear();
 
+        String funcName = connectome.checkQueryCell(cellName).toLowerCase();
+
         if (results.isEmpty()) {
             menu.getItems().add(new MenuItem("None"));
             return;
@@ -528,8 +550,15 @@ public class ContextMenuController extends AnchorPane implements Initializable {
         final MenuItem all = new MenuItem("Color All");
         menu.getItems().add(all);
         all.setOnAction(event -> {
-            final Rule rule = searchLayer.addGiantConnectomeColorRule(
-                    cellName,
+//            final Rule rule = searchLayer.addGiantConnectomeColorRule(
+//                    cellName,
+//                    DEFAULT_COLOR,
+//                    isPresynaptic,
+//                    isPostsynaptic,
+//                    isElectrical,
+//                    isNeuromuscular);
+        	final Rule rule = searchLayer.addConnectomeColorRuleFromContextMenu(
+            		funcName,
                     DEFAULT_COLOR,
                     isPresynaptic,
                     isPostsynaptic,
@@ -542,8 +571,8 @@ public class ContextMenuController extends AnchorPane implements Initializable {
             final MenuItem item = new MenuItem(result);
             menu.getItems().add(item);
             item.setOnAction(event -> {
-                final Rule rule = searchLayer.addConnectomeColorRule(
-                        result,
+                final Rule rule = searchLayer.addConnectomeColorRuleFromContextMenu(
+                		connectome.checkQueryCell(result).toLowerCase(),
                         DEFAULT_COLOR,
                         isPresynaptic,
                         isPostsynaptic,

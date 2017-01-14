@@ -1,17 +1,5 @@
 /*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
+ * Bao Lab 2017
  */
 
 package wormguides.controllers;
@@ -140,19 +128,16 @@ import static wormguides.util.AppFont.getSpriteAndOverlayFont;
 
 /**
  * The controller for the 3D subscene inside the rootEntitiesGroup layout. This class contains the subscene itself, and
- * places it
- * into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also responsible for refreshing
- * the scene
- * on timeProperty, search, wormguides.stories, notes, and rules change. This class contains observable properties that
- * are
- * passed to other classes so that a subscene refresh can be trigger from that other class.
+ * places it into the AnchorPane called modelAnchorPane inside the rootEntitiesGroup layout. It is also responsible
+ * for refreshing the scene on timeProperty, search, wormguides.stories, notes, and rules change. This class contains
+ * observable properties that are passed to other classes so that a subscene refresh can be trigger from that other
+ * class.
  * <p>
  * An "entity" in the subscene is either a cell, cell body, or multicellular structure. These are graphically
  * represented by the Shape3Ds Sphere and MeshView available in JavaFX. {@link Sphere}s represent cells, and
  * {@link MeshView}s represent cell bodies and multicellular structures. Notes and labels are rendered as
  * {@link Text}s. This class queries the {@link LineageData} and {@link SceneElementsList} for a certain timeProperty
- * and
- * renders the entities, notes, story, and labels present in that timeProperty point.
+ * and renders the entities, notes, story, and labels present in that timeProperty point.
  * <p>
  * For the coloring of entities, an observable list of {@link Rule}s is queried to see which ones apply to a
  * particular entity, then queries the {@link ColorHash} for the {@link Material} to use for the entity.
@@ -269,8 +254,10 @@ public class Window3DController {
     // orientation indicator
     private final Cylinder orientationIndicator;
     // rotation
-    private final double[] keyValuesRotate = {0, 45, 100, 100, 145};
-    private final double[] keyFramesRotate = {1, 20, 320, 340, 400};
+    private final double[] keyValuesRotate = {90, 30, 30, 90};
+    //  private final double[] keyValuesRotate = {60, 1, 1, 60};
+    private final double[] keyFramesRotate = {1, 16, 321, 359};
+
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
     private final ProductionInfo productionInfo;
@@ -605,7 +592,7 @@ public class Window3DController {
         // set up the orientation indicator in bottom right corner
         double radius = 5.0;
         double height = 15.0;
-        PhongMaterial material = new PhongMaterial();
+        final PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(RED);
         orientationIndicator = new Cylinder(radius, height);
         orientationIndicator.getTransforms().addAll(rotateX, rotateY, rotateZ);
@@ -689,20 +676,20 @@ public class Window3DController {
         this.searchResultsList = requireNonNull(searchResultsList);
     }
 
-//	private void initializeWithCannonicalOrientation() {
-//		// set default cannonical orientations
-//		rotateXAngleProperty.set(CANNONICAL_ORIENTATION_X);
-//		rotateYAngleProperty.set(CANNONICAL_ORIENTATION_Y);
-//		rotateZAngleProperty.set(CANNONICAL_ORIENTATION_Z);
-//	}
-
+    /**
+     * Creates the orientation indicator and transforms
+     * <p>
+     * (for new model as of 1/5/2016)
+     *
+     * @return the group containing the orientation indicator texts
+     */
     private Group createOrientationIndicator() {
         indicatorRotation = new Rotate();
         // top level group
         // had rotation to make it match main rotation
-        Group orientationIndicator = new Group();
+        final Group orientationIndicator = new Group();
         // has rotation to make it match biological orientation
-        Group middleTransformGroup = new Group();
+        final Group middleTransformGroup = new Group();
 
         // set up the orientation indicator in bottom right corner
         Text t = makeNoteBillboardText("P     A");
@@ -1141,7 +1128,7 @@ public class Window3DController {
      * its bounds are within the window again.
      *
      * @param noteOrLabelGraphic
-     *         graphical representation of a note/notes
+     *         graphical representation of a note/notes (could be a {@link Text} or a {@link VBox})
      * @param node
      *         entity that the note graphic should attach to
      * @param isLabel
@@ -1149,21 +1136,14 @@ public class Window3DController {
      */
     private void alignTextWithEntity(final Node noteOrLabelGraphic, final Node node, final boolean isLabel) {
         if (node != null) {
-            // graphic could have been previously removed due to out-of-bounds-ness
-            final ObservableList<Node> children = spritesPane.getChildren();
-            if (!children.contains(noteOrLabelGraphic)) {
-                children.add(noteOrLabelGraphic);
-            }
-
             final Bounds b = node.getBoundsInParent();
             if (b != null) {
-                noteOrLabelGraphic.getTransforms().clear();
                 final Point2D p = CameraHelper.project(
                         camera,
                         new Point3D(
-                                (b.getMinX() + b.getMaxX()) / 2,
-                                (b.getMinY() + b.getMaxY()) / 2,
-                                (b.getMaxZ() + b.getMinZ()) / 2));
+                                (b.getMinX() + b.getMaxX()) / 2.0,
+                                (b.getMinY() + b.getMaxY()) / 2.0,
+                                (b.getMaxZ() + b.getMinZ()) / 2.0));
                 double x = p.getX();
                 double y = p.getY();
 
@@ -1177,23 +1157,8 @@ public class Window3DController {
                     x += hOffset;
                     y += vOffset + LABEL_SPRITE_Y_OFFSET;
                 }
-
-                final Bounds paneBounds = spritesPane.localToScreen(spritesPane.getBoundsInLocal());
-                final Bounds graphicBounds = noteOrLabelGraphic.localToScreen(noteOrLabelGraphic.getBoundsInLocal());
-
-                if (graphicBounds != null && paneBounds != null) {
-                    if (x < -OUT_OF_BOUNDS_THRESHOLD
-                            || y < -OUT_OF_BOUNDS_THRESHOLD
-                            || (paneBounds.getMaxY() - y - graphicBounds.getHeight())
-                            < (paneBounds.getMinY() - OUT_OF_BOUNDS_THRESHOLD)
-                            || (x + graphicBounds.getWidth()) > (paneBounds.getMaxX() + OUT_OF_BOUNDS_THRESHOLD)) {
-                        spritesPane.getChildren().remove(noteOrLabelGraphic);
-
-                    } else {
-                        // note graphic is within bounds
-                        noteOrLabelGraphic.getTransforms().add(new Translate(x, y));
-                    }
-                }
+                noteOrLabelGraphic.getTransforms().clear();
+                noteOrLabelGraphic.getTransforms().add(new Translate(x, y));
             }
         }
     }
@@ -1257,13 +1222,11 @@ public class Window3DController {
                 final MeshView mesh = se.buildGeometry(requestedTime - 1);
                 if (mesh != null) {
                     mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
+                    // TODO is this right?
                     mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
-
                     // add rendered mesh to meshes list
                     currentSceneElementMeshes.add(mesh);
-
-                    // add scene element to rendered scene element reference for
-                    // on click responsiveness
+                    // add scene element to rendered scene element reference for on-click responsiveness
                     currentSceneElements.add(se);
                 }
             }
@@ -1460,7 +1423,7 @@ public class Window3DController {
 
                     // in search mode
                     if (isInSearchMode) {
-                        // note: in highlighting lim4_nerve_ring is parallel with an AB
+                        // note: in highlighting, lim4_nerve_ring is parallel with an AB
                         // lineage name in meshNames and sceneElements respectively
                         if (cellBodyTicked && isMeshSearchedFlags[i]) {
                             meshView.setMaterial(colorHash.getHighlightMaterial());
@@ -1624,21 +1587,19 @@ public class Window3DController {
         }
     }
 
-    private void insertLabelFor(String name, Node entity) {
-        // if label is already in scene, make all labels white
-        // and highlight that one
-        Text label = entityLabelMap.get(entity);
+    private void insertLabelFor(final String name, final Node entity) {
+        // if label is already in scene, make all labels white and highlight that one
+        final Text label = entityLabelMap.get(entity);
         if (label != null) {
             for (Node shape : entityLabelMap.keySet()) {
                 entityLabelMap.get(shape).setFill(web(SPRITE_COLOR_HEX));
             }
-
             label.setFill(web(ACTIVE_LABEL_COLOR_HEX));
             return;
         }
 
         // otherwise, create a highlight new label
-        String funcName = getFunctionalNameByLineageName(name);
+        final String funcName = getFunctionalNameByLineageName(name);
         Text text;
         if (funcName != null) {
             text = makeNoteSpriteText(funcName);
@@ -1648,11 +1609,9 @@ public class Window3DController {
 
         final String tempName = name;
         text.setOnMouseClicked(event -> removeLabelFor(tempName));
-
         text.setWrappingWidth(-1);
 
         entityLabelMap.put(entity, text);
-
         spritesPane.getChildren().add(text);
         alignTextWithEntity(text, entity, true);
     }
@@ -1672,7 +1631,7 @@ public class Window3DController {
      * meshes (if a mesh and a cell have the same name, then the mesh is
      * returned).
      */
-    private Shape3D getEntityWithName(String name) {
+    private Shape3D getEntityWithName(final String name) {
         if (defaultEmbryoFlag) {
             // mesh view label
             for (int i = 0; i < currentSceneElements.size(); i++) {
@@ -1995,15 +1954,15 @@ public class Window3DController {
 //					isMeshSearchedFlags[i] = false;
 //				}
 
-				
+
 				/* It probably never makes sense to include this because structures with no cells shouldn't be
-				 * highlighted via a cells search but in case it's ever needed, here's the condition
+                 * highlighted via a cells search but in case it's ever needed, here's the condition
 				 */
 //				else if (sceneElement.isNoCellStructure()) {
 //					if (sceneElement.getSceneName().startsWith(searchField.getText())) {
 //						isMeshSearchedFlags[i] = true;
 //					}
-//				} 
+//				}
 
             }
         }
@@ -2176,7 +2135,7 @@ public class Window3DController {
     }
 
     /**
-     * Hides cell name label/context menu
+     * Hides the context menu
      */
     private void hideContextPopups() {
         contextMenuStage.hide();
