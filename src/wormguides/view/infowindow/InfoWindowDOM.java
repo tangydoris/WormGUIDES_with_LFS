@@ -478,6 +478,10 @@ public class InfoWindowDOM {
             wiringPartnersUL.addChild(li);
         }
 
+        /*
+         * TODO
+         * for some reason synapse partners are all zero so this is always false and terminal pages are never properly made
+         */
         boolean isneuronpage = (presynapticPartners.size() > 0 || electricalPartners.size() > 0
                 || neuromuscularPartners.size() > 0 || postsynapticPartners.size() > 0);
         // only add this section if it's a neuron (i.e. it appears in wiring diagram) -AS
