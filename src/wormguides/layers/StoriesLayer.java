@@ -592,6 +592,7 @@ public class StoriesLayer {
         } else {
             activeStoryProperty.set("");
             useInternalRulesFlag.set(true);
+            rebuildSubsceneFlag.set(true);
         }
 
         if (editController != null) {
