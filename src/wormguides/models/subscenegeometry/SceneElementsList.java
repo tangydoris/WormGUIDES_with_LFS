@@ -1,5 +1,5 @@
 /*
- * Bao Lab 2016
+ * Bao Lab 2017
  */
 
 package wormguides.models.subscenegeometry;
@@ -126,8 +126,7 @@ public class SceneElementsList {
                     }
                 } else {
                     // add structure (leaf node) to tree
-                    // build scene element if resource exists, structure is not added if not
-
+                    // add scene element only if resource exists in /wormguides/models/obj_files
                     try {
                         resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
                         startTime = parseInt(tokens[START_TIME_INDEX]);

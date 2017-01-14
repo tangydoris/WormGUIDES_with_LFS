@@ -1,10 +1,11 @@
 /*
- * Bao Lab 2016
+ * Bao Lab 2017
  */
 
 package wormguides.stories;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -26,10 +27,10 @@ import wormguides.models.subscenegeometry.SceneElementsList;
  */
 public class Note {
 
-    private final String OBJ_EXT = ".obj";
+    private static final String OBJ_EXT = ".obj";
 
     // it is possible for a note to have multiple scene elements just by setting its resource location
-    private ArrayList<SceneElement> elements;
+    private List<SceneElement> elements;
     private String tagName;
     private String tagContents;
     private Type attachmentType;
@@ -242,7 +243,7 @@ public class Note {
         }
     }
 
-    public ArrayList<SceneElement> getSceneElements() {
+    public List<SceneElement> getSceneElements() {
         return elements;
     }
 
@@ -344,13 +345,18 @@ public class Note {
         return resourceLocation;
     }
 
-    public void setResourceLocation(String location) {
-        if (location != null && location.trim().toLowerCase().endsWith(".obj")) {
-            resourceLocation = location.trim();
-
+    public void setResourceLocation(final String location) {
+        if (elements == null) {
             elements = new ArrayList<>();
+        }
+        if (location != null && !location.isEmpty()) {
+            resourceLocation = location.trim();
+            String sceneName = resourceLocation;
+            if (resourceLocation.lastIndexOf("/") != -1) {
+                sceneName = resourceLocation.substring(resourceLocation.lastIndexOf("/") + 1);
+            }
             final SceneElement se = new SceneElement(
-                    tagName,
+                    sceneName,
                     cellName,
                     marker,
                     imagingSource,
