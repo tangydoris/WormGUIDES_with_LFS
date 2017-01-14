@@ -25,8 +25,7 @@ import static wormguides.util.AppFont.getBoldFont;
 import static wormguides.util.AppFont.getFont;
 
 /**
- * This class is a popup dialog that contains some prompt text and two buttons, yes and no. The Strings for these
- * three components are set upon initialization.
+ * Popup dialog to save the active story before exiting the application
  */
 public class StorySavePane extends AnchorPane {
 
@@ -34,7 +33,7 @@ public class StorySavePane extends AnchorPane {
     private final Button noBtn;
     private final Button cancelBtn;
 
-    private Text promptText;
+    private final Text promptText;
 
     public StorySavePane(
             final EventHandler<ActionEvent> yesHandler,
@@ -58,17 +57,15 @@ public class StorySavePane extends AnchorPane {
 
         // initialize prompt text
         promptText = new Text();
-        promptText.setFont(getBoldFont());
+        promptText.setFont(getFont());
         promptText.wrappingWidthProperty().bind(mainVBox.widthProperty().subtract(10));
         promptText.setTextAlignment(CENTER);
         promptText.setText(prompt);
 
-        mainVBox.getChildren().add(promptText);
-
         // initialize buttons
         yesBtn = new Button();
         yesBtn.setText(yesButtonText);
-        yesBtn.setFont(getFont());
+        yesBtn.setFont(getBoldFont());
         yesBtn.setPrefWidth(70);
         yesBtn.setMaxHeight(MAX_VALUE);
         yesBtn.setOnAction(yesHandler);
@@ -102,10 +99,8 @@ public class StorySavePane extends AnchorPane {
             child.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
         }
 
-        mainVBox.getChildren().add(btnHBox);
-
+        mainVBox.getChildren().addAll(promptText, btnHBox);
         mainVBox.setPadding(new Insets(10, 0, 10, 0));
-
         getChildren().add(mainVBox);
     }
 
