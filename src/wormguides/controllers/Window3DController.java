@@ -1134,7 +1134,7 @@ public class Window3DController {
      * its bounds are within the window again.
      *
      * @param noteOrLabelGraphic
-     *         graphical representation of a note/notes
+     *         graphical representation of a note/notes (could be a {@link Text} or a {@link VBox})
      * @param node
      *         entity that the note graphic should attach to
      * @param isLabel
@@ -1142,21 +1142,14 @@ public class Window3DController {
      */
     private void alignTextWithEntity(final Node noteOrLabelGraphic, final Node node, final boolean isLabel) {
         if (node != null) {
-            // graphic could have been previously removed due to out-of-bounds-ness
-            final ObservableList<Node> children = spritesPane.getChildren();
-            if (!children.contains(noteOrLabelGraphic)) {
-                children.add(noteOrLabelGraphic);
-            }
-
             final Bounds b = node.getBoundsInParent();
             if (b != null) {
-                noteOrLabelGraphic.getTransforms().clear();
                 final Point2D p = CameraHelper.project(
                         camera,
                         new Point3D(
-                                (b.getMinX() + b.getMaxX()) / 2,
-                                (b.getMinY() + b.getMaxY()) / 2,
-                                (b.getMaxZ() + b.getMinZ()) / 2));
+                                (b.getMinX() + b.getMaxX()) / 2.0,
+                                (b.getMinY() + b.getMaxY()) / 2.0,
+                                (b.getMaxZ() + b.getMinZ()) / 2.0));
                 double x = p.getX();
                 double y = p.getY();
 
@@ -1170,6 +1163,7 @@ public class Window3DController {
                     x += hOffset;
                     y += vOffset + LABEL_SPRITE_Y_OFFSET;
                 }
+                noteOrLabelGraphic.getTransforms().clear();
                 noteOrLabelGraphic.getTransforms().add(new Translate(x, y));
             }
         }
@@ -1234,7 +1228,7 @@ public class Window3DController {
                 final MeshView mesh = se.buildGeometry(requestedTime - 1);
                 if (mesh != null) {
                     mesh.getTransforms().addAll(rotateX, rotateY, rotateZ);
-                    // TODO fix
+                    // TODO is this right?
                     mesh.getTransforms().add(new Translate(-offsetX, -offsetY, -offsetZ * zScale));
                     // add rendered mesh to meshes list
                     currentSceneElementMeshes.add(mesh);
@@ -1601,21 +1595,19 @@ public class Window3DController {
         }
     }
 
-    private void insertLabelFor(String name, Node entity) {
-        // if label is already in scene, make all labels white
-        // and highlight that one
-        Text label = entityLabelMap.get(entity);
+    private void insertLabelFor(final String name, final Node entity) {
+        // if label is already in scene, make all labels white and highlight that one
+        final Text label = entityLabelMap.get(entity);
         if (label != null) {
             for (Node shape : entityLabelMap.keySet()) {
                 entityLabelMap.get(shape).setFill(web(SPRITE_COLOR_HEX));
             }
-
             label.setFill(web(ACTIVE_LABEL_COLOR_HEX));
             return;
         }
 
         // otherwise, create a highlight new label
-        String funcName = getFunctionalNameByLineageName(name);
+        final String funcName = getFunctionalNameByLineageName(name);
         Text text;
         if (funcName != null) {
             text = makeNoteSpriteText(funcName);
@@ -1625,12 +1617,12 @@ public class Window3DController {
 
         final String tempName = name;
         text.setOnMouseClicked(event -> removeLabelFor(tempName));
-
         text.setWrappingWidth(-1);
 
         entityLabelMap.put(entity, text);
 
         spritesPane.getChildren().add(text);
+
         alignTextWithEntity(text, entity, true);
     }
 
@@ -1649,13 +1641,12 @@ public class Window3DController {
      * meshes (if a mesh and a cell have the same name, then the mesh is
      * returned).
      */
-    private Shape3D getEntityWithName(String name) {
+    private Shape3D getEntityWithName(final String name) {
         if (defaultEmbryoFlag) {
             // mesh view label
             for (int i = 0; i < currentSceneElements.size(); i++) {
                 if (normalizeName(currentSceneElements.get(i).getSceneName()).equalsIgnoreCase(name)
-                        && currentSceneElementMeshes.get(i) != null
-                        && currentSceneElementMeshes.get(i).getBoundsInParent().getMinZ() > 0) {
+                        && currentSceneElementMeshes.get(i) != null) {
                     return currentSceneElementMeshes.get(i);
                 }
             }

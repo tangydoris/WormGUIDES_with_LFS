@@ -113,8 +113,7 @@ public class TerminalCellCase extends CellCase {
 
         //generate and add the wormwiring link
         addLink(addWormWiringLink());
-
-
+        
 		// TODO cytoshow stub
         //links.add("Cytoshow: [cytoshow link to this cell in EM data]");
     }
