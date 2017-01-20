@@ -255,10 +255,10 @@ public class Window3DController {
     private final Map<Node, Text> entityLabelMap;
     // orientation indicator
     private final Cylinder orientationIndicator;
-    // rotation
-    private final double[] keyValuesRotate = {90, 30, 30, 90};
-    //  private final double[] keyValuesRotate = {60, 1, 1, 60};
-    private final double[] keyFramesRotate = {1, 16, 321, 359};
+    
+    // rotation - AP
+    private double[] keyValuesRotate; // = {90, 30, 30, 90};
+    private double[] keyFramesRotate; // = {1, 16, 321, 359};
 
     private final EventHandler<MouseEvent> clickableMouseEnteredHandler;
     private final EventHandler<MouseEvent> clickableMouseExitedHandler;
@@ -415,7 +415,12 @@ public class Window3DController {
                 timeProperty.set(endTime);
             }
         });
-
+        
+        // set orientation indicator frames and rotation from production info
+        keyFramesRotate = productionInfo.getKeyFramesRotate();
+        keyValuesRotate = productionInfo.getKeyValuesRotate();
+//        double[] initialRotation = productionInfo.getInitialRotation();
+        
         spheres = new Sphere[1];
         meshes = new MeshView[1];
         cellNames = new String[1];
