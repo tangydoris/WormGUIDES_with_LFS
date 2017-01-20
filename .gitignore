@@ -1,0 +1,13 @@
+bin/*
+.settings/*
+build/*
+build-libs/*
+java.hprof.txt
+/bin/
+/TestApp.jar
+/compiledTest/
+/deployedTest/
+/build-libs/
+*.class
+/org/
+/org/*
