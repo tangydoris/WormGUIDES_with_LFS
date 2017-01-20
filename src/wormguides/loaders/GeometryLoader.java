@@ -1,167 +1,160 @@
+/*
+ * Bao Lab 2017
+ */
+
 package wormguides.loaders;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
+
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 
+import wormguides.MainApp;
+
 /**
- * Utility Class
- * Builds 3D Geometry for Scene Elements to be placed in 3D scene graph
- * 
- * @author bradenkatzman
- * Created: Nov. 2nd, 2015
+ * Builder for scene element mesh geometries to be placed in the 3D subscene
  */
 public class GeometryLoader {
 
-	private static final String vertexLine = "v ";
-	private static final String faceLine = "f ";
-	private static ArrayList<double[]> coords;
-	private static ArrayList<int[]> faces;
-	private static TriangleMesh mesh;
+    private static final String OBJ_EXTENSION = ".obj";
+    private static final String VERTEX_LINE = "v";
+    private static final String FACE_LINE = "f";
 
-	/**
-	 * Builds a 3D shape from a file
-	 * 
-	 * @param fileName the name of the obj fle for the mesh
-	 * @return the 3D meshview
-	 */
-	public static MeshView loadOBJ(String fileName) {
-		/*
-		 * can't use '..' in getResouce --> instead use complete relative path
-		 * from root directory. has to start with '/'
-		 */
-		// take path up until model
-		// fileName = fileName.substring(fileName.indexOf("/model"));
-		// fileName = ".." + fileName;
+    /**
+     * Checks to see if a spefified resource exists in the shape files archive. A resource exists if there
+     *
+     * @param resourcePath
+     *         the resource path to check, without the .obj extension
+     *
+     * @return true if the resource exists, false otherwise
+     */
+    public static boolean doesResourceExist(
+            String resourcePath,
+            final int startTime,
+            final int endTime) {
+        resourcePath = "/" + resourcePath;
+        URL url = MainApp.class.getResource(resourcePath + OBJ_EXTENSION);
+        if (url != null) {
+            return true;
+        } else {
+            // check for obj file with a time
+            for (int time = startTime; time <= endTime; time++) {
+                url = MainApp.class.getResource(resourcePath + "_t" + time + OBJ_EXTENSION);
+                if (url != null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-		// append /
-		URL url = ProductionInfoLoader.class.getResource("/" + fileName);
+    /**
+     * Builds a 3D mesh from a file
+     *
+     * @param resourcePath
+     *         the resource path to check, without the .obj extension
+     *
+     * @return the 3D mesh
+     */
+    public static MeshView loadOBJ(String resourcePath) {
+        MeshView meshView = null;
+        resourcePath = "/" + resourcePath + OBJ_EXTENSION;
+        final URL url = MainApp.class.getResource(resourcePath);
 
-		coords = new ArrayList<double[]>();
-		faces = new ArrayList<int[]>();
-		mesh = new TriangleMesh();
+        final List<double[]> coords = new ArrayList<>();
+        final List<int[]> faces = new ArrayList<>();
 
-		try {
-			if (url != null) {
-				InputStream stream = url.openStream();
-				InputStreamReader streamReader = new InputStreamReader(stream);
-				BufferedReader reader = new BufferedReader(streamReader);
+        if (url != null) {
+            try (final InputStreamReader streamReader = new InputStreamReader(url.openStream());
+                 final BufferedReader reader = new BufferedReader(streamReader)) {
+                String line;
+                StringTokenizer tokenizer;
+                String v;
+                String f;
+                String lineType;
+                while ((line = reader.readLine()) != null) {
+                    // process each line in the obj file
+                    lineType = line.substring(0, 1);
+                    switch (lineType) {
+                        case VERTEX_LINE: {
+                            // process vertex lines
+                            v = line.substring(2);
+                            double[] vertices = new double[3];
+                            int counter = 0;
+                            tokenizer = new StringTokenizer(v);
+                            while (tokenizer.hasMoreTokens()) {
+                                vertices[counter++] = Double.parseDouble(tokenizer.nextToken());
+                            }
+                            // make sure good line
+                            if (counter == 3) {
+                                coords.add(vertices);
+                            }
+                            break;
+                        }
+                        case FACE_LINE: {
+                            // process face lines
+                            f = line.substring(2);
+                            int[] faceCoords = new int[3];
+                            int counter = 0;
 
-				String line;
+                            tokenizer = new StringTokenizer(f);
+                            while (tokenizer.hasMoreTokens()) {
+                                faceCoords[counter++] = Integer.parseInt(tokenizer.nextToken());
+                            }
+                            if (counter == 3) {
+                                faces.add(faceCoords);
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+                meshView = new MeshView(createMesh(coords, faces));
+            } catch (IOException e) {
+                System.out.println("The file " + resourcePath + " wasn't found on the system.");
+            }
+        }
+        return meshView;
+    }
 
-				while ((line = reader.readLine()) != null) {
-					// make sure valid line
-					if (line.length() <= 1)
-						break;
-
-					// process each line in the obj file
-					String lineType = line.substring(0, 2);
-					if (lineType.equals(vertexLine)) {
-						// process vertex lines
-						String v = line.substring(2);
-						double[] vertices = new double[3];
-						int counter = 0;
-
-						StringTokenizer tokenizer = new StringTokenizer(v);
-						while (tokenizer.hasMoreTokens()) {
-							vertices[counter++] = Double.parseDouble(tokenizer.nextToken());
-						}
-						// make sure good line
-						if (counter == 3) {
-							coords.add(vertices);
-						}
-					} else if (lineType.equals(faceLine)) {
-						// process face lines
-						String f = line.substring(2);
-						int[] faceCoords = new int[3];
-						int counter = 0;
-
-						StringTokenizer tokenizer = new StringTokenizer(f);
-						while (tokenizer.hasMoreTokens()) {
-							faceCoords[counter++] = Integer.parseInt(tokenizer.nextToken());
-						}
-
-						if (counter == 3) {
-							faces.add(faceCoords);
-						}
-					} else {
-					} // ignore other cases
-				}
-				createMesh();
-				reader.close();
-			}
-		} catch (IOException e1) {
-			System.out.println("The file " + fileName + " wasn't found on the system.");
-			return null;
-		}
-
-		return new MeshView(mesh);
-	}
-
-	/**
-	 * Builds the mesh from the loaded vertex coordinates and faces in the file
-	 */
-	private static void createMesh() {
-		int counter = 0;
-		int texCounter = 0;
-		float stripeSeparation = 1500;
-
-		float[] coordinates = new float[(coords.size() * 3)];
-		float[] texCoords = new float[(coords.size() * 2)];
-		for (int i = 0; i < coords.size(); i++) {
-			for (int j = 0; j < 3; j++) {
-				coordinates[counter++] = (float) coords.get(i)[j];
-			}
-			texCoords[texCounter++] = 0;
-			texCoords[texCounter++] = ((float) coords.get(i)[0] / stripeSeparation) * 200;
-		}
-
-		mesh.getPoints().addAll(coordinates);
-		mesh.getTexCoords().addAll(texCoords);
-
-		counter = 0;
-
-		int[] faceCoords = new int[(faces.size() * 3) * 2];
-		for (int i = 0; i < faces.size(); i++) {
-			for (int j = 0; j < 3; j++) {
-				faceCoords[counter++] = faces.get(i)[j] - 1;
-				faceCoords[counter++] = faces.get(i)[j] - 1; // for our texture
-																// coordinate -
-																// face syntax:
-																// p0, t0, p1,
-																// t1, p2, t2
-			}
-		}
-
-		mesh.getFaces().addAll(faceCoords);
-	}
-
-	/*--------------------DEBUGGING------------------------*/
-	public static void printCoords() {
-		System.out.println("-----------VERTICES------------- " + coords.size());
-		for (int i = 0; i < coords.size(); i++) {
-			System.out.print("v ");
-			for (int j = 0; j < 3; j++) {
-				System.out.print(coords.get(i)[j] + ", ");
-			}
-			System.out.println("");
-		}
-	}
-
-	public static void printFaces() {
-		System.out.println("-----------FACES-------------");
-		for (int i = 0; i < faces.size(); i++) {
-			System.out.print("f ");
-			for (int j = 0; j < 3; j++) {
-				System.out.print(faces.get(i)[j] + ", ");
-			}
-			System.out.println("");
-		}
-	}
+    /**
+     * Builds the mesh from the loaded vertex coordinates and faces in the file
+     */
+    private static TriangleMesh createMesh(final List<double[]> coords, final List<int[]> faces) {
+        final TriangleMesh mesh = new TriangleMesh();
+        int counter = 0;
+        int texCounter = 0;
+        final float stripeSeparation = 1500;
+        float[] coordinates = new float[(coords.size() * 3)];
+        float[] texCoords = new float[(coords.size() * 2)];
+        for (double[] coord : coords) {
+            for (int j = 0; j < 3; j++) {
+                coordinates[counter++] = (float) coord[j];
+            }
+            texCoords[texCounter++] = 0;
+            texCoords[texCounter++] = ((float) coord[0] / stripeSeparation) * 200;
+        }
+        mesh.getPoints().addAll(coordinates);
+        mesh.getTexCoords().addAll(texCoords);
+        counter = 0;
+        int[] faceCoords = new int[(faces.size() * 3) * 2];
+        for (int[] face : faces) {
+            for (int j = 0; j < 3; j++) {
+                faceCoords[counter++] = face[j] - 1;
+                faceCoords[counter++] = face[j] - 1;
+                // texture coordinate - face syntax:
+                // p0, t0, p1,
+                // t1, p2, t2
+            }
+        }
+        mesh.getFaces().addAll(faceCoords);
+        return mesh;
+    }
 }

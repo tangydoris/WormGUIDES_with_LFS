@@ -1,3 +1,7 @@
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.controllers;
 
 import java.net.URL;
@@ -15,127 +19,133 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import wormguides.SearchOption;
+
+import wormguides.models.colorrule.SearchOption;
+
+import static wormguides.models.colorrule.SearchOption.ANCESTOR;
+import static wormguides.models.colorrule.SearchOption.CELL_BODY;
+import static wormguides.models.colorrule.SearchOption.CELL_NUCLEUS;
+import static wormguides.models.colorrule.SearchOption.DESCENDANT;
 
 public class RuleEditorController extends AnchorPane implements Initializable {
 
-	@FXML
-	Text heading;
-	@FXML
-	CheckBox cellTick;
-	@FXML
-	Label cellLabel;
-	@FXML
-	CheckBox cellBodyTick;
-	@FXML
-	Label cellBodyLabel;
-	@FXML
-	CheckBox ancTick;
-	@FXML
-	Label ancLabel;
-	@FXML
-	CheckBox desTick;
-	@FXML
-	Label desLabel;
-	@FXML
-	ColorPicker picker;
-	@FXML
-	Button submit;
+    @FXML
+    Text heading;
 
-	public RuleEditorController() {
-		super();
-	}
+    @FXML
+    CheckBox cellCheckBox;
 
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		assertFXMLNodes();
-	}
+    @FXML
+    Label cellLabel;
 
-	private void assertFXMLNodes() {
-		assert(heading != null);
-		assert(cellTick != null);
-		assert(cellBodyTick != null);
-		assert(ancTick != null);
-		assert(desTick != null);
-		assert(picker != null);
-		assert(submit != null);
-	}
+    @FXML
+    CheckBox cellBodyCheckBox;
 
-	public void disableDescendantOption() {
-		desLabel.setDisable(true);
-		desTick.setDisable(true);
-	}
+    @FXML
+    Label cellBodyLabel;
 
-	public void disableOptionsForStructureRule() {
-		cellBodyTick.setSelected(true);
+    @FXML
+    CheckBox ancestorsCheckBox;
 
-		cellLabel.setDisable(true);
-		cellTick.setDisable(true);
-		ancLabel.setDisable(true);
-		ancTick.setDisable(true);
-		desLabel.setDisable(true);
-		desTick.setDisable(true);
-	}
+    @FXML
+    Label ancestorsLabel;
 
-	public void setHeading(String name) {
-		heading.setText(name);
-	}
+    @FXML
+    CheckBox descendantsCheckBox;
 
-	public void setSubmitHandler(EventHandler<ActionEvent> handler) {
-		submit.setOnAction(handler);
-	}
+    @FXML
+    Label descendantsLabel;
 
-	public boolean isCellTicked() {
-		return cellTick.isSelected();
-	}
+    @FXML
+    ColorPicker colorPicker;
 
-	public void setCellTicked(boolean ticked) {
-		cellTick.setSelected(ticked);
-	}
+    @FXML
+    Button submitButton;
 
-	public boolean isCellBodyTicked() {
-		return cellBodyTick.isSelected();
-	}
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // no need to do anything here
+    }
 
-	public void setCellBodyTicked(boolean ticked) {
-		cellBodyTick.setSelected(ticked);
-	}
+    public void disableDescendantOption() {
+        descendantsLabel.setDisable(true);
+        descendantsCheckBox.setDisable(true);
+    }
 
-	public boolean isAncestorsTicked() {
-		return ancTick.isSelected();
-	}
+    public void disableOptionsForStructureRule() {
+        cellBodyLabel.setDisable(true);
+        cellBodyCheckBox.setDisable(true);
+        cellLabel.setDisable(true);
+        cellCheckBox.setDisable(true);
+        ancestorsLabel.setDisable(true);
+        ancestorsCheckBox.setDisable(true);
+        descendantsLabel.setDisable(true);
+        descendantsCheckBox.setDisable(true);
+    }
 
-	public void setAncestorsTicked(boolean ticked) {
-		ancTick.setSelected(ticked);
-	}
+    public void setHeading(String name) {
+        heading.setText(name);
+    }
 
-	public boolean isDescendantsTicked() {
-		return desTick.isSelected();
-	}
+    public void setSubmitHandler(final EventHandler<ActionEvent> handler) {
+        submitButton.setOnAction(handler);
+    }
 
-	public void setDescendantsTicked(boolean ticked) {
-		desTick.setSelected(ticked);
-	}
+    public boolean isCellTicked() {
+        return cellCheckBox.isSelected();
+    }
 
-	public Color getColor() {
-		return picker.getValue();
-	}
+    public void setCellTicked(boolean ticked) {
+        cellCheckBox.setSelected(ticked);
+    }
 
-	public void setColor(Color color) {
-		picker.setValue(color);
-	}
+    public boolean isCellBodyTicked() {
+        return cellBodyCheckBox.isSelected();
+    }
 
-	public ArrayList<SearchOption> getOptions() {
-		ArrayList<SearchOption> options = new ArrayList<SearchOption>();
-		if (isCellTicked())
-			options.add(SearchOption.CELLNUCLEUS);
-		if (isCellBodyTicked())
-			options.add(SearchOption.CELLBODY);
-		if (isAncestorsTicked())
-			options.add(SearchOption.ANCESTOR);
-		if (isDescendantsTicked())
-			options.add(SearchOption.DESCENDANT);
-		return options;
-	}
+    public void setCellBodyTicked(boolean ticked) {
+        cellBodyCheckBox.setSelected(ticked);
+    }
+
+    public boolean isAncestorsTicked() {
+        return ancestorsCheckBox.isSelected();
+    }
+
+    public void setAncestorsTicked(boolean ticked) {
+        ancestorsCheckBox.setSelected(ticked);
+    }
+
+    public boolean isDescendantsTicked() {
+        return descendantsCheckBox.isSelected();
+    }
+
+    public void setDescendantsTicked(boolean ticked) {
+        descendantsCheckBox.setSelected(ticked);
+    }
+
+    public Color getColor() {
+        return colorPicker.getValue();
+    }
+
+    public void setColor(Color color) {
+        colorPicker.setValue(color);
+    }
+
+    public ArrayList<SearchOption> getOptions() {
+        ArrayList<SearchOption> options = new ArrayList<>();
+        if (isCellTicked()) {
+            options.add(CELL_NUCLEUS);
+        }
+        if (isCellBodyTicked()) {
+            options.add(CELL_BODY);
+        }
+        if (isAncestorsTicked()) {
+            options.add(ANCESTOR);
+        }
+        if (isDescendantsTicked()) {
+            options.add(DESCENDANT);
+        }
+        return options;
+    }
 
 }

@@ -1,102 +1,112 @@
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides;
 
 import java.io.IOException;
+import java.time.Instant;
 
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
-import wormguides.controllers.RootLayoutController;
-//import wormguides.view.RootLayout;
-import wormguides.loaders.ImageLoader;
-import wormguides.model.NucleiMgrAdapterResource;
 
+import wormguides.controllers.RootLayoutController;
+import wormguides.resources.NucleiMgrAdapterResource;
+
+import static java.time.Duration.between;
+import static java.time.Instant.now;
+
+import static javafx.application.Platform.setImplicitExit;
+
+import static wormguides.loaders.ImageLoader.loadImages;
+
+/**
+ * Driver class for the WormGUIDES desktop application
+ */
 public class MainApp extends Application {
 
-	private Scene scene;
-	private static Stage primaryStage;
-	private BorderPane rootLayout;
-	private RootLayoutController controller;
-	private static NucleiMgrAdapterResource nucleiMgrAdapterResource;
+    private static Stage primaryStage;
 
-	public MainApp() {}
+    private static NucleiMgrAdapterResource nucleiMgrAdapterResource;
 
-	@SuppressWarnings("static-access")
-	@Override
-	public void start(Stage primaryStage) {
-		System.out.println("start");
+    private Scene scene;
 
-		ImageLoader.loadImages();
+    private BorderPane rootLayout;
 
-		this.primaryStage = primaryStage;
-		this.primaryStage.setTitle("WormGUIDES");
+    private RootLayoutController controller;
 
-		long start_time = System.nanoTime();
-		initRootLayout();
-		long end_time = System.nanoTime();
-		double difference = (end_time - start_time) / 1e6;
-		System.out.println("root layout init " + difference + "ms");
+    public static void startProgramatically(final String[] args, final NucleiMgrAdapterResource nmar) {
+        nucleiMgrAdapterResource = nmar;
+        launch(args);
+    }
 
-		primaryStage.setResizable(true);
-		primaryStage.show();
+    public static void main(String[] args) {
+        launch(args);
+    }
 
-		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			@Override
-			public void handle(WindowEvent event) {
-				event.consume();
+    @Override
+    public void start(final Stage primaryStage) {
+        System.out.println("Starting WormGUIDES JavaFX application");
 
-				// prompt user to save active story on application exit
-				if (controller != null)
-					controller.promptStorySave();
-			}
-		});
-	}
+        loadImages();
 
-	public void initRootLayout() {
-		// Load root layout from FXML file.
-		FXMLLoader loader = new FXMLLoader();
-		loader.setLocation(getClass().getResource("view/layouts/RootLayout.fxml"));
-		
-		if (nucleiMgrAdapterResource != null) {
-			loader.setResources(nucleiMgrAdapterResource);
-			Platform.setImplicitExit(false);
-		}
+        MainApp.primaryStage = primaryStage;
+        MainApp.primaryStage.setTitle("WormGUIDES");
 
-		controller = new RootLayoutController();
-		controller.setStage(primaryStage);
-		loader.setController(controller);
-		loader.setRoot(controller);
+        final Instant start = now();
+        initRootLayout();
+        final Instant end = now();
+        System.out.println("Root layout initialized in "
+                + between(start, end).toMillis()
+                + "ms");
 
-		try {
-			rootLayout = (BorderPane) loader.load();
+        primaryStage.setResizable(true);
+        primaryStage.show();
 
-			scene = new Scene(rootLayout);
-			primaryStage.setScene(scene);
-			primaryStage.setResizable(true);
-			primaryStage.centerOnScreen();
+        primaryStage.setOnCloseRequest(event -> {
+            event.consume();
+            if (controller != null) {
+                controller.initCloseApplication();
+            }
+        });
+    }
 
-			Parent root = scene.getRoot();
-			for (Node node : root.getChildrenUnmodifiable())
-				node.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
+    public void initRootLayout() {
+        // Load root layout from FXML file.
+        final FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("view/layouts/RootLayout.fxml"));
 
-		} catch (IOException e) {
-			System.out.println("could not initialize root layout.");
-			e.printStackTrace();
-		}
-	}
-	
-	public static void startProgramatically(String[] args, NucleiMgrAdapterResource nmar) {
-		nucleiMgrAdapterResource = nmar;
-		launch(args);
-	}
+        if (nucleiMgrAdapterResource != null) {
+            loader.setResources(nucleiMgrAdapterResource);
+            setImplicitExit(false);
+        }
 
-	public static void main(String[] args) {
-		launch(args);
-	}
+        controller = new RootLayoutController();
+        controller.setStage(primaryStage);
+        loader.setController(controller);
+        loader.setRoot(controller);
+
+        try {
+            rootLayout = loader.load();
+
+            scene = new Scene(rootLayout);
+            primaryStage.setScene(scene);
+            primaryStage.setResizable(true);
+            primaryStage.centerOnScreen();
+
+            final Parent root = scene.getRoot();
+            for (Node node : root.getChildrenUnmodifiable()) {
+                node.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
+            }
+
+        } catch (IOException e) {
+            System.out.println("Could not initialize root layout");
+            e.printStackTrace();
+        }
+    }
 }

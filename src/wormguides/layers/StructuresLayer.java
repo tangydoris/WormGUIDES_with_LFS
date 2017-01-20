@@ -1,353 +1,296 @@
+/*
+ * Bao Lab 2016
+ */
+
+/*
+ * Bao Lab 2016
+ */
+
 package wormguides.layers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.geometry.Insets;
+import javafx.scene.control.Button;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
-import wormguides.model.Rule;
-import wormguides.model.SceneElementsList;
-import wormguides.view.AppFont;
-import wormguides.Search;
-import wormguides.model.PartsList;
+
+import wormguides.models.subscenegeometry.SceneElementsList;
+import wormguides.models.subscenegeometry.StructureTreeNode;
+
+import static java.lang.Double.MAX_VALUE;
+import static java.util.Objects.requireNonNull;
+
+import static javafx.collections.FXCollections.observableArrayList;
+import static javafx.scene.control.ContentDisplay.GRAPHIC_ONLY;
+import static javafx.scene.paint.Color.WHITE;
+
+import static partslist.PartsList.getLineageNamesByFunctionalName;
+import static wormguides.util.AppFont.getBolderFont;
+import static wormguides.util.AppFont.getFont;
 
 public class StructuresLayer {
 
-	private ObservableList<String> allStructuresList;
-	private ObservableList<String> searchResultsList;
+    private final SearchLayer searchLayer;
+    private final SceneElementsList sceneElementsList;
 
-	private Color selectedColor;
-	private String searchText;
+    private final ObservableList<String> searchStructuresResultsList;
 
-	private HashMap<String, ArrayList<String>> nameToCellsMap;
-	private HashMap<String, String> nameToCommentsMap;
-	private HashMap<String, StructureListCellGraphic> nameListCellMap;
+    private final TreeView<StructureTreeNode> allStructuresTreeView;
 
-	private StringProperty selectedNameProperty;
+    private final Map<String, List<String>> nameToCellsMap;
+    private final Map<String, String> nameToCommentsMap;
+    private final Map<String, StructureCellGraphic> structureNameToTreeCellMap;
 
-	private TextField searchField;
+    private final StringProperty selectedStructureNameProperty;
 
-	public StructuresLayer(SceneElementsList sceneElementsList, TextField searchField) {
-		selectedColor = Color.WHITE; // default color
+    private final TextField searchField;
 
-		allStructuresList = FXCollections.observableArrayList();
-		searchResultsList = FXCollections.observableArrayList();
+    private Color selectedColor;
+    private String searchText;
 
-		nameListCellMap = new HashMap<String, StructureListCellGraphic>();
-		selectedNameProperty = new SimpleStringProperty("");
+    public StructuresLayer(
+            final SearchLayer searchLayer,
+            final SceneElementsList sceneElementsList,
+            final StringProperty selectedEntityNameProperty,
+            final TextField searchField,
+            final ListView<String> structuresSearchResultsListView,
+            final TreeView<StructureTreeNode> allStructuresTreeView,
+            final Button addStructureRuleButton,
+            final ColorPicker colorPicker,
+            final BooleanProperty rebuildSceneFlag) {
 
-		allStructuresList.addListener(new ListChangeListener<String>() {
-			@Override
-			public void onChanged(ListChangeListener.Change<? extends String> change) {
-				while (change.next()) {
-					if (!change.wasUpdated()) {
-						for (String string : change.getAddedSubList()) {
-							StructureListCellGraphic graphic = new StructureListCellGraphic(string);
-							nameListCellMap.put(string, graphic);
-						}
-					}
-				}
-			}
-		});
+        selectedColor = WHITE;
 
-		allStructuresList.addAll(sceneElementsList.getAllMulticellSceneNames());
-		nameToCellsMap = sceneElementsList.getNameToCellsMap();
-		nameToCommentsMap = sceneElementsList.getNameToCommentsMap();
+        searchStructuresResultsList = observableArrayList();
 
-		setSearchField(searchField);
-	}
+        structureNameToTreeCellMap = new HashMap<>();
 
-	public ObservableList<String> getAllStructuresList() {
-		return allStructuresList;
-	}
+        requireNonNull(selectedEntityNameProperty);
+        selectedStructureNameProperty = new SimpleStringProperty("");
+        selectedStructureNameProperty.addListener((observable, oldValue, newValue) -> {
+            if (!newValue.isEmpty()) {
+                selectedEntityNameProperty.set(newValue);
+            }
+        });
 
-	public void setSelectedStructure(String structure) {
-		// unhighlight previous selected structure
-		if (!selectedNameProperty.get().isEmpty())
-			nameListCellMap.get(selectedNameProperty.get()).setSelected(false);
+        this.searchLayer = requireNonNull(searchLayer);
 
-		selectedNameProperty.set(structure);
+        this.sceneElementsList = requireNonNull(sceneElementsList);
+        nameToCellsMap = this.sceneElementsList.getNameToCellsMap();
+        nameToCommentsMap = this.sceneElementsList.getNameToCommentsMap();
 
-		// highlight new selected structure
-		if (!selectedNameProperty.get().isEmpty())
-			nameListCellMap.get(selectedNameProperty.get()).setSelected(true);
-	}
+        this.searchField = requireNonNull(searchField);
+        this.searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            searchText = newValue.toLowerCase();
+            if (searchText.isEmpty()) {
+                searchStructuresResultsList.clear();
+            } else {
+                selectedStructureNameProperty.set("");
+                deselectAllStructures();
+                searchAndUpdateResults(newValue.toLowerCase());
+            }
+        });
 
-	public void setSelectedColor(Color color) {
-		selectedColor = color;
-	}
+        requireNonNull(structuresSearchResultsListView).setItems(searchStructuresResultsList);
 
-	private void setSearchField(TextField field) {
-		if (field != null) {
-			searchField = field;
+        this.allStructuresTreeView = requireNonNull(allStructuresTreeView);
+        this.allStructuresTreeView.setShowRoot(false);
+        this.allStructuresTreeView.setRoot(sceneElementsList.getTreeRoot());
+        this.allStructuresTreeView.setCellFactory(new StructureTreeCellFactory());
+        this.allStructuresTreeView.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((observable, oldValue, newValue) -> {
+                    if (newValue != null) {
+                        final StructureTreeNode selectedNode = newValue.getValue();
+                        if (!selectedNode.isCategoryNode()) {
+                            searchField.clear();
+                            selectedStructureNameProperty.set(selectedNode.getNodeText());
+                        }
+                    }
+                });
 
-			searchField.textProperty().addListener(new ChangeListener<String>() {
-				@Override
-				public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-					searchText = newValue.toLowerCase();
+        requireNonNull(rebuildSceneFlag);
+        requireNonNull(addStructureRuleButton).setOnAction(event -> {
+            final String name = selectedStructureNameProperty.get();
+            if (!name.isEmpty()) {
+                addStructureRule(name, selectedColor);
+                deselectAllStructures();
+            } else {
+                // if no name is selected, add all results from search
+                for (String string : searchStructuresResultsList) {
+                    addStructureRule(string, selectedColor);
+                }
+                searchField.clear();
+            }
+            rebuildSceneFlag.set(true);
+        });
+        requireNonNull(colorPicker).setOnAction(event -> selectedColor = ((ColorPicker) event.getSource()).getValue());
+    }
 
-					if (searchText.isEmpty())
-						searchResultsList.clear();
+    /**
+     * Deselects any structure in the tree that was active
+     */
+    private void deselectAllStructures() {
+        allStructuresTreeView.getSelectionModel().clearSelection();
+    }
 
-					else {
-						setSelectedStructure("");
-						deselectAllStructures();
-						searchAndUpdateResults(newValue.toLowerCase());
-					}
-				}
-			});
-		}
-	}
+    public void addStructureRule(String name, Color color) {
+        if (name == null || color == null) {
+            return;
+        }
+        // check for validity of name
+        name = name.trim();
+        if (sceneElementsList.getAllSceneNames().contains(name)) {
+            searchLayer.addStructureRuleBySceneName(name, color);
+        }
+    }
 
-	private void deselectAllStructures() {
-		for (String name : nameListCellMap.keySet())
-			nameListCellMap.get(name).setSelected(false);
-	}
+    /**
+     * Searches for scene elements (single-celled and multicellular) whose scene name or comment is specified by the
+     * searched term. The search results list is updated with those structure scene names.
+     *
+     * @param searched
+     *         the searched term
+     */
+    public void searchAndUpdateResults(String searched) {
+        if (searched == null || searched.isEmpty()) {
+            return;
+        }
 
-	public EventHandler<ActionEvent> getAddStructureRuleButtonListener() {
-		return new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				String name = selectedNameProperty.get();
+        String[] terms = searched.toLowerCase().split(" ");
+        searchStructuresResultsList.clear();
 
-				if (!name.isEmpty()) {
-					addStructureRule(name, selectedColor);
-					deselectAllStructures();
-				}
+        for (String name : sceneElementsList.getAllSceneNames()) {
 
-				// if no name is selected, add all results from search
-				else {
-					for (String string : searchResultsList)
-						addStructureRule(string, selectedColor);
-					searchField.clear();
-				}
-			}
-		};
-	}
+            if (!searchStructuresResultsList.contains(name)) {
+                // search in structure scene names
+                String nameLower = name.toLowerCase();
 
-	public void addStructureRule(String name, Color color) {
-		if (name == null || color == null)
-			return;
-		
-		// Check for validity of name
-		name = name.trim();
-		if (allStructuresList.contains(name))
-			Search.addMulticellularStructureRule(name, color);
-	}
+                boolean appliesToName = true;
+                boolean appliesToCell = false;
+                boolean appliesToComment = false;
 
-	public EventHandler<ActionEvent> getColorPickerListener() {
-		return new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				selectedColor = ((ColorPicker) event.getSource()).getValue();
-			}
-		};
-	}
+                for (String term : terms) {
+                    if (!nameLower.contains(term)) {
+                        appliesToName = false;
+                        break;
+                    }
+                }
 
-	// Only searches names for now
-	public void searchAndUpdateResults(String searched) {
-		if (searched == null || searched.isEmpty())
-			return;
+                // search in cells
+                List<String> cells = nameToCellsMap.get(nameLower);
+                if (cells != null) {
+                    for (String cell : cells) {
+                        // use the first term
+                        if (terms.length > 0) {
+                            // check if search term is a functional name
+                            final List<String> lineageNames = new ArrayList<>(
+                                    getLineageNamesByFunctionalName(terms[0]));
+                            for (String lineageName : lineageNames) {
+                                if (lineageName != null) {
+                                    if (cell.toLowerCase().startsWith(lineageName.toLowerCase())) {
+                                        appliesToCell = true;
+                                        break;
+                                    }
+                                } else {
+                                    if (cell.toLowerCase().startsWith(terms[0].toLowerCase())) {
+                                        appliesToCell = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
-		String[] terms = searched.toLowerCase().split(" ");
-		searchResultsList.clear();
+                // search in comments if name does not already apply
+                if (nameToCommentsMap.containsKey(nameLower)) {
+                    final String commentLowerCase = nameToCommentsMap.get(nameLower).toLowerCase();
+                    for (String term : terms) {
+                        if (commentLowerCase.contains(term)) {
+                            appliesToComment = true;
+                        } else {
+                            appliesToComment = false;
+                            break;
+                        }
+                    }
+                }
 
-		for (String name : allStructuresList) {
+                if (appliesToName || appliesToCell || appliesToComment) {
+                    searchStructuresResultsList.add(name);
+                }
+            }
+        }
+    }
 
-			if (!searchResultsList.contains(name)) {
-				// search in structure scene names
-				String nameLower = name.toLowerCase();
+    public StringProperty getSelectedStructureNameProperty() {
+        return selectedStructureNameProperty;
+    }
 
-				boolean appliesToName = true;
-				boolean appliesToCell = false;
-				boolean appliesToComment = true;
+    public String getSearchText() {
+        return searchText;
+    }
 
-				for (String term : terms) {
-					if (!nameLower.contains(term)) {
-						appliesToName = false;
-						break;
-					}
-				}
+    /**
+     * Callback for TreeCell<String> so that fonts are uniform
+     */
+    private class StructureTreeCellFactory
+            implements Callback<TreeView<StructureTreeNode>, TreeCell<StructureTreeNode>> {
 
-				// search in cells
-				ArrayList<String> cells = nameToCellsMap.get(nameLower);
-				if (cells != null) {
-					for (String cell : cells) {
-						// we'll use the first term
-						if (terms.length > 0) {
-							// check if search term is a functional name
-							String lineageName = PartsList.getLineageNameByFunctionalName((terms[0].toUpperCase()));
-							if (lineageName != null) {
-								if (cell.toLowerCase().startsWith(lineageName.toLowerCase())) {
-									appliesToCell = true;
-									break;
-								}
-							} else {
-								if (cell.toLowerCase().startsWith(terms[0].toLowerCase())) {
-									appliesToCell = true;
-									break;
-								}
-							}
-						}
-					}
-				}
+        @Override
+        public TreeCell<StructureTreeNode> call(TreeView<StructureTreeNode> param) {
+            return new StructureTreeCell();
+        }
+    }
 
-				// search in comments if name does not already apply
-				String comment = nameToCommentsMap.get(nameLower);
-				String commentLower = comment.toLowerCase();
-				for (String term : terms) {
-					if (!commentLower.contains(term)) {
-						appliesToComment = false;
-						break;
-					}
-				}
+    private class StructureTreeCell extends TreeCell<StructureTreeNode> {
 
-				if (appliesToName || appliesToCell || appliesToComment)
-					searchResultsList.add(name);
-			}
-		}
-	}
+        @Override
+        protected void updateItem(final StructureTreeNode item, final boolean empty) {
+            super.updateItem(item, empty);
+            setContentDisplay(GRAPHIC_ONLY);
+            setFocusTraversable(false);
+            if (item != null && !empty) {
+                final StructureCellGraphic graphic = new StructureCellGraphic(item);
+                setGraphic(graphic);
+            } else {
+                setGraphic(null);
+            }
+        }
+    }
 
-	// search in cells
-	// for (SceneElement se : sceneElementsList.elementsList) {
-	// if (se.getSceneName().toLowerCase().equals(nameLower)) {
-	// for (String cell : se.getAllCellNames()) {
-	// if (cell.toLowerCase().contains(searched.toLowerCase())) {
-	// appliesToCell = true;
-	// }
-	// }
-	// }
-	// }
+    /**
+     * Graphical representation of a structure list cell (not including the expansion arrow)
+     */
+    private class StructureCellGraphic extends HBox {
 
-	public StringProperty getSelectedNameProperty() {
-		return selectedNameProperty;
-	}
+        private Label label;
 
-	// Called by RootLayourController to set reference to global rules list
-	public void setRulesList(ObservableList<Rule> list) {
-		if (list != null) {
-		}
-	}
-
-	public String getSearchText() {
-		return searchText;
-	}
-
-	public ObservableList<String> getStructuresSearchResultsList() {
-		return searchResultsList;
-	}
-
-	public void addSelectedNameListener(ChangeListener<String> listener) {
-		if (listener != null)
-			selectedNameProperty.addListener(listener);
-	}
-
-	public Callback<ListView<String>, ListCell<String>> getCellFactory() {
-		return new Callback<ListView<String>, ListCell<String>>() {
-			@Override
-			public ListCell<String> call(ListView<String> param) {
-				ListCell<String> cell = new ListCell<String>() {
-					@Override
-					protected void updateItem(String name, boolean empty) {
-						super.updateItem(name, empty);
-						if (name != null)
-							setGraphic(nameListCellMap.get(name));
-						else
-							setGraphic(null);
-
-						setStyle("-fx-focus-color: transparent;" + "-fx-background-color: transparent;");
-						setPadding(Insets.EMPTY);
-					}
-				};
-				return cell;
-			}
-		};
-	}
-
-	// Graphical representation of a structure list cell
-	private class StructureListCellGraphic extends HBox {
-
-		private BooleanProperty isSelected;
-		private Label label;
-
-		public StructureListCellGraphic(String name) {
-			super();
-
-			label = new Label(name);
-			label.setFont(AppFont.getFont());
-
-			label.setPrefHeight(UI_HEIGHT);
-			label.setMinHeight(USE_PREF_SIZE);
-			label.setMaxHeight(USE_PREF_SIZE);
-
-			getChildren().add(label);
-
-			setMaxWidth(Double.MAX_VALUE);
-			setPadding(new Insets(5, 5, 5, 5));
-
-			setPickOnBounds(false);
-			isSelected = new SimpleBooleanProperty(false);
-			setOnMouseClicked(new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent event) {
-					isSelected.set(!isSelected());
-					searchField.clear();
-				}
-			});
-			isSelected.addListener(new ChangeListener<Boolean>() {
-				@Override
-				public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-					if (newValue) {
-						setSelectedStructure(label.getText());
-						highlightCell(true);
-					} else {
-						setSelectedStructure("");
-						highlightCell(false);
-					}
-				}
-			});
-			highlightCell(isSelected());
-		}
-
-		public boolean isSelected() {
-			return isSelected.get();
-		}
-
-		public void setSelected(boolean selected) {
-			isSelected.set(selected);
-		}
-
-		private void highlightCell(boolean highlight) {
-			if (highlight) {
-				setStyle("-fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-selection-bar;"
-						+ "-fx-background: -fx-accent;");
-				label.setTextFill(Color.WHITE);
-			} else {
-				setStyle("-fx-background-color: white;");
-				label.setTextFill(Color.BLACK);
-			}
-		}
-
-		private final double UI_HEIGHT = 28.0;
-	}
-
+        public StructureCellGraphic(final StructureTreeNode treeNode) {
+            super();
+            label = new Label(requireNonNull(treeNode).getNodeText());
+            if (treeNode.isCategoryNode()) {
+                label.setFont(getBolderFont());
+            } else {
+                label.setFont(getFont());
+            }
+            getChildren().add(label);
+            setMaxWidth(MAX_VALUE);
+            setPickOnBounds(false);
+        }
+    }
 }
