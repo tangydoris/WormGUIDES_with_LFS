@@ -296,17 +296,40 @@ public class SearchLayer {
      *
      * @return the rule that was added to the internal list
      */
-    public Rule addGiantConnectomeColorRule(
-            final String linegeName,
+    public Rule addConnectomeColorRuleFromContextMenu(
+            final String funcName,
             final Color color,
             final boolean isPresynapticTicked,
             final boolean isPostsynapticTicked,
             final boolean isElectricalTicked,
             final boolean isNeuromuscularTicked) {
+        final StringBuilder sb = createLabelForConnectomeRule(funcName, 
+        		isPresynapticTicked, isPostsynapticTicked, isElectricalTicked, isNeuromuscularTicked);
 
-        final StringBuilder sb = new StringBuilder("'");
-        sb.append(linegeName.toLowerCase()).append("' Connectome");
+        final Rule rule = new Rule(rebuildSubsceneFlag, sb.toString(), color, CONNECTOME, CELL_NUCLEUS);
+        rule.setCells(connectome.queryConnectivity(
+        		funcName,
+                isPresynapticTicked,
+                isPostsynapticTicked,
+                isElectricalTicked,
+                isNeuromuscularTicked,
+                true));
+        rule.setSearchedText(sb.toString());
+        rule.resetLabel(sb.toString());
+        rulesList.add(rule);
+        return rule;
+    }
+    
+    private StringBuilder createLabelForConnectomeRule(String funcName,
+    		final boolean isPresynapticTicked,
+            final boolean isPostsynapticTicked,
+            final boolean isElectricalTicked,
+            final boolean isNeuromuscularTicked) {
+    	
+    	final StringBuilder sb = new StringBuilder("'");
+        sb.append(funcName.toLowerCase()).append("' Connectome");
 
+        
         final List<String> types = new ArrayList<>();
         if (isPresynapticTicked) {
             types.add("presynaptic");
@@ -330,29 +353,8 @@ public class SearchLayer {
                 }
             }
         }
-
-        final Rule rule = new Rule(rebuildSubsceneFlag, sb.toString(), color, CONNECTOME, CELL_NUCLEUS);
-        rule.setCells(connectome.queryConnectivity(
-                linegeName,
-                isPresynapticTicked,
-                isPostsynapticTicked,
-                isElectricalTicked,
-                isNeuromuscularTicked,
-                true));
-        rule.setSearchedText(sb.toString());
-        rule.resetLabel(sb.toString());
-        rulesList.add(rule);
-        return rule;
-    }
-
-    public Rule addConnectomeColorRule(
-            final String searched,
-            final Color color,
-            final boolean isPresynaptic,
-            final boolean isPostsynaptic,
-            final boolean isElectrical,
-            final boolean isNeuromuscular) {
-        return addColorRule(CONNECTOME, searched, color, CELL_NUCLEUS);
+    	
+        return sb;
     }
 
     private void updateGeneResults(final String searchedGene) {
@@ -426,6 +428,33 @@ public class SearchLayer {
         addColorRule(FUNCTIONAL, "da3", web("0xe6b34d"), CELL_NUCLEUS);
         addColorRule(FUNCTIONAL, "da4", web("0xe6b34d"), CELL_NUCLEUS);
         addColorRule(FUNCTIONAL, "da5", web("0xe6b34d"), CELL_NUCLEUS);
+        
+        // 12/28/2016 --> added because mutlicellular structures are not colored via individual cell rules in this version
+        // TODO
+        /*
+         * I'm unclear as to how the rules here are percolated to the actual rules this that's displayed. I know that the 
+         * blank story does URL parsing to set the 4 default rules, but this is less known to me. I added these rules below
+         * and saw no difference and to test whether or not it was code that I had written today to cause the problem, I added
+         * a second rule to those above. I added another rule for siav with the same syntax and gave it a different color ond
+         * it didn't result in another siav rule in the display panel so if you remember how these rules listed above actually
+         * end up being active rules, we need those applied to these rules below to have the same default view in this version
+         * 
+         * For the blank story template to look the same as it was before, we need to add explicit structure rules that have the
+         * colors of the original view because in this version, only structure rules can color multicellular structures. I know
+         * that the 4 default rules under the story that it is initialized with are made via that URL string so if you could add
+         * the explicit structures rules that would be great. I figured that would be faster than me figuring out the syntax of
+         * the URLs and trying to make them myself because I have very little knowledge of how those work currently.
+         */
+        addStructureRuleBySceneName("lim4_bundle_left", web("0xe6ccff"));
+        addStructureRuleBySceneName("lim4_bundle_left", web("0x99b3ff"));
+        addStructureRuleBySceneName("lim4_bundle_right", web("0xe6ccff"));
+        addStructureRuleBySceneName("lim4_bundle_right", web("0x99b3ff"));
+        addStructureRuleBySceneName("lim4_nerve_ring", web("0xff9966"));
+        addStructureRuleBySceneName("lim4_nerve_ring", web("0xffe6b4"));
+        addStructureRuleBySceneName("Amphid Commissure Right", DARKSEAGREEN);
+        addStructureRuleBySceneName("Amphid Commissure Right", web("0x663366"));
+        addStructureRuleBySceneName("Amphid Commissure Left", DARKSEAGREEN);
+        addStructureRuleBySceneName("Amphid Commissure Left", web("0x663366"));
     }
 
     /**
@@ -489,7 +518,7 @@ public class SearchLayer {
             final String searched,
             final Color color,
             List<SearchOption> options) {
-
+    	
         // default search options is cell
         if (options == null) {
             options = new ArrayList<>();
@@ -508,17 +537,26 @@ public class SearchLayer {
         return rule;
     }
 
+    /*
+     * TODO fix this
+     */
     private String createRuleLabel(String searched, SearchType searchType) {
         searched = searched.trim().toLowerCase();
-        final StringBuilder labelBuilder = new StringBuilder();
+        StringBuilder labelBuilder = new StringBuilder();
         if (searchType != null) {
             if (searchType == LINEAGE) {
                 labelBuilder.append(getCaseSensitiveName(searched));
                 if (labelBuilder.toString().isEmpty()) {
                     labelBuilder.append(searched);
                 }
+            } else if (searchType == CONNECTOME) {
+            	labelBuilder = createLabelForConnectomeRule(searched, 
+            				presynapticCheckBox.isSelected(),
+                            postsynapticCheckBox.isSelected(),
+                            neuromuscularCheckBox.isSelected(),
+                            electricalCheckBox.isSelected());
             } else {
-                labelBuilder.append("'").append(searched).append("' ").append(searchType.toString());
+            	labelBuilder.append("'").append(searched).append("' ").append(searchType.toString());
             }
         } else {
             labelBuilder.append(searched);

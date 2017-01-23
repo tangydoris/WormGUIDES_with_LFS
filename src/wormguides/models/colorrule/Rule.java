@@ -1,9 +1,5 @@
 /*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
+ * Bao Lab 2017
  */
 
 package wormguides.models.colorrule;
@@ -11,6 +7,7 @@ package wormguides.models.colorrule;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -451,9 +448,9 @@ public class Rule {
         return options.toArray(new SearchOption[options.size()]);
     }
 
-    public void setOptions(List<SearchOption> options) {
+    public void setOptions(final List<SearchOption> options) {
         this.options = new ArrayList<>();
-        this.options.addAll(options.stream().filter(option -> option != null).collect(toList()));
+        this.options.addAll(options.stream().filter(Objects::nonNull).collect(toList()));
     }
 
     /**
@@ -544,6 +541,7 @@ public class Rule {
         if (!visible || !options.contains(CELL_BODY)) {
             return false;
         }
+        
         for (String cell : cells) {
             if (cell.equalsIgnoreCase(name)) {
                 return true;
@@ -581,6 +579,7 @@ public class Rule {
             if (editController != null) {
                 setColor(editController.getColor());
                 editStage.hide();
+                
                 // because the multicellular name based rule is not a check option, we need to override this function
                 // to avoid overwriting the multicellular search option
                 if (searchType != STRUCTURE_BY_SCENE_NAME) {

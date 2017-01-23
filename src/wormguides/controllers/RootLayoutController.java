@@ -1,9 +1,5 @@
 /*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
+ * Bao Lab 2017
  */
 
 package wormguides.controllers;
@@ -599,7 +595,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
     public void captureVideo() {
         captureVideoMenuItem.setDisable(true);
         stopCaptureVideoMenuItem.setDisable(false);
-
         // start the image capture
         if (window3DController != null) {
             if (!window3DController.captureImagesForMovie()) {
@@ -616,7 +611,6 @@ public class RootLayoutController extends BorderPane implements Initializable {
         captureVideoMenuItem.setDisable(false);
         stopCaptureVideoMenuItem.setDisable(true);
         capturingVideoFlag.set(false);
-
         // convert captured images to movie
         if (window3DController != null) {
             window3DController.convertImagesToMovie();
@@ -631,37 +625,34 @@ public class RootLayoutController extends BorderPane implements Initializable {
         } else {
             exitApplication();
         }
-
     }
 
     private void promptStorySave() {
-        if (storiesLayer != null && storiesLayer.getActiveStory() != null) {
-            if (exitSavePopup == null) {
-                // create handlers for yes, no and cancel buttons
-                final EventHandler<ActionEvent> yesHandler = event -> {
-                    exitSavePopup.hide();
-                    storiesLayer.saveActiveStory();
+        if (exitSavePopup == null) {
+            // create handlers for yes, no and cancel buttons
+            final EventHandler<ActionEvent> yesHandler = event -> {
+                exitSavePopup.hide();
+                if (storiesLayer.saveActiveStory()) {
                     exitApplication();
-                };
-                final EventHandler<ActionEvent> noHandler = event -> {
-                    exitSavePopup.hide();
-                    exitApplication();
-                };
-                final EventHandler<ActionEvent> cancelHandler = event -> exitSavePopup.hide();
+                }
+            };
+            final EventHandler<ActionEvent> noHandler = event -> {
+                exitSavePopup.hide();
+                exitApplication();
+            };
+            final EventHandler<ActionEvent> cancelHandler = event -> exitSavePopup.hide();
 
-                exitSavePopup = new Popup();
-                exitSavePopup.getContent().add(new StorySavePane(
-                        yesHandler,
-                        noHandler,
-                        cancelHandler));
-
-                // position dialog on screen
-                exitSavePopup.setAutoFix(true);
-            }
-
-            exitSavePopup.show(mainStage);
-            exitSavePopup.centerOnScreen();
+            exitSavePopup = new Popup();
+            exitSavePopup.getContent().add(new StorySavePane(
+                    yesHandler,
+                    noHandler,
+                    cancelHandler));
+            // position dialog on screen
+            exitSavePopup.setAutoFix(true);
         }
+
+        exitSavePopup.show(mainStage);
+        exitSavePopup.centerOnScreen();
     }
 
     private void exitApplication() {
@@ -1082,6 +1073,7 @@ public class RootLayoutController extends BorderPane implements Initializable {
         colorAndDisplayTab = colorAndDisplayDragTab;
 
         mainTabPane.getTabs().addAll(storiesTab, colorAndDisplayTab);
+        mainTabPane.toFront();
     }
 
     @Override

@@ -214,11 +214,6 @@ public class LineageTree {
             }
             // for the p cells, test number after the 'p'
             if (descendant.startsWith(p) && ancestor.startsWith(p)) {
-                System.out.println(descendant
-                        + " is descendant of "
-                        + ancestor
-                        + ": "
-                        + (descendant.compareTo(ancestor) > 0));
                 return descendant.compareTo(ancestor) > 0;
             }
             // try to decipher lineage from names

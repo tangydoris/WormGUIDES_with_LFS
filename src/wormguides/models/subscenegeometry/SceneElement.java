@@ -1,13 +1,5 @@
 /*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
- */
-
-/*
- * Bao Lab 2016
+ * Bao Lab 2017
  */
 
 package wormguides.models.subscenegeometry;
@@ -18,7 +10,6 @@ import java.util.List;
 
 import javafx.scene.shape.MeshView;
 
-import static java.lang.Character.isLetter;
 import static java.util.Objects.requireNonNull;
 
 import static wormguides.loaders.GeometryLoader.loadOBJ;
@@ -85,7 +76,7 @@ public class SceneElement {
         this.embryoName = ""; // will fill this field in later?
         this.imagingSource = requireNonNull(imagingSource);
         this.resourceLocation = requireNonNull(resourceLocation);
-        completeResourceFlag = isResourceComplete();
+        this.completeResourceFlag = isResourceComplete();
 
         this.startTime = startTime;
         this.endTime = endTime;
@@ -108,8 +99,6 @@ public class SceneElement {
             }
         }
         cellNames.addAll(editedNames);
-
-
     }
 
     // Geometry used for notes in wormguides.stories
@@ -136,23 +125,11 @@ public class SceneElement {
         this.completeResourceFlag = isResourceComplete();
     }
 
+    /**
+     * @return true if the resource location path is complete with the .obj extension, false otherwise
+     */
     private boolean isResourceComplete() {
-        boolean complete = true;
-        if (resourceLocation != null) {
-            int idx = resourceLocation.lastIndexOf(".");
-            if (idx > -1) {
-                // substring after "."
-                String extCheck = resourceLocation.substring(++idx);
-                for (int i = 0; i < extCheck.length(); i++) {
-                    if (!isLetter(extCheck.charAt(i))) {
-                        complete = false;
-                    }
-                }
-            } else {
-                complete = false;
-            }
-        }
-        return complete;
+        return resourceLocation.endsWith(".obj");
     }
 
     public MeshView buildGeometry(int time) {
@@ -227,6 +204,10 @@ public class SceneElement {
 
     public boolean isMulticellular() {
         return cellNames.size() > 1;
+    }
+    
+    public boolean isNoCellStructure() {
+    	return cellNames.size() == 0;
     }
 
     public boolean existsAtTime(int time) {

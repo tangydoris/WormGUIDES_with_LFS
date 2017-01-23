@@ -1,5 +1,5 @@
 /*
- * Bao Lab 2016
+ * Bao Lab 2017
  */
 
 package wormguides.models.subscenegeometry;
@@ -126,8 +126,7 @@ public class SceneElementsList {
                     }
                 } else {
                     // add structure (leaf node) to tree
-                    // build scene element if resource exists, structure is not added if not
-
+                    // add scene element only if resource exists in /wormguides/models/obj_files
                     try {
                         resourceLocation = tokens[RESOURCE_LOCATION_INDEX];
                         startTime = parseInt(tokens[START_TIME_INDEX]);
@@ -158,7 +157,7 @@ public class SceneElementsList {
                             // check to see if resource exists in the shape files archive
                             // only create a scene element if it does
                             final SceneElement element = new SceneElement(
-                                    name,
+                                    lineageName,
                                     cellNames,
                                     tokens[MARKER_INDEX],
                                     tokens[IMAGING_SOURCE_INDEX],
@@ -282,7 +281,7 @@ public class SceneElementsList {
         // Add lineage names of all structures at time
         final List<String> list = new ArrayList<>();
         elementsList.stream().filter(se -> se.existsAtTime(time)).forEachOrdered(se -> {
-            if (se.isMulticellular()) {
+            if (se.isMulticellular() || se.getAllCells().size() == 0) {
                 list.add(se.getSceneName());
             } else {
                 list.add(se.getAllCells().get(0));

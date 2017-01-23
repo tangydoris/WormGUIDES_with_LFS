@@ -21,6 +21,7 @@ import static javafx.scene.layout.HBox.setHgrow;
 import static javafx.scene.layout.Priority.ALWAYS;
 import static javafx.scene.text.TextAlignment.CENTER;
 
+import static wormguides.util.AppFont.getBoldFont;
 import static wormguides.util.AppFont.getFont;
 
 /**
@@ -42,9 +43,9 @@ public class StorySavePane extends AnchorPane {
 
         super();
 
-        final String prompt = "Would you like to save the current active story before exiting WormGUIDES?";
-        final String yesButtonText = "Yes";
-        final String noButtonText = "No";
+        final String prompt = "Save active story before quitting?";
+        final String yesButtonText = "Save";
+        final String noButtonText = "Don't Save";
         final String cancelButtonText = "Cancel";
 
         final VBox mainVBox = new VBox(10);
@@ -53,7 +54,7 @@ public class StorySavePane extends AnchorPane {
         setRightAnchor(mainVBox, 10.0);
         setBottomAnchor(mainVBox, 10.0);
 
-        mainVBox.setStyle("-fx-background-color: white; -fx-border-color: black; ");
+        mainVBox.setStyle("-fx-background-color: white; -fx-border-color: black;");
 
         // initialize prompt text
         promptText = new Text();
@@ -67,7 +68,7 @@ public class StorySavePane extends AnchorPane {
         // initialize buttons
         yesBtn = new Button();
         yesBtn.setText(yesButtonText);
-        yesBtn.setFont(getFont());
+        yesBtn.setFont(getBoldFont());
         yesBtn.setPrefWidth(70);
         yesBtn.setMaxHeight(MAX_VALUE);
         yesBtn.setOnAction(yesHandler);
@@ -75,7 +76,7 @@ public class StorySavePane extends AnchorPane {
         noBtn = new Button();
         noBtn.setText(noButtonText);
         noBtn.setFont(getFont());
-        noBtn.setPrefWidth(70);
+        noBtn.setPrefWidth(100);
         noBtn.setMaxHeight(MAX_VALUE);
         noBtn.setOnAction(noHandler);
 
@@ -100,12 +101,10 @@ public class StorySavePane extends AnchorPane {
         for (Node child : btnHBox.getChildrenUnmodifiable()) {
             child.setStyle("-fx-focus-color: -fx-outer-border; -fx-faint-focus-color: transparent;");
         }
-
         mainVBox.getChildren().add(btnHBox);
 
         mainVBox.setPadding(new Insets(10, 0, 10, 0));
-        mainVBox.setMinHeight(115.0);
-
+//        mainVBox.setMinHeight(115.0);
         getChildren().add(mainVBox);
     }
 
