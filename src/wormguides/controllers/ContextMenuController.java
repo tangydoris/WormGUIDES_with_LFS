@@ -264,12 +264,6 @@ public class ContextMenuController extends AnchorPane implements Initializable {
             loadingService.cancel();
         });
 
-        /*TODO
-         * figure out what is going on with different rule behavior. should this be same as search layer?
-         * what is the difference between terminal and non terminal?
-         * should lineage of functional name be used based on the type of cell case
-         *
-         */
         wiredToQueryService = new Service<List<List<String>>>() {
             @Override
             protected Task<List<List<String>>> createTask() {
@@ -289,19 +283,19 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                                 results.add(ELECTR_INDEX, terminalCase.getElectricalPartners());
                                 results.add(NEURO_INDEX, terminalCase.getNeuromuscularPartners());
                             } else {
-                            	
+                            	// these calls return functional names
                                 results.add(
                                         PRE_SYN_INDEX,
-                                        connectome.queryConnectivity(funcName, true, false, false, false, true));
+                                        connectome.queryConnectivity(funcName, true, false, false, false, false));
                                 results.add(
                                         POST_SYN_INDEX,
-                                        connectome.queryConnectivity(funcName, false, true, false, false, true));
+                                        connectome.queryConnectivity(funcName, false, true, false, false, false));
                                 results.add(
                                         ELECTR_INDEX,
-                                        connectome.queryConnectivity(funcName, false, false, true, false, true));
+                                        connectome.queryConnectivity(funcName, false, false, true, false, false));
                                 results.add(
                                         NEURO_INDEX,
-                                        connectome.queryConnectivity(funcName, false, false, false, true, true));
+                                        connectome.queryConnectivity(funcName, false, false, false, true, false));
                             }
                             return results;
                         }
@@ -332,8 +326,7 @@ public class ContextMenuController extends AnchorPane implements Initializable {
                 populateWiredToMenu(results.get(PRE_SYN_INDEX), preSyn, true, false, false, false);
                 populateWiredToMenu(results.get(POST_SYN_INDEX), postSyn, false, true, false, false);
                 populateWiredToMenu(results.get(ELECTR_INDEX), electr, false, false, true, false);
-                populateWiredToMenu(results.get(NEURO_INDEX), neuro, false, false, false, true);
-
+                populateWiredToMenu(results.get(NEURO_INDEX), neuro, false, false, false, false);
             } else {
                 wiredToMenu.getItems().clear();
                 wiredToMenu.getItems().add(new MenuItem("None"));
